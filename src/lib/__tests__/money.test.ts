@@ -29,6 +29,11 @@ describe('formatCompactVND', () => {
   it('formats billions', () => {
     expect(formatCompactVND(1200000000)).toBe('1,2 tỷ');
   });
+  it('promotes the tier when rounding reaches 1000', () => {
+    expect(formatCompactVND(999950)).toBe('1tr');
+    expect(formatCompactVND(999949)).toBe('999,9k');
+    expect(formatCompactVND(999999999)).toBe('1 tỷ');
+  });
   it('leaves small amounts as đ', () => {
     expect(formatCompactVND(800)).toBe('800 đ');
   });

@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
@@ -8,13 +9,28 @@ export default function SettingsScreen() {
   const metadata = session?.user.user_metadata;
   const name: string | undefined = metadata?.full_name ?? metadata?.name;
   const email = session?.user.email;
+  const [busy, setBusy] = useState(false);
+
+  async function onSignOut() {
+    setBusy(true);
+    try {
+      await signOut();
+    } catch (e) {
+      Alert.alert('Không đăng xuất được', e instanceof Error ? e.message : 'Vui lòng thử lại.');
+      setBusy(false);
+    }
+  }
 
   return (
     <View style={styles.container}>
       {name ? <Text style={styles.name}>{name}</Text> : null}
       {email ? <Text style={styles.email}>{email}</Text> : null}
-      <Pressable style={styles.signOut} onPress={signOut} accessibilityRole="button">
-        <Text style={styles.signOutText}>Đăng xuất</Text>
+      <Pressable
+        style={[styles.signOut, busy && styles.signOutBusy]}
+        onPress={onSignOut}
+        disabled={busy}
+        accessibilityRole="button">
+        {busy ? <ActivityIndicator color={Colors.danger} /> : <Text style={styles.signOutText}>Đăng xuất</Text>}
       </Pressable>
     </View>
   );
@@ -33,5 +49,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.danger,
   },
+  signOutBusy: { opacity: 0.6 },
   signOutText: { color: Colors.danger, fontSize: 16, fontWeight: '500' },
 });

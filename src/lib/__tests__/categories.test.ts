@@ -3,6 +3,8 @@ import {
     createCategory,
     deleteCategory,
     DuplicateCategoryError,
+    moveCategory,
+    saveCategoryOrder,
     listCategories,
     normalizeCategoryName,
 } from "@/lib/categories";
@@ -106,5 +108,75 @@ describe("deleteCategory", () => {
     it("throws when the delete fails", async () => {
         fake.enqueue("categories", { error: { code: "42501" } });
         await expect(deleteCategory("c1")).rejects.toBeTruthy();
+    });
+});
+
+const cat = (id: string, sortOrder: number) => ({
+    id,
+    name: id,
+    icon: null,
+    type: "expense" as const,
+    sortOrder,
+});
+
+describe("moveCategory", () => {
+    const list = [cat("a", 1), cat("b", 2), cat("c", 3)];
+
+    it("moves an item up and renumbers from 1", () => {
+        expect(moveCategory(list, "c", -1)).toEqual([
+            cat("a", 1),
+            cat("c", 2),
+            cat("b", 3),
+        ]);
+    });
+
+    it("moves an item down", () => {
+        expect(moveCategory(list, "a", 1).map((c) => c.id)).toEqual([
+            "b",
+            "a",
+            "c",
+        ]);
+    });
+
+    it("leaves the list unchanged at the edges", () => {
+        expect(moveCategory(list, "a", -1)).toBe(list);
+        expect(moveCategory(list, "c", 1)).toBe(list);
+    });
+
+    it("renumbers ties and gaps so the new order sticks", () => {
+        const messy = [cat("a", 0), cat("b", 0), cat("c", 7)];
+        expect(moveCategory(messy, "b", -1)).toEqual([
+            cat("b", 1),
+            cat("a", 2),
+            cat("c", 3),
+        ]);
+    });
+});
+
+describe("saveCategoryOrder", () => {
+    it("updates only rows whose sort order changed", async () => {
+        fake.enqueue("categories", {});
+        await saveCategoryOrder(
+            [cat("a", 1), cat("b", 2), cat("c", 3)],
+            [cat("a", 1), cat("c", 2), cat("b", 3)],
+        );
+        expect(fake.callsTo("update")).toEqual([
+            [{ sort_order: 2 }],
+            [{ sort_order: 3 }],
+        ]);
+        expect(fake.callsTo("eq")).toEqual([
+            ["id", "c"],
+            ["id", "b"],
+        ]);
+    });
+
+    it("throws when an update fails", async () => {
+        fake.enqueue("categories", { error: { code: "42501" } });
+        await expect(
+            saveCategoryOrder(
+                [cat("a", 1), cat("b", 2)],
+                [cat("b", 1), cat("a", 2)],
+            ),
+        ).rejects.toBeTruthy();
     });
 });

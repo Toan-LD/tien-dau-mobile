@@ -77,3 +77,36 @@ export async function deleteCategory(id: string): Promise<void> {
     const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) throw error;
 }
+
+// Moves one category up (-1) or down (+1) and renumbers the list 1..n, so
+// ties and gaps in sort_order can't undo the user's order.
+export function moveCategory(
+    list: Category[],
+    id: string,
+    step: -1 | 1,
+): Category[] {
+    const from = list.findIndex((c) => c.id === id);
+    const to = from + step;
+    if (from < 0 || to < 0 || to >= list.length) return list;
+    const next = [...list];
+    [next[from], next[to]] = [next[to], next[from]];
+    return next.map((c, i) => ({ ...c, sortOrder: i + 1 }));
+}
+
+export async function saveCategoryOrder(
+    before: Category[],
+    after: Category[],
+): Promise<void> {
+    const old = new Map(before.map((c) => [c.id, c.sortOrder]));
+    const changed = after.filter((c) => old.get(c.id) !== c.sortOrder);
+    const results = await Promise.all(
+        changed.map((c) =>
+            supabase
+                .from("categories")
+                .update({ sort_order: c.sortOrder })
+                .eq("id", c.id),
+        ),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw failed.error;
+}

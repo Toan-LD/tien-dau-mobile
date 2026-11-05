@@ -19,6 +19,8 @@ import { Colors, Spacing } from "@/constants/theme";
 import {
     deleteCategory,
     listCategories,
+    moveCategory,
+    saveCategoryOrder,
     type Category,
     type TxType,
 } from "@/lib/categories";
@@ -69,6 +71,23 @@ export default function CategoriesScreen() {
         }
     };
 
+    // The list updates at once; saves run one after another so quick taps
+    // reach the database in order. A failed save reloads the real order.
+    const saving = useRef(Promise.resolve());
+    const move = (id: string, step: -1 | 1) => {
+        if (!categories) return;
+        const next = moveCategory(categories, id, step);
+        if (next === categories) return;
+        const before = categories;
+        setCategories(next);
+        saving.current = saving.current
+            .then(() => saveCategoryOrder(before, next))
+            .catch(() => {
+                toast.show({ message: "Không lưu được thứ tự, thử lại nhé" });
+                load(type);
+            });
+    };
+
     const confirmDelete = (c: Category) => {
         Alert.alert(
             `Xoá mục "${c.name}"?`,
@@ -95,12 +114,48 @@ export default function CategoriesScreen() {
                 data={categories ?? []}
                 keyExtractor={(c) => c.id}
                 contentContainerStyle={styles.list}
-                renderItem={({ item }) => (
+                renderItem={({ item, index }) => (
                     <View style={styles.row}>
                         <CategoryIcon iconKey={item.icon} size={20} />
                         <Text style={styles.name} numberOfLines={1}>
                             {item.name}
                         </Text>
+                        <Pressable
+                            onPress={() => move(item.id, -1)}
+                            disabled={index === 0}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Đưa ${item.name} lên trên`}
+                            hitSlop={4}
+                            style={[
+                                styles.iconButton,
+                                index === 0 && styles.iconButtonDisabled,
+                            ]}
+                        >
+                            <Ionicons
+                                name="chevron-up-outline"
+                                size={20}
+                                color={Colors.icon}
+                            />
+                        </Pressable>
+                        <Pressable
+                            onPress={() => move(item.id, 1)}
+                            disabled={index === (categories?.length ?? 0) - 1}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Đưa ${item.name} xuống dưới`}
+                            hitSlop={4}
+                            style={[
+                                styles.iconButton,
+                                index === (categories?.length ?? 0) - 1 &&
+                                    styles.iconButtonDisabled,
+                            ]}
+                        >
+                            <Ionicons
+                                name="chevron-down-outline"
+                                size={20}
+                                color={Colors.icon}
+                            />
+                        </Pressable>
+                        <View style={styles.divider} />
                         <Pressable
                             onPress={() => confirmDelete(item)}
                             accessibilityRole="button"
@@ -123,8 +178,9 @@ export default function CategoriesScreen() {
                 }
                 ListFooterComponent={
                     <Text style={styles.hint}>
-                        Xoá một mục không xoá các khoản đã ghi. Các khoản đó sẽ
-                        hiện là &quot;Không phân loại&quot;.
+                        Bấm mũi tên lên, xuống để đổi thứ tự. Mục ở trên cùng
+                        hiện đầu tiên ở màn Ghi. Xoá một mục không xoá các khoản
+                        đã ghi: chúng sẽ hiện là &quot;Không phân loại&quot;.
                     </Text>
                 }
             />
@@ -163,7 +219,7 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: "row",
         alignItems: "center",
-        gap: Spacing.three,
+        gap: Spacing.two,
         paddingVertical: 12,
         paddingHorizontal: Spacing.three,
         marginBottom: Spacing.two,
@@ -173,6 +229,14 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     name: { flex: 1, fontSize: 15, color: Colors.text },
+    iconButton: { padding: Spacing.one },
+    iconButtonDisabled: { opacity: 0.25 },
+    divider: {
+        width: 1,
+        alignSelf: "stretch",
+        marginHorizontal: Spacing.one,
+        backgroundColor: Colors.border,
+    },
     deleteButton: { padding: Spacing.one },
     empty: {
         textAlign: "center",

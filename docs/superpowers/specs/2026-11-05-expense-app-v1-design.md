@@ -27,7 +27,7 @@ Trước mắt app cho chính họ dùng, nhưng có thể sau này cho người
 - Nhiều ví, chọn ví, chuyển tiền giữa các ví. Bảng `wallets` có sẵn nhưng UI không đụng tới.
 - Ngân sách (`budgets`), giao dịch định kỳ (`recurring_transactions`), ảnh hoá đơn (`receipt_url`).
 - Mục con (`categories.parent_id`).
-- Quản lý mục: đổi tên, đổi icon, xoá, sắp xếp. **[người dùng]**: "để tôi xem nó như nào đã rồi làm thêm".
+- Quản lý mục: đổi tên, đổi icon. **[người dùng]**: "để tôi xem nó như nào đã rồi làm thêm". *(Cập nhật 2026-11-05: sau khi dùng thử, chủ project yêu cầu làm luôn **xoá** và **sắp xếp** mục; có ở màn Cài đặt → Quản lý danh mục.)*
 - Đăng nhập bằng email/mật khẩu, đăng nhập ẩn danh, Google Sign-In native.
 - Biểu đồ chi theo ngày. Đã cân nhắc và bỏ. **[người dùng]**
 - Chạy trên web. Template có cấu hình web, nhưng v1 chỉ nhắm iOS/Android. **[Claude]**

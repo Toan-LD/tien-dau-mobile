@@ -45,7 +45,7 @@ Env: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` (publishable key,
 ## Architecture
 
 - **Routing:** Expo Router with routes in `src/app/`. Typed routes and React Compiler are on (`app.json` `experiments`). `(tabs)/_layout.tsx` uses `Tabs` from `expo-router/js-tabs`: Ghi (index) · Hôm nay · Báo cáo. `login`, `settings` and `transaction/[id]` sit beside the tabs.
-- **Auth:** `src/lib/auth.tsx` provides the session; the root `_layout.tsx` gates routes with `Stack.Protected`.
+- **Auth:** `src/lib/auth.tsx` provides the session; the root `_layout.tsx` gates routes with `Stack.Protected`. `src/app/+native-intent.tsx` sends the OAuth redirect deep link (`auth/callback`) to `/` so it never hits an unmatched route.
 - **Data layer:** all Supabase access lives in `src/lib/` (`supabase.ts`, `transactions.ts`, `categories.ts`, `report.ts`, `delete-with-undo.ts`). Screens and components never call `supabase` directly. Transaction-creation logic (validation, default wallet, category) is in `transactions.ts` so a later AI entry feature can reuse it. After a write, `subscribeTransactionsChanged` notifies the screens that need to reload.
 - **Types:** `src/lib/database.types.ts` is generated; regenerate it after schema changes.
 - **Path aliases:** `@/*` points to `src/*` and `@/assets/*` points to `assets/*`.
@@ -54,7 +54,7 @@ Env: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` (publishable key,
   - Sessions are stored in AsyncStorage. The app uses only the publishable key.
   - Schema lives in `supabase/migrations/`. **Never edit an applied migration**; add a new one.
   - New-user setup (profile, hidden default wallet, default categories) happens in the `handle_new_user` trigger, not in the app.
-  - Every table has RLS on `user_id = auth.uid()` (`profiles` uses `id`). `is_own_category` stops a transaction pointing at someone else's category or wallet.
+  - Every table has RLS on `user_id = auth.uid()` (`profiles` uses `id`). `transactions`, `budgets` and `recurring_transactions` check in their RLS `with check` (inline `EXISTS`) that the category and wallet belong to the user. `is_own_category` (security definer) guards only `categories.parent_id`, to avoid RLS recursion.
   - `categories.icon` stores an icon key string (see `category-icons.ts`), not an emoji.
 
 ## Working with the owner

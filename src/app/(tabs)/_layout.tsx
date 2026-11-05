@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router/js-tabs';
+import { StyleSheet } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 
@@ -10,7 +11,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: Colors.text,
         tabBarInactiveTintColor: Colors.textMuted,
-        tabBarStyle: { backgroundColor: Colors.surface, borderTopColor: Colors.border },
+        tabBarStyle: styles.tabBar,
       }}>
       <Tabs.Screen
         name="index"
@@ -36,3 +37,7 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: { backgroundColor: Colors.surface, borderTopColor: Colors.border },
+});

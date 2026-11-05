@@ -80,10 +80,10 @@ Từ trên xuống:
 1. Nút chuyển **Chi / Thu**, mặc định là Chi. Danh sách mục bên dưới chỉ hiện mục cùng loại.
 2. **Số tiền**, chữ to, căn phải, có hậu tố `đ`. Khi chưa nhập thì hiện mờ.
 3. Dòng nhỏ: **"Hôm nay"**, bấm vào để chọn ngày khác, và **"Thêm mô tả"**, bấm vào để nhập mô tả tuỳ ý (lưu vào `transactions.note`).
-4. **Lưới mục** 3 cột: icon và tên, mục đang chọn có viền đậm. Ô cuối cùng là **"+ Mục mới"** viền nét đứt.
+4. **Lưới mục** 4 cột (chủ project đổi từ 3 cột ngày 2026-11-05 vì ô quá to): icon và tên, mục đang chọn có viền đậm. Ô cuối cùng là **"+ Mục mới"** viền nét đứt.
 5. **Dòng gợi ý số tiền**, nằm ngay trên bàn phím (xem quy tắc bên dưới).
 6. **Nút "Lưu"** (chữ chỉ là "Lưu"), **chỉ hiện khi đã có số tiền > 0 và đã chọn mục**. Thứ tự chọn không quan trọng.
-7. **Bàn phím số tự làm**, không dùng bàn phím hệ thống: `1–9`, `000`, `0`, `⌫`.
+7. **Bàn phím số tự làm**, không dùng bàn phím hệ thống: `1–9`, `000`, `0`, `⌫`. **Mặc định ẩn**: chỉ hiện khi người dùng chạm vào ô số tiền; chọn mục hoặc bấm nút thu gọn thì ẩn đi (chủ project đổi ngày 2026-11-05).
 
 **Phím ⌫ [người dùng]:** bấm một lần xoá một chữ số. **Giữ 2 giây thì xoá hết** số tiền.
 

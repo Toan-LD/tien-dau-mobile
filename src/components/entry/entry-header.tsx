@@ -43,15 +43,31 @@ export function TypeToggle({
     );
 }
 
-export function AmountDisplay({ value }: { value: number }) {
+export function AmountDisplay({
+    value,
+    active,
+    onPress,
+}: {
+    value: number;
+    active: boolean;
+    onPress(): void;
+}) {
     const empty = value === 0;
     return (
-        <View style={styles.amountRow}>
-            <Text style={[styles.amount, empty && styles.amountEmpty]}>
-                {empty ? "0" : formatAmountDigits(value)}
-            </Text>
-            <Text style={styles.suffix}> đ</Text>
-        </View>
+        <Pressable
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityLabel="Nhập số tiền"
+            style={[styles.amountField, active && styles.amountFieldActive]}
+        >
+            <Text style={styles.amountLabel}>Số tiền</Text>
+            <View style={styles.amountRow}>
+                <Text style={[styles.amount, empty && styles.amountEmpty]}>
+                    {empty ? "0" : formatAmountDigits(value)}
+                </Text>
+                <Text style={styles.suffix}> đ</Text>
+            </View>
+        </Pressable>
     );
 }
 
@@ -73,14 +89,19 @@ const styles = StyleSheet.create({
     optionOn: { backgroundColor: Colors.surface },
     optionText: { fontSize: 14, color: Colors.textSecondary },
     optionTextOn: { fontWeight: "600", color: Colors.text },
-    amountRow: {
+    amountField: {
         flexDirection: "row",
         alignItems: "baseline",
-        justifyContent: "flex-end",
-        paddingHorizontal: Spacing.three,
-        paddingTop: Spacing.three,
+        justifyContent: "space-between",
+        marginHorizontal: Spacing.three,
+        marginTop: Spacing.three,
         paddingBottom: Spacing.one,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.border,
     },
+    amountFieldActive: { borderBottomColor: Colors.borderStrong },
+    amountLabel: { fontSize: 13, color: Colors.textMuted },
+    amountRow: { flexDirection: "row", alignItems: "baseline" },
     amount: { fontSize: 32, fontWeight: "600", color: Colors.text },
     amountEmpty: { color: Colors.textMuted },
     suffix: { fontSize: 16, color: Colors.textSecondary },

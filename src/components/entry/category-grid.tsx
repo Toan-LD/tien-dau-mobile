@@ -39,7 +39,7 @@ export function CategoryGrid({
                                 selected && styles.tileSelected,
                             ]}
                         >
-                            <CategoryIcon iconKey={c.icon} size={22} />
+                            <CategoryIcon iconKey={c.icon} size={18} />
                             <Text
                                 style={[
                                     styles.name,
@@ -66,7 +66,7 @@ export function CategoryGrid({
                 >
                     <Ionicons
                         name="add-outline"
-                        size={22}
+                        size={18}
                         color={Colors.textMuted}
                     />
                     <Text style={styles.addName} numberOfLines={1}>
@@ -86,21 +86,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.two,
         paddingBottom: Spacing.two,
     },
-    cell: { width: "33.3333%", padding: 3 },
+    cell: { width: "25%", padding: 3 },
     tile: {
         alignItems: "center",
-        gap: Spacing.one,
-        paddingVertical: 10,
-        paddingHorizontal: Spacing.one,
+        gap: 2,
+        paddingVertical: 6,
+        paddingHorizontal: 2,
         backgroundColor: Colors.surface,
         borderWidth: 1,
         borderColor: Colors.border,
-        borderRadius: 10,
+        borderRadius: 8,
     },
     tileSelected: { borderWidth: 1.5, borderColor: Colors.borderStrong },
     tileAdd: { borderStyle: "dashed" },
     tileDisabled: { opacity: 0.4 },
-    name: { fontSize: 12, color: Colors.text },
+    name: { fontSize: 11, color: Colors.text },
     nameSelected: { fontWeight: "600" },
-    addName: { fontSize: 12, color: Colors.textSecondary },
+    addName: { fontSize: 11, color: Colors.textSecondary },
 });

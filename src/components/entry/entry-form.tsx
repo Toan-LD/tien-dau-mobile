@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useReducer, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -56,6 +57,7 @@ export function EntryForm({
     const [categories, setCategories] = useState<Category[] | null>(null);
     const [noteOpen, setNoteOpen] = useState(false);
     const [newCategoryOpen, setNewCategoryOpen] = useState(false);
+    const [keypadOpen, setKeypadOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const savingRef = useRef(false);
     const today = useToday();
@@ -83,6 +85,11 @@ export function EntryForm({
         setType(next);
         setCategoryId(null);
         setCategories(null);
+    };
+
+    const selectCategory = (id: string) => {
+        setCategoryId(id);
+        setKeypadOpen(false);
     };
 
     const changeDate = (next: LocalDate) =>
@@ -127,7 +134,11 @@ export function EntryForm({
     return (
         <View style={styles.root}>
             <TypeToggle type={type} onChange={changeType} />
-            <AmountDisplay value={amount.value} />
+            <AmountDisplay
+                value={amount.value}
+                active={keypadOpen}
+                onPress={() => setKeypadOpen(true)}
+            />
             <View style={styles.metaRow}>
                 <DateField date={date} onChange={changeDate} />
                 <Pressable
@@ -150,41 +161,63 @@ export function EntryForm({
             <CategoryGrid
                 categories={categories ?? []}
                 selectedId={categoryId}
-                onSelect={setCategoryId}
+                onSelect={selectCategory}
                 addDisabled={categories === null}
                 onAdd={() => setNewCategoryOpen(true)}
             />
 
-            <View style={styles.suggestions}>
-                {suggestions.map((value) => (
-                    <Pressable
-                        key={value}
-                        onPress={() => dispatch({ type: "pick", value })}
-                        accessibilityRole="button"
-                        style={styles.suggestion}
-                    >
-                        <Text style={styles.suggestionText}>
-                            {formatAmountDigits(value)}
-                        </Text>
-                    </Pressable>
-                ))}
-            </View>
-            <View style={styles.saveSlot}>
-                {canSave && (
-                    <Pressable
-                        onPress={save}
-                        disabled={saving}
-                        accessibilityRole="button"
-                        style={[
-                            styles.saveButton,
-                            saving && styles.saveButtonBusy,
-                        ]}
-                    >
-                        <Text style={styles.saveText}>Lưu</Text>
-                    </Pressable>
-                )}
-            </View>
-            <Keypad onKey={dispatch} />
+            {/* While the keypad is open the slot keeps its height so the keypad doesn't jump. */}
+            {(canSave || keypadOpen) && (
+                <View style={styles.saveSlot}>
+                    {canSave && (
+                        <Pressable
+                            onPress={save}
+                            disabled={saving}
+                            accessibilityRole="button"
+                            style={[
+                                styles.saveButton,
+                                saving && styles.saveButtonBusy,
+                            ]}
+                        >
+                            <Text style={styles.saveText}>Lưu</Text>
+                        </Pressable>
+                    )}
+                </View>
+            )}
+            {keypadOpen && (
+                <>
+                    <View style={styles.suggestions}>
+                        {suggestions.map((value) => (
+                            <Pressable
+                                key={value}
+                                onPress={() =>
+                                    dispatch({ type: "pick", value })
+                                }
+                                accessibilityRole="button"
+                                style={styles.suggestion}
+                            >
+                                <Text style={styles.suggestionText}>
+                                    {formatAmountDigits(value)}
+                                </Text>
+                            </Pressable>
+                        ))}
+                        <Pressable
+                            onPress={() => setKeypadOpen(false)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Ẩn bàn phím"
+                            hitSlop={8}
+                            style={styles.closeKeypad}
+                        >
+                            <Ionicons
+                                name="chevron-down-outline"
+                                size={22}
+                                color={Colors.icon}
+                            />
+                        </Pressable>
+                    </View>
+                    <Keypad onKey={dispatch} />
+                </>
+            )}
             {onDelete && (
                 <Pressable
                     onPress={onDelete}
@@ -252,6 +285,11 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     suggestionText: { fontSize: 14, color: Colors.text },
+    closeKeypad: {
+        marginLeft: "auto",
+        paddingHorizontal: Spacing.two,
+        paddingVertical: Spacing.one,
+    },
     saveSlot: {
         height: 64,
         justifyContent: "center",

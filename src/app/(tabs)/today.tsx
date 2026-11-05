@@ -14,7 +14,6 @@ import { sumByType } from '@/lib/report';
 import { listTransactionsForDay, subscribeTransactionsChanged, type Transaction } from '@/lib/transactions';
 
 const HINT_KEY = 'hint.swipe.v1';
-const HINT_MS = 1000;
 
 export default function TodayScreen() {
   const router = useRouter();
@@ -24,7 +23,7 @@ export default function TodayScreen() {
   const [items, setItems] = useState<Transaction[] | null>(null);
   const [hintId, setHintId] = useState<string | null>(null);
   const requestId = useRef(0);
-  const hintChecked = useRef(false);
+  const hintStarted = useRef(false);
 
   const load = useCallback(
     (day: string) => {
@@ -52,23 +51,19 @@ export default function TodayScreen() {
 
   const firstId = items && items.length > 0 ? items[0].id : null;
   useEffect(() => {
-    if (!firstId || hintChecked.current) return;
-    hintChecked.current = true;
+    if (!firstId || hintStarted.current) return;
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
     AsyncStorage.getItem(HINT_KEY)
       .then((seen) => {
-        if (seen || cancelled) return;
+        if (cancelled || hintStarted.current) return;
+        hintStarted.current = true;
+        if (seen) return;
+        AsyncStorage.setItem(HINT_KEY, '1').catch(() => {});
         setHintId(firstId);
-        timer = setTimeout(() => {
-          setHintId(null);
-          AsyncStorage.setItem(HINT_KEY, '1').catch(() => {});
-        }, HINT_MS);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
     };
   }, [firstId]);
 

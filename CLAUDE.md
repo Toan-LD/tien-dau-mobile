@@ -60,6 +60,7 @@ Env: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` (publishable key,
   - New-user setup (profile, hidden default wallet, default categories) happens in the `handle_new_user` trigger, not in the app.
   - Every table has RLS on `user_id = auth.uid()` (`profiles` uses `id`). `transactions`, `budgets` and `recurring_transactions` check in their RLS `with check` (inline `EXISTS`) that the category and wallet belong to the user. `is_own_category` (security definer) guards only `categories.parent_id`, to avoid RLS recursion.
   - `categories.icon` stores an icon key string (see `category-icons.ts`), not an emoji.
+  - **Sample data (dev only):** Cài đặt shows "Dữ liệu mẫu" when `__DEV__`. `src/lib/sample-data.ts` generates believable rows from 1 January to now and marks each with `receipt_url = 'sample-data'` (`SAMPLE_MARKER`); "Xoá dữ liệu mẫu" deletes by that marker only. If a receipt feature ever starts using `receipt_url`, move the marker first.
 
 ## Working with the owner
 

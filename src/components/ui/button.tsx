@@ -25,7 +25,7 @@ type Props = {
     variant?: Variant;
     icon?: ComponentProps<typeof Ionicons>["name"];
     disabled?: boolean;
-    // Shows a spinner (danger-outline) or fades the button, and ignores taps.
+    // Shows a spinner (or, on primary, fades the button) and ignores taps.
     busy?: boolean;
     accessibilityLabel?: string;
     // For outer spacing only (margins), from the caller's StyleSheet.
@@ -61,7 +61,7 @@ export function Button({
             ]}
             pressedStyle={v.pressed}
         >
-            {busy && variant === "danger-outline" ? (
+            {busy && variant !== "primary" ? (
                 <ActivityIndicator color={v.color} />
             ) : (
                 <>

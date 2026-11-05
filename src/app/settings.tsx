@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 
+import { SampleDataPanel } from "@/components/settings/sample-data-panel";
 import { Button } from "@/components/ui/button";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { Colors, Spacing } from "@/constants/theme";
@@ -58,6 +59,7 @@ export default function SettingsScreen() {
                 busy={busy}
                 style={styles.signOut}
             />
+            {__DEV__ && <SampleDataPanel />}
         </View>
     );
 }

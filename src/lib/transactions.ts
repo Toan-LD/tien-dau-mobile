@@ -66,7 +66,8 @@ export function subscribeTransactionsChanged(fn: () => void): () => void {
     };
 }
 
-function notifyChanged() {
+// Tells every screen that transactions changed (the query cache reloads).
+export function notifyTransactionsChanged() {
     listeners.forEach((fn) => fn());
 }
 
@@ -76,7 +77,7 @@ export function clearDefaultWalletCache() {
     walletCache = null;
 }
 
-async function defaultWalletId(userId: string): Promise<string> {
+export async function defaultWalletId(userId: string): Promise<string> {
     if (walletCache?.userId === userId) return walletCache.walletId;
     const { data, error } = await supabase
         .from("wallets")
@@ -119,7 +120,7 @@ export async function createTransaction(
         .select(SELECT)
         .single();
     if (error) throw error;
-    notifyChanged();
+    notifyTransactionsChanged();
     return toTransaction(data);
 }
 
@@ -134,14 +135,14 @@ export async function updateTransaction(
         .select(SELECT)
         .single();
     if (error) throw error;
-    notifyChanged();
+    notifyTransactionsChanged();
     return toTransaction(data);
 }
 
 export async function deleteTransaction(id: string): Promise<void> {
     const { error } = await supabase.from("transactions").delete().eq("id", id);
     if (error) throw error;
-    notifyChanged();
+    notifyTransactionsChanged();
 }
 
 export async function restoreTransaction(t: Transaction): Promise<void> {
@@ -158,7 +159,7 @@ export async function restoreTransaction(t: Transaction): Promise<void> {
         note: t.note,
     });
     if (error) throw error;
-    notifyChanged();
+    notifyTransactionsChanged();
 }
 
 export async function getTransaction(id: string): Promise<Transaction | null> {

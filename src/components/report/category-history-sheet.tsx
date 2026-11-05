@@ -14,6 +14,7 @@ import { categoryHistoryQuery } from "@/lib/queries";
 import {
     historySummary,
     monthlyTotals,
+    movingAverage,
     type CategoryTotal,
 } from "@/lib/report";
 
@@ -46,6 +47,7 @@ export function CategoryHistorySheet({
     });
     const months = monthlyTotals(query.data ?? [], until);
     const summary = historySummary(months);
+    const trend = movingAverage(months.map((m) => m.total));
 
     // null = the latest month; a tapped column overrides it until reopened.
     const [picked, setPicked] = useState<number | null>(null);
@@ -92,9 +94,13 @@ export function CategoryHistorySheet({
                         <Text style={styles.selectedValue}>
                             {formatVND(month.total)}
                         </Text>
+                        <Text style={styles.selectedTrend}>
+                            TB 3 tháng: {formatVND(trend[selected] ?? 0)}
+                        </Text>
                     </View>
                     <MonthColumns
                         months={months}
+                        trend={trend}
                         selected={selected}
                         onSelect={setPicked}
                         drawKey={`${shown?.categoryId}-${type}-${visible}`}
@@ -144,6 +150,11 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: "700",
         color: Colors.text,
+        marginTop: 2,
+    },
+    selectedTrend: {
+        fontSize: 12,
+        color: Colors.textSecondary,
         marginTop: 2,
     },
     summary: { marginTop: Spacing.three },

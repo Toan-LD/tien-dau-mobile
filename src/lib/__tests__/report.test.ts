@@ -3,6 +3,8 @@ import {
     formatShare,
     historySummary,
     monthlyTotals,
+    movingAverage,
+    niceTicks,
     sumByType,
     toDonutSlices,
     type CategoryTotal,
@@ -240,5 +242,31 @@ describe("formatShare", () => {
         expect(formatShare(1)).toBe("100%");
         expect(formatShare(0.004)).toBe("<1%");
         expect(formatShare(0)).toBe("0%");
+    });
+});
+
+describe("movingAverage", () => {
+    it("averages each value with up to two before it", () => {
+        expect(movingAverage([300, 0, 600, 300])).toEqual([300, 150, 300, 300]);
+    });
+
+    it("returns nothing for nothing", () => {
+        expect(movingAverage([])).toEqual([]);
+    });
+});
+
+describe("niceTicks", () => {
+    it("picks round steps that cover the largest value", () => {
+        expect(niceTicks(2_350_000)).toEqual([
+            0, 1_000_000, 2_000_000, 3_000_000,
+        ]);
+        expect(niceTicks(180_000)).toEqual([
+            0, 50_000, 100_000, 150_000, 200_000,
+        ]);
+        expect(niceTicks(1000)).toEqual([0, 250, 500, 750, 1000]);
+    });
+
+    it("still gives an axis when everything is zero", () => {
+        expect(niceTicks(0)).toEqual([0, 1]);
     });
 });

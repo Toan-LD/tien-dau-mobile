@@ -166,3 +166,26 @@ export function formatShare(share: number): string {
     if (p > 0 && p < 1) return "<1%";
     return `${Math.round(p)}%`;
 }
+
+// Each month's average with up to two months before it: the trend line on
+// the category history chart, in the same unit as the columns.
+export function movingAverage(values: number[], window = 3): number[] {
+    return values.map((_, i) => {
+        const from = Math.max(0, i - window + 1);
+        const part = values.slice(from, i + 1);
+        return Math.round(part.reduce((s, v) => s + v, 0) / part.length);
+    });
+}
+
+// Round axis values from 0 up past `max`, about four steps (0, 500k, 1tr…).
+export function niceTicks(max: number, steps = 4): number[] {
+    if (max <= 0) return [0, 1];
+    const rough = max / steps;
+    const magnitude = 10 ** Math.floor(Math.log10(rough));
+    const nice = [1, 2, 2.5, 5, 10].find((n) => n * magnitude >= rough) ?? 10;
+    const step = nice * magnitude;
+    const top = Math.ceil(max / step) * step;
+    const ticks: number[] = [];
+    for (let v = 0; v <= top + step / 2; v += step) ticks.push(Math.round(v));
+    return ticks;
+}

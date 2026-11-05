@@ -128,7 +128,7 @@ Từ trên xuống:
 - **Tổng tháng:** ô lớn **Còn lại (thu − chi)**, bên dưới là hai ô **Thu** và **Chi**. Chỉ là số, không có biểu đồ.
 - **Chi theo mục:** thanh ngang, **một màu xám đậm**, xếp từ lớn đến nhỏ. Mỗi dòng có icon, tên mục, thanh dài theo tỉ lệ với mục lớn nhất, và số tiền dạng rút gọn (`2,5tr`, `450k`). **[Claude]**: dùng thanh xếp hạng thay vì biểu đồ tròn vì dễ so sánh hơn và hợp phong cách một màu.
 - **Thu theo mục:** cách hiển thị giống hệt.
-- Mỗi dòng mục có thêm **phần trăm** trên tổng chi (hoặc tổng thu) của tháng. **Bấm một mục** mở sheet **"Chi/Thu từ trước tới nay"**: biểu đồ cột theo tháng, từ tháng đầu tiên có khoản trong mục đó tới tháng hiện tại (tháng trống là 0), tự cuộn tới tháng mới nhất; bấm một cột để xem số của tháng đó; bên dưới là Tổng, Trung bình mỗi tháng, Tháng cao nhất. **[người dùng, 2026-11-05]**
+- Mỗi dòng mục có thêm **phần trăm** trên tổng chi (hoặc tổng thu) của tháng. **Bấm một mục** mở sheet **"Chi/Thu từ trước tới nay"**: biểu đồ cột theo tháng kèm **đường trung bình 3 tháng** (chấm tròn), trục số bên trái và lưới ngang, **chung một trục** (không dùng hai trục như ảnh mẫu vì cả hai đều là tiền), từ tháng đầu tiên có khoản trong mục đó tới tháng hiện tại (tháng trống là 0), tự cuộn tới tháng mới nhất; bấm một cột để xem số của tháng đó; bên dưới là Tổng, Trung bình mỗi tháng, Tháng cao nhất. **[người dùng, 2026-11-05]**
 - Các khoản không có mục (`category_id` null) gom vào dòng **"Không phân loại"**. **[Claude]**
 - Bấm một mục: mở danh sách các khoản của mục đó trong tháng, dùng cùng kiểu dòng như tab Danh sách. **[Claude, tuỳ chọn]**: nếu tốn công thì để sau.
 - Tháng không có dữ liệu: các số hiện 0, các phần biểu đồ hiện một dòng chữ nhẹ.

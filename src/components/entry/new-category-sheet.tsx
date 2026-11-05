@@ -20,6 +20,10 @@ import {
     type TxType,
 } from "@/lib/categories";
 
+// Cells get whole-pixel widths from the measured grid: six "16.6667%" cells add up
+// to just over 100%, so Android wrapped some rows after five icons.
+const ICON_COLUMNS = 6;
+
 type Props = {
     visible: boolean;
     type: TxType;
@@ -41,6 +45,8 @@ export function NewCategorySheet({
     const [creating, setCreating] = useState(false);
     const creatingRef = useRef(false);
     const [wasVisible, setWasVisible] = useState(visible);
+    const [gridWidth, setGridWidth] = useState(0);
+    const cellWidth = Math.floor(gridWidth / ICON_COLUMNS);
     if (visible !== wasVisible) {
         setWasVisible(visible);
         if (visible) {
@@ -99,13 +105,23 @@ export function NewCategorySheet({
             {error !== null && <Text style={styles.error}>{error}</Text>}
             <ScrollView
                 style={styles.icons}
-                contentContainerStyle={styles.iconsContent}
+                contentContainerStyle={[
+                    styles.iconsContent,
+                    { paddingLeft: (gridWidth - cellWidth * ICON_COLUMNS) / 2 },
+                ]}
                 keyboardShouldPersistTaps="handled"
+                onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}
             >
                 {CATEGORY_ICON_KEYS.map((key) => {
                     const selected = key === iconKey;
                     return (
-                        <View key={key} style={styles.iconCell}>
+                        <View
+                            key={key}
+                            style={[
+                                styles.iconCell,
+                                cellWidth > 0 && { width: cellWidth },
+                            ]}
+                        >
                             <Pressable
                                 onPress={() => setIconKey(key)}
                                 accessibilityRole="button"
@@ -156,7 +172,7 @@ const styles = StyleSheet.create({
     error: { marginTop: Spacing.one, fontSize: 12, color: Colors.danger },
     icons: { maxHeight: 200, marginTop: Spacing.three },
     iconsContent: { flexDirection: "row", flexWrap: "wrap" },
-    iconCell: { width: "16.6667%", padding: 3 },
+    iconCell: { width: "16.66%", padding: 3 },
     iconTile: {
         alignItems: "center",
         justifyContent: "center",

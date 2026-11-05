@@ -16,7 +16,8 @@ The package manager is npm (`package-lock.json`), so use `npx`, not `bunx`.
 
 ```bash
 npx expo start            # dev server; v1 runs in Expo Go on Android
-npx expo lint             # lint (eslint-config-expo)
+npx expo lint             # lint (eslint-config-expo + Prettier; formatting issues are errors)
+npm run format            # format everything with Prettier (format:check to verify)
 npx tsc --noEmit          # typecheck
 npm test                  # unit tests (jest-expo)
 npx expo install <pkg>    # add dependencies
@@ -38,6 +39,7 @@ Env: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` (publishable key,
 
 ## Code style rules from the owner
 
+- **Formatting is Prettier** (`.prettierrc`): 4-space indent and Prettier defaults otherwise (double quotes, semicolons, trailing commas, 80-column width). `.vscode/settings.json` makes VS Code format `.ts`/`.tsx`/`.js`/`.json` with Prettier on save. Markdown, `docs/` and generated `database.types.ts` are excluded (`.prettierignore`).
 - **No inline styles.** No `style={{ ... }}` literals in JSX. Put styles in `StyleSheet.create` at the bottom of the file; only values computed at runtime (a bar width) may sit inline next to a stylesheet entry, as in `style={[styles.bar, { width }]}`.
 - **Dates never via `toISOString()`.** Dates are local-time `YYYY-MM-DD` (helpers in `src/lib/dates.ts`); `toISOString()` shifts the day back before 07:00 in UTC+7.
 - **Money is a positive integer VND**, displayed like `30.000 đ`. The sign comes from the transaction type and is for display only. Max input is `999_999_999_999`.

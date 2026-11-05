@@ -1,0 +1,13 @@
+# generated
+src/lib/database.types.ts
+package-lock.json
+# design docs and mockups are not code
+docs/
+.trail/
+.superpowers/
+supabase/.temp/
+dist/
+# markdown is formatted by the editor's markdown extension; Claude/asset config left as-is
+*.md
+.claude/
+assets/

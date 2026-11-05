@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import {
+    BackHandler,
     KeyboardAvoidingView,
-    Modal,
     Pressable,
     StyleSheet,
     Text,
     useWindowDimensions,
     View,
+    type StyleProp,
+    type ViewStyle,
 } from "react-native";
 import Animated, {
     Easing,
+    FadeIn,
     useAnimatedStyle,
     useSharedValue,
     withTiming,
@@ -17,24 +20,41 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 
+import { Portal } from "@/components/ui/portal";
 import { Colors, Spacing } from "@/constants/theme";
 
 const OPEN = { duration: 240, easing: Easing.out(Easing.cubic) };
 const CLOSE = { duration: 180, easing: Easing.in(Easing.cubic) };
+const CONTENT_IN = FadeIn.duration(160);
 
 type Props = {
     visible: boolean;
     onClose(): void;
     title: string;
     children: React.ReactNode;
+    // Heavy content (charts): slide up with an empty body first and render
+    // the children once the sheet is fully open, so building them doesn't
+    // steal frames from the slide. Give `bodyStyle` a fixed height: the empty
+    // body and the content then have the same size and the sheet never jumps.
+    deferContent?: boolean;
+    bodyStyle?: StyleProp<ViewStyle>;
 };
 
-// The Modal itself does not animate: on Android a layout animation started as
-// the Modal window opens stutters for the first frames. Instead one value
-// (0 = hidden, 1 = open) drives both the backdrop fade and the sheet slide on
-// the UI thread, so it stays smooth even while the screen behind is busy.
-// The Modal stays mounted until the closing slide has finished.
-export function BottomSheet({ visible, onClose, title, children }: Props) {
+// A sheet that slides up from the bottom over a dimmed backdrop.
+//
+// Drawn through the app's Portal, not React Native's Modal: a Modal opens a
+// new Android window each time, which made the slide stutter at the start.
+// One value (0 = hidden, 1 = open) drives the backdrop fade and the slide on
+// the UI thread. The sheet stays mounted until the closing slide ends; the
+// Android back button closes it.
+export function BottomSheet({
+    visible,
+    onClose,
+    title,
+    children,
+    deferContent,
+    bodyStyle,
+}: Props) {
     const insets = useSafeAreaInsets();
     const { height: windowHeight } = useWindowDimensions();
     const progress = useSharedValue(0);
@@ -44,18 +64,38 @@ export function BottomSheet({ visible, onClose, title, children }: Props) {
 
     const [mounted, setMounted] = useState(visible);
     if (visible && !mounted) setMounted(true);
+    // Deferred content is shown once the opening slide has finished.
+    const [ready, setReady] = useState(false);
 
     useEffect(() => {
+        const hide = () => {
+            setMounted(false);
+            setReady(false);
+        };
         if (visible) {
-            progress.set(withTiming(1, OPEN));
+            progress.set(
+                withTiming(1, OPEN, (finished) => {
+                    if (finished) scheduleOnRN(setReady, true);
+                }),
+            );
         } else {
             progress.set(
                 withTiming(0, CLOSE, (finished) => {
-                    if (finished) scheduleOnRN(setMounted, false);
+                    if (finished) scheduleOnRN(hide);
                 }),
             );
         }
     }, [visible, progress]);
+
+    // Back closes the sheet instead of leaving the screen.
+    useEffect(() => {
+        if (!visible) return;
+        const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+            onClose();
+            return true;
+        });
+        return () => sub.remove();
+    }, [visible, onClose]);
 
     const backdropStyle = useAnimatedStyle(() => ({
         opacity: progress.get(),
@@ -64,15 +104,23 @@ export function BottomSheet({ visible, onClose, title, children }: Props) {
         transform: [{ translateY: (1 - progress.get()) * sheetHeight.get() }],
     }));
 
+    if (!mounted) return null;
+
+    const body =
+        !deferContent || ready ? (
+            deferContent ? (
+                <Animated.View entering={CONTENT_IN} style={bodyStyle}>
+                    {children}
+                </Animated.View>
+            ) : (
+                children
+            )
+        ) : (
+            <View style={bodyStyle} />
+        );
+
     return (
-        <Modal
-            visible={mounted}
-            transparent
-            animationType="none"
-            onRequestClose={onClose}
-            statusBarTranslucent
-            navigationBarTranslucent
-        >
+        <Portal>
             <KeyboardAvoidingView behavior="padding" style={styles.root}>
                 <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
                     <Pressable
@@ -93,10 +141,10 @@ export function BottomSheet({ visible, onClose, title, children }: Props) {
                 >
                     <View style={styles.handle} />
                     <Text style={styles.title}>{title}</Text>
-                    {children}
+                    {body}
                 </Animated.View>
             </KeyboardAvoidingView>
-        </Modal>
+        </Portal>
     );
 }
 

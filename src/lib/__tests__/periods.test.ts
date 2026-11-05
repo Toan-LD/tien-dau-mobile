@@ -1,5 +1,7 @@
 import {
     containsDate,
+    filterByCategories,
+    NO_CATEGORY,
     formatPeriodTitle,
     formatWeekday,
     groupByDay,
@@ -154,5 +156,29 @@ describe("groupByDay", () => {
 
     it("returns nothing for an empty list", () => {
         expect(groupByDay([])).toEqual([]);
+    });
+});
+
+describe("filterByCategories", () => {
+    const withCat = (id: string, categoryId: string | null) => ({
+        ...tx(id, TODAY, "expense", 1000),
+        categoryId,
+    });
+    const list = [withCat("a", "c1"), withCat("b", "c2"), withCat("c", null)];
+
+    it("keeps everything when there is no filter", () => {
+        expect(filterByCategories(list, [])).toBe(list);
+    });
+
+    it("keeps only the chosen categories", () => {
+        expect(filterByCategories(list, ["c2"]).map((t) => t.id)).toEqual([
+            "b",
+        ]);
+    });
+
+    it('matches rows without a category with "none"', () => {
+        expect(
+            filterByCategories(list, ["c1", NO_CATEGORY]).map((t) => t.id),
+        ).toEqual(["a", "c"]);
     });
 });

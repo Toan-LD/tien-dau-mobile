@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+import { PortalHost } from "@/components/ui/portal";
 import { ToastProvider } from "@/components/ui/toast";
 import { Colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from "@/lib/auth";
@@ -61,10 +62,14 @@ export default function RootLayout() {
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
                     <ToastProvider>
-                        <ThemeProvider value={theme}>
-                            <StatusBar style="dark" />
-                            <RootStack />
-                        </ThemeProvider>
+                        {/* Sheets draw here, above every screen; toasts
+                            (rendered by ToastProvider after this) stay on top. */}
+                        <PortalHost>
+                            <ThemeProvider value={theme}>
+                                <StatusBar style="dark" />
+                                <RootStack />
+                            </ThemeProvider>
+                        </PortalHost>
                     </ToastProvider>
                 </AuthProvider>
             </QueryClientProvider>

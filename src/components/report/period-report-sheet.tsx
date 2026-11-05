@@ -68,6 +68,8 @@ export function PeriodReportSheet({
             visible={visible}
             onClose={onClose}
             title={`Báo cáo · ${periodTitle}`}
+            deferContent
+            bodyStyle={styles.body}
         >
             <TypeToggle
                 type={type}
@@ -97,7 +99,7 @@ export function PeriodReportSheet({
                         note={
                             selected ? formatShare(selected.share) : undefined
                         }
-                        drawKey={`${periodTitle}-${type}-${visible}`}
+                        drawKey={`${periodTitle}-${type}`}
                     />
                     <ScrollView style={styles.list}>
                         {slices.map((slice) => (
@@ -173,6 +175,9 @@ const swatchOther = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+    // Fixed, so the empty body shown while sliding up and the report that
+    // replaces it are the same size; the list takes what's left and scrolls.
+    body: { height: 470 },
     toggle: { marginHorizontal: 0, marginTop: 0 },
     empty: {
         textAlign: "center",
@@ -180,7 +185,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: Colors.textMuted,
     },
-    list: { maxHeight: 240 },
+    list: { flex: 1 },
     row: {
         flexDirection: "row",
         alignItems: "center",

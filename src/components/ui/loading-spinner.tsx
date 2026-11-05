@@ -17,7 +17,7 @@ type Props = {
 // A spinner in a small white disc, laid over the area that is loading (the
 // area itself is usually dimmed). Put it inside a container with
 // `position: relative` (any View): it covers that container and lets taps
-// through. Not for use inside a BottomSheet: `entering` stutters in a Modal.
+// through.
 export function LoadingSpinner({ visible, position = "center" }: Props) {
     // The cover stays mounted so the disc can fade out when loading ends.
     return (

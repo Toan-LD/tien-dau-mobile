@@ -67,6 +67,8 @@ export function CategoryHistorySheet({
             visible={visible}
             onClose={onClose}
             title={`${isExpense ? "Chi" : "Thu"} từ trước tới nay`}
+            deferContent
+            bodyStyle={styles.body}
         >
             <View style={styles.categoryRow}>
                 <CategoryIcon iconKey={shown?.icon} size={20} />
@@ -103,7 +105,7 @@ export function CategoryHistorySheet({
                         trend={trend}
                         selected={selected}
                         onSelect={setPicked}
-                        drawKey={`${shown?.categoryId}-${type}-${visible}`}
+                        drawKey={`${shown?.categoryId}-${type}`}
                     />
                     <StatRow style={styles.summary}>
                         <StatCard
@@ -142,6 +144,9 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         color: Colors.text,
     },
+    // Fixed, so the empty body shown while sliding up and the chart that
+    // replaces it are the same size: the sheet never resizes.
+    body: { height: 410 },
     state: { paddingVertical: Spacing.five },
     stateText: { textAlign: "center", fontSize: 14, color: Colors.textMuted },
     selected: { marginBottom: Spacing.three },

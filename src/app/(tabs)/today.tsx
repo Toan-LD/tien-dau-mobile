@@ -12,7 +12,9 @@ import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PeriodReportSheet } from "@/components/report/period-report-sheet";
+import { CategoryFilterSheet } from "@/components/today/category-filter-sheet";
 import { DayHeader } from "@/components/today/day-header";
+import { FilterChip } from "@/components/today/filter-chip";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { TransactionRow } from "@/components/today/transaction-row";
 import { useDatePicker } from "@/components/ui/date-picker";
@@ -28,13 +30,16 @@ import {
     containsDate,
     formatPeriodTitle,
     formatWeekday,
+    filterByCategories,
     groupByDay,
+    NO_CATEGORY,
     periodOf,
     shiftAnchor,
     type DayGroup,
     type PeriodMode,
 } from "@/lib/periods";
 import {
+    categoriesQuery,
     isWaitingForData,
     periodQuery,
     useRefreshOnFocus,
@@ -70,6 +75,20 @@ function toRows(mode: PeriodMode, list: Transaction[]): Row[] {
     ]);
 }
 
+// Names for the filter button: "Ăn uống, Cà phê" or "Ăn uống, Cà phê +2";
+// null when nothing is filtered.
+function useFilterLabel(ids: string[]): string | null {
+    const expense = useQuery(categoriesQuery("expense")).data ?? [];
+    const income = useQuery(categoriesQuery("income")).data ?? [];
+    if (ids.length === 0) return null;
+    const byId = new Map([...expense, ...income].map((c) => [c.id, c.name]));
+    const names = ids.map((id) =>
+        id === NO_CATEGORY ? "Không phân loại" : (byId.get(id) ?? "Mục đã xoá"),
+    );
+    const shown = names.slice(0, 2).join(", ");
+    return names.length > 2 ? `${shown} +${names.length - 2}` : shown;
+}
+
 export default function ListScreen() {
     const router = useRouter();
     const toast = useToast();
@@ -92,7 +111,14 @@ export default function ListScreen() {
         // instead of flashing an empty screen.
         placeholderData: keepPreviousData,
     });
-    const items = query.data ?? null;
+    // The category filter (empty = all) applies to the list, the totals and
+    // the report sheet alike.
+    const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+    const [filterOpen, setFilterOpen] = useState(false);
+    const items = query.data
+        ? filterByCategories(query.data, categoryFilter)
+        : null;
+    const filterLabel = useFilterLabel(categoryFilter);
     const showingOld = query.isPlaceholderData;
     const rows = toRows(mode, items ?? []);
     const remove = useDeleteTransaction();
@@ -207,6 +233,11 @@ export default function ListScreen() {
                 prevLabel={`${unit} trước`}
                 nextLabel={`${unit} sau`}
             />
+            <FilterChip
+                label={filterLabel}
+                onPress={() => setFilterOpen(true)}
+                onClear={() => setCategoryFilter([])}
+            />
             <View style={styles.listArea}>
                 {/* A plain FlatList: Animated.FlatList wraps every row in an
                     animated view, which made long week/month lists stutter while
@@ -231,7 +262,11 @@ export default function ListScreen() {
                     ListHeaderComponent={header}
                     ListEmptyComponent={
                         items && !showingOld ? (
-                            <Text style={styles.empty}>Chưa có khoản nào</Text>
+                            <Text style={styles.empty}>
+                                {categoryFilter.length > 0
+                                    ? "Không có khoản nào khớp bộ lọc"
+                                    : "Chưa có khoản nào"}
+                            </Text>
                         ) : undefined
                     }
                     renderItem={({ item }) =>
@@ -260,6 +295,15 @@ export default function ListScreen() {
                 />
             </View>
             {datePicker.sheet}
+            <CategoryFilterSheet
+                visible={filterOpen}
+                selected={categoryFilter}
+                onApply={(ids) => {
+                    setCategoryFilter(ids);
+                    setFilterOpen(false);
+                }}
+                onClose={() => setFilterOpen(false)}
+            />
             <PeriodReportSheet
                 visible={reportType !== null}
                 onClose={() => setReportType(null)}

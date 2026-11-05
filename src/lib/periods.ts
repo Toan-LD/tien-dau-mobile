@@ -123,3 +123,17 @@ export function groupByDay(list: Transaction[]): DayGroup[] {
     }
     return groups;
 }
+
+// Filter key for transactions without a category ("Không phân loại").
+export const NO_CATEGORY = "none";
+
+// The Danh sách category filter: keeps rows in any of the chosen categories.
+// An empty choice means no filter (the same list comes back).
+export function filterByCategories(
+    list: Transaction[],
+    categoryIds: string[],
+): Transaction[] {
+    if (categoryIds.length === 0) return list;
+    const chosen = new Set(categoryIds);
+    return list.filter((tx) => chosen.has(tx.categoryId ?? NO_CATEGORY));
+}

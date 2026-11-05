@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+import { ToastProvider } from "@/components/ui/toast";
 import { Colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from "@/lib/auth";
 
@@ -42,10 +43,12 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <AuthProvider>
-        <ThemeProvider value={theme}>
-          <StatusBar style="dark" />
-          <RootStack />
-        </ThemeProvider>
+        <ToastProvider>
+          <ThemeProvider value={theme}>
+            <StatusBar style="dark" />
+            <RootStack />
+          </ThemeProvider>
+        </ToastProvider>
       </AuthProvider>
     </GestureHandlerRootView>
   );

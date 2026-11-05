@@ -11,6 +11,7 @@ export const Colors = {
   onPrimary: '#ffffff',
   danger: '#9f1239',
   segment: '#e7e5e4',
+  backdrop: 'rgba(28,25,23,0.35)',
 } as const;
 
 export const Spacing = {

@@ -6,9 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CategoryBars } from '@/components/report/category-bars';
 import { Colors, Spacing } from '@/constants/theme';
-import { formatMonthTitle, todayLocal } from '@/lib/dates';
+import { formatMonthTitle } from '@/lib/dates';
 import { formatVND } from '@/lib/money';
 import { buildMonthReport, type MonthReport } from '@/lib/report';
+import { useToday } from '@/lib/use-today';
 import { listTransactionsForMonth } from '@/lib/transactions';
 
 function formatBalance(balance: number): string {
@@ -19,10 +20,12 @@ function formatBalance(balance: number): string {
 
 export default function ReportScreen() {
   const router = useRouter();
-  const today = todayLocal();
+  const today = useToday();
   const currentYear = Number(today.slice(0, 4));
   const currentMonth = Number(today.slice(5, 7));
-  const [view, setView] = useState({ year: currentYear, month: currentMonth });
+  // null = following the current month, so it moves on by itself when the month changes.
+  const [picked, setPicked] = useState<{ year: number; month: number } | null>(null);
+  const view = picked ?? { year: currentYear, month: currentMonth };
   const [report, setReport] = useState<MonthReport | null>(null);
   const [failed, setFailed] = useState(false);
   const requestId = useRef(0);
@@ -43,12 +46,14 @@ export default function ReportScreen() {
   useFocusEffect(
     useCallback(() => {
       load(view.year, view.month);
-    }, [view, load]),
+    }, [view.year, view.month, load]),
   );
 
   const changeMonth = (delta: number) => {
     const d = new Date(view.year, view.month - 1 + delta, 1);
-    setView({ year: d.getFullYear(), month: d.getMonth() + 1 });
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    setPicked(year === currentYear && month === currentMonth ? null : { year, month });
     setReport(null);
     setFailed(false);
   };

@@ -5,12 +5,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { TransactionRow, deleteWithUndo } from '@/components/today/transaction-row';
+import { TransactionRow } from '@/components/today/transaction-row';
 import { useToast } from '@/components/ui/toast';
 import { Colors, Spacing } from '@/constants/theme';
-import { addDays, formatDayTitle, todayLocal } from '@/lib/dates';
+import { deleteWithUndo } from '@/lib/delete-with-undo';
+import { addDays, formatDayTitle, resolveDate, type LocalDate } from '@/lib/dates';
 import { formatVND } from '@/lib/money';
 import { sumByType } from '@/lib/report';
+import { useToday } from '@/lib/use-today';
 import { listTransactionsForDay, subscribeTransactionsChanged, type Transaction } from '@/lib/transactions';
 
 const HINT_KEY = 'hint.swipe.v1';
@@ -18,8 +20,10 @@ const HINT_KEY = 'hint.swipe.v1';
 export default function TodayScreen() {
   const router = useRouter();
   const toast = useToast();
-  const today = todayLocal();
-  const [date, setDate] = useState(today);
+  const today = useToday();
+  // null = following today, so the screen moves on by itself after midnight.
+  const [picked, setPicked] = useState<LocalDate | null>(null);
+  const date = resolveDate(picked, today);
   const [items, setItems] = useState<Transaction[] | null>(null);
   const [hintId, setHintId] = useState<string | null>(null);
   const requestId = useRef(0);
@@ -69,8 +73,8 @@ export default function TodayScreen() {
 
   const clearHint = useCallback(() => setHintId(null), []);
 
-  const changeDay = (next: string) => {
-    setDate(next);
+  const changeDay = (next: LocalDate) => {
+    setPicked(next === today ? null : next);
     setItems(null);
   };
 

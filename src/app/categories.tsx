@@ -1,12 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Alert, StyleSheet, Text } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { SortableCategoryList } from "@/components/categories/sortable-category-list";
 import { NewCategorySheet } from "@/components/entry/new-category-sheet";
 import { TypeToggle } from "@/components/type-toggle";
 import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/components/ui/toast";
 import { Colors, Spacing } from "@/constants/theme";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/lib/categories";
 import {
     categoriesQuery,
+    isWaitingForData,
     setCachedCategories,
     useRefreshOnFocus,
 } from "@/lib/queries";
@@ -97,23 +99,26 @@ export default function CategoriesScreen() {
     return (
         <SafeAreaView edges={["bottom"]} style={styles.container}>
             <TypeToggle type={type} onChange={changeType} />
-            {categories !== null && categories.length === 0 ? (
-                <Text style={styles.empty}>Chưa có mục nào</Text>
-            ) : (
-                <SortableCategoryList
-                    items={categories ?? []}
-                    onReorder={reorder}
-                    onDelete={confirmDelete}
-                    footer={
-                        <Text style={styles.hint}>
-                            Nhấn giữ biểu tượng ≡ rồi kéo để đổi thứ tự. Mục ở
-                            trên cùng hiện đầu tiên ở màn Ghi. Xoá một mục không
-                            xoá các khoản đã ghi: chúng sẽ hiện là &quot;Không
-                            phân loại&quot;.
-                        </Text>
-                    }
-                />
-            )}
+            <View style={styles.listArea}>
+                {categories !== null && categories.length === 0 ? (
+                    <Text style={styles.empty}>Chưa có mục nào</Text>
+                ) : (
+                    <SortableCategoryList
+                        items={categories ?? []}
+                        onReorder={reorder}
+                        onDelete={confirmDelete}
+                        footer={
+                            <Text style={styles.hint}>
+                                Nhấn giữ biểu tượng ≡ rồi kéo để đổi thứ tự. Mục
+                                ở trên cùng hiện đầu tiên ở màn Ghi. Xoá một mục
+                                không xoá các khoản đã ghi: chúng sẽ hiện là
+                                &quot;Không phân loại&quot;.
+                            </Text>
+                        }
+                    />
+                )}
+                <LoadingSpinner visible={isWaitingForData(query)} />
+            </View>
             <Button
                 variant="dashed"
                 icon="add-outline"
@@ -142,6 +147,7 @@ export default function CategoriesScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.background },
+    listArea: { flex: 1 },
     empty: {
         flex: 1,
         textAlign: "center",

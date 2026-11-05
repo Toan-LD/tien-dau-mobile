@@ -15,6 +15,7 @@ import { NoteSheet } from "@/components/entry/note-sheet";
 import { TypeToggle } from "@/components/type-toggle";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { useToast } from "@/components/ui/toast";
 import { Motion } from "@/constants/motion";
@@ -29,6 +30,7 @@ import { resolveDate, todayLocal, type LocalDate } from "@/lib/dates";
 import { formatAmountDigits } from "@/lib/money";
 import {
     categoriesQuery,
+    isWaitingForData,
     setCachedCategories,
     useRefreshOnFocus,
 } from "@/lib/queries";
@@ -216,6 +218,9 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
                             />
                         </Animated.View>
                     </LayoutAnimationConfig>
+                    <LoadingSpinner
+                        visible={isWaitingForData(categoriesResult)}
+                    />
                 </View>
             </GestureDetector>
 

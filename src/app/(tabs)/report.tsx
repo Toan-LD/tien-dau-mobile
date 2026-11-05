@@ -11,13 +11,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CategoryBars } from "@/components/report/category-bars";
 import { CategoryHistorySheet } from "@/components/report/category-history-sheet";
 import { IconButton } from "@/components/ui/icon-button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { MonthPicker, type YearMonth } from "@/components/ui/month-picker";
 import { PeriodNav } from "@/components/ui/period-nav";
 import { StatCard, StatRow } from "@/components/ui/stat-card";
 import { Colors, Spacing } from "@/constants/theme";
 import { formatMonthTitle } from "@/lib/dates";
 import { formatVND } from "@/lib/money";
-import { monthQuery, useRefreshOnFocus } from "@/lib/queries";
+import { isWaitingForData, monthQuery, useRefreshOnFocus } from "@/lib/queries";
 import { buildMonthReport, type CategoryTotal } from "@/lib/report";
 import type { TxType } from "@/lib/categories";
 import { useToday } from "@/lib/use-today";
@@ -152,6 +153,7 @@ export default function ReportScreen() {
                 </View>
                 <View style={styles.bottomSpace} />
             </ScrollView>
+            <LoadingSpinner visible={isWaitingForData(query)} />
             <MonthPicker
                 visible={pickerOpen}
                 value={view}

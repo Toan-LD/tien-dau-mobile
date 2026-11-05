@@ -3,6 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 import {
     dayQuery,
     findCachedTransaction,
+    isWaitingForData,
     monthQuery,
     transactionQuery,
 } from "@/lib/queries";
@@ -60,4 +61,31 @@ it("keeps the edit-screen query out of the transactions group", () => {
     // Invalidating ["transactions"] after a delete must not refetch it.
     expect(transactionQuery("a").queryKey[0]).not.toBe("transactions");
     expect(dayQuery("2026-11-05").queryKey[0]).toBe("transactions");
+});
+
+describe("isWaitingForData", () => {
+    const q = (o: Partial<Parameters<typeof isWaitingForData>[0]>) => ({
+        isFetching: false,
+        isPlaceholderData: false,
+        data: undefined as unknown,
+        ...o,
+    });
+
+    it("is true while loading something not on screen yet", () => {
+        expect(isWaitingForData(q({ isFetching: true }))).toBe(true);
+        expect(
+            isWaitingForData(
+                q({ isFetching: true, isPlaceholderData: true, data: [] }),
+            ),
+        ).toBe(true);
+    });
+
+    it("is false for a quiet refresh of data already shown", () => {
+        expect(isWaitingForData(q({ isFetching: true, data: [] }))).toBe(false);
+    });
+
+    it("is false when nothing is loading", () => {
+        expect(isWaitingForData(q({ data: [] }))).toBe(false);
+        expect(isWaitingForData(q({}))).toBe(false);
+    });
 });

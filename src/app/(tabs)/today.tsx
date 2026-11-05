@@ -7,12 +7,13 @@ import {
 import { useNavigation, useRouter } from "expo-router";
 import type { BottomTabNavigationProp } from "expo-router/js-tabs";
 import { useEffect, useRef, useState } from "react";
-import { FlatList, StyleSheet, Text } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PeriodReportSheet } from "@/components/report/period-report-sheet";
 import { DayHeader } from "@/components/today/day-header";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { TransactionRow } from "@/components/today/transaction-row";
 import { useDatePicker } from "@/components/ui/date-picker";
 import { MonthPicker } from "@/components/ui/month-picker";
@@ -33,7 +34,11 @@ import {
     type DayGroup,
     type PeriodMode,
 } from "@/lib/periods";
-import { periodQuery, useRefreshOnFocus } from "@/lib/queries";
+import {
+    isWaitingForData,
+    periodQuery,
+    useRefreshOnFocus,
+} from "@/lib/queries";
 import { sumByType } from "@/lib/report";
 import type { TxType } from "@/lib/categories";
 import type { Transaction } from "@/lib/transactions";
@@ -202,52 +207,58 @@ export default function ListScreen() {
                 prevLabel={`${unit} trước`}
                 nextLabel={`${unit} sau`}
             />
-            {/* A plain FlatList: Animated.FlatList wraps every row in an
-                animated view, which made long week/month lists stutter while
-                scrolling. Deleting still glides (LayoutAnimation in
-                useDeleteTransaction). Smaller batches keep each scroll step
-                light, since every row carries a swipe gesture. */}
-            <FlatList
-                ref={listRef}
-                style={showingOld && styles.stale}
-                initialNumToRender={12}
-                maxToRenderPerBatch={8}
-                updateCellsBatchingPeriod={40}
-                windowSize={7}
-                onScrollBeginDrag={stopSwipes}
-                onScrollEndDrag={allowSwipes}
-                onMomentumScrollBegin={stopSwipes}
-                onMomentumScrollEnd={allowSwipes}
-                data={rows}
-                keyExtractor={(row) =>
-                    row.kind === "day" ? `day-${row.group.date}` : row.tx.id
-                }
-                ListHeaderComponent={header}
-                ListEmptyComponent={
-                    items && !showingOld ? (
-                        <Text style={styles.empty}>Chưa có khoản nào</Text>
-                    ) : undefined
-                }
-                renderItem={({ item }) =>
-                    item.kind === "day" ? (
-                        <DayHeader
-                            title={formatWeekday(item.group.date, today)}
-                            expense={item.group.expense}
-                            income={item.group.income}
-                        />
-                    ) : (
-                        <TransactionRow
-                            tx={item.tx}
-                            peekHint={item.tx.id === hintId}
-                            onPeekDone={clearHint}
-                            onPress={openTransaction}
-                            onEdit={editTransaction}
-                            onDelete={remove}
-                            swipeEnabled={swipeEnabled}
-                        />
-                    )
-                }
-            />
+            <View style={styles.listArea}>
+                {/* A plain FlatList: Animated.FlatList wraps every row in an
+                    animated view, which made long week/month lists stutter while
+                    scrolling. Deleting still glides (LayoutAnimation in
+                    useDeleteTransaction). Smaller batches keep each scroll step
+                    light, since every row carries a swipe gesture. */}
+                <FlatList
+                    ref={listRef}
+                    style={showingOld && styles.stale}
+                    initialNumToRender={12}
+                    maxToRenderPerBatch={8}
+                    updateCellsBatchingPeriod={40}
+                    windowSize={7}
+                    onScrollBeginDrag={stopSwipes}
+                    onScrollEndDrag={allowSwipes}
+                    onMomentumScrollBegin={stopSwipes}
+                    onMomentumScrollEnd={allowSwipes}
+                    data={rows}
+                    keyExtractor={(row) =>
+                        row.kind === "day" ? `day-${row.group.date}` : row.tx.id
+                    }
+                    ListHeaderComponent={header}
+                    ListEmptyComponent={
+                        items && !showingOld ? (
+                            <Text style={styles.empty}>Chưa có khoản nào</Text>
+                        ) : undefined
+                    }
+                    renderItem={({ item }) =>
+                        item.kind === "day" ? (
+                            <DayHeader
+                                title={formatWeekday(item.group.date, today)}
+                                expense={item.group.expense}
+                                income={item.group.income}
+                            />
+                        ) : (
+                            <TransactionRow
+                                tx={item.tx}
+                                peekHint={item.tx.id === hintId}
+                                onPeekDone={clearHint}
+                                onPress={openTransaction}
+                                onEdit={editTransaction}
+                                onDelete={remove}
+                                swipeEnabled={swipeEnabled}
+                            />
+                        )
+                    }
+                />
+                <LoadingSpinner
+                    visible={isWaitingForData(query)}
+                    position="top"
+                />
+            </View>
             {datePicker.sheet}
             <PeriodReportSheet
                 visible={reportType !== null}
@@ -278,6 +289,7 @@ export default function ListScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.background },
+    listArea: { flex: 1 },
     periodRow: {
         paddingHorizontal: Spacing.three,
         paddingVertical: Spacing.two,

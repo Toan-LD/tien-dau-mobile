@@ -144,3 +144,17 @@ export function useRefreshOnFocus(queryKey: QueryKey) {
         }, [client]),
     );
 }
+
+// True while a screen waits for data it hasn't got yet: the first load, or a
+// new day/week/month still showing the old one (placeholder). A quiet refresh
+// of data already on screen doesn't count, so the spinner doesn't flicker.
+export function isWaitingForData(query: {
+    isFetching: boolean;
+    isPlaceholderData: boolean;
+    data: unknown;
+}): boolean {
+    return (
+        query.isFetching &&
+        (query.isPlaceholderData || query.data === undefined)
+    );
+}

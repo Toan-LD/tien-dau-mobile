@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { CategoryIcon } from "@/components/category-icon";
+import { SelectableTile } from "@/components/ui/selectable-tile";
 import { Colors, Spacing } from "@/constants/theme";
 import type { Category } from "@/lib/categories";
 
@@ -30,14 +31,10 @@ export function CategoryGrid({
                 const selected = c.id === selectedId;
                 return (
                     <View key={c.id} style={styles.cell}>
-                        <Pressable
+                        <SelectableTile
+                            selected={selected}
                             onPress={() => onSelect(c.id)}
-                            accessibilityRole="button"
-                            accessibilityState={{ selected }}
-                            style={[
-                                styles.tile,
-                                selected && styles.tileSelected,
-                            ]}
+                            style={styles.tile}
                         >
                             <CategoryIcon iconKey={c.icon} size={18} />
                             <Text
@@ -49,20 +46,16 @@ export function CategoryGrid({
                             >
                                 {c.name}
                             </Text>
-                        </Pressable>
+                        </SelectableTile>
                     </View>
                 );
             })}
             <View style={styles.cell}>
-                <Pressable
+                <SelectableTile
+                    dashed
                     onPress={onAdd}
                     disabled={addDisabled}
-                    accessibilityRole="button"
-                    style={[
-                        styles.tile,
-                        styles.tileAdd,
-                        addDisabled && styles.tileDisabled,
-                    ]}
+                    style={styles.tile}
                 >
                     <Ionicons
                         name="add-outline"
@@ -72,7 +65,7 @@ export function CategoryGrid({
                     <Text style={styles.addName} numberOfLines={1}>
                         Mục mới
                     </Text>
-                </Pressable>
+                </SelectableTile>
             </View>
         </ScrollView>
     );
@@ -88,18 +81,11 @@ const styles = StyleSheet.create({
     },
     cell: { width: "25%", padding: 3 },
     tile: {
-        alignItems: "center",
         gap: 2,
         paddingVertical: 6,
         paddingHorizontal: 2,
-        backgroundColor: Colors.surface,
-        borderWidth: 1,
-        borderColor: Colors.border,
         borderRadius: 8,
     },
-    tileSelected: { borderWidth: 1.5, borderColor: Colors.borderStrong },
-    tileAdd: { borderStyle: "dashed" },
-    tileDisabled: { opacity: 0.4 },
     name: { fontSize: 11, color: Colors.text },
     nameSelected: { fontWeight: "600" },
     addName: { fontSize: 11, color: Colors.textSecondary },

@@ -78,6 +78,12 @@ export async function deleteCategory(id: string): Promise<void> {
     if (error) throw error;
 }
 
+// sort_order for a new category: after the last one. reorderCategories numbers
+// from 1, so an empty list starts at 1 too.
+export function nextCategorySortOrder(list: Category[]): number {
+    return list.reduce((max, c) => Math.max(max, c.sortOrder), 0) + 1;
+}
+
 // Puts categories in the given id order and renumbers them 1..n, so ties
 // and gaps in sort_order can't undo the user's order.
 export function reorderCategories(list: Category[], ids: string[]): Category[] {

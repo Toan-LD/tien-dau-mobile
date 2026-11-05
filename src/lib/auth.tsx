@@ -6,6 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
 
+import { queryClient } from "@/lib/query-client";
 import { supabase } from "@/lib/supabase";
 import { clearDefaultWalletCache } from "@/lib/transactions";
 
@@ -94,9 +95,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .catch(() => setSession(null))
             .finally(() => setLoading(false));
 
-        const { data } = supabase.auth.onAuthStateChange((_event, next) =>
-            setSession(next),
-        );
+        const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+            // Signed out (by the button or an expired session): drop the cached
+            // data so the next account never sees the previous one's rows.
+            if (!next) queryClient.clear();
+            setSession(next);
+        });
         return () => data.subscription.unsubscribe();
     }, []);
 

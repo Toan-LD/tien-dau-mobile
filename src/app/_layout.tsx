@@ -1,3 +1,4 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import { DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -8,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ToastProvider } from "@/components/ui/toast";
 import { Colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { queryClient } from "@/lib/query-client";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,7 +40,11 @@ function RootStack() {
                     options={{ headerShown: true, title: "Danh mục" }}
                 />
                 <Stack.Screen
-                    name="transaction/[id]"
+                    name="transaction/[id]/index"
+                    options={{ headerShown: true, title: "Chi tiết" }}
+                />
+                <Stack.Screen
+                    name="transaction/[id]/edit"
                     options={{ headerShown: true, title: "Sửa khoản" }}
                 />
             </Stack.Protected>
@@ -52,14 +58,16 @@ function RootStack() {
 export default function RootLayout() {
     return (
         <GestureHandlerRootView style={styles.root}>
-            <AuthProvider>
-                <ToastProvider>
-                    <ThemeProvider value={theme}>
-                        <StatusBar style="dark" />
-                        <RootStack />
-                    </ThemeProvider>
-                </ToastProvider>
-            </AuthProvider>
+            <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                    <ToastProvider>
+                        <ThemeProvider value={theme}>
+                            <StatusBar style="dark" />
+                            <RootStack />
+                        </ThemeProvider>
+                    </ToastProvider>
+                </AuthProvider>
+            </QueryClientProvider>
         </GestureHandlerRootView>
     );
 }

@@ -1,25 +1,35 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
-import { useCallback, useReducer, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useReducer, useRef, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import Animated from "react-native-reanimated";
 
 import { CategoryGrid } from "@/components/entry/category-grid";
 import { DateField } from "@/components/entry/date-field";
-import { AmountDisplay, TypeToggle } from "@/components/entry/entry-header";
+import { AmountDisplay } from "@/components/entry/entry-header";
 import { Keypad } from "@/components/entry/keypad";
 import { MetaChip } from "@/components/entry/meta-chip";
 import { NewCategorySheet } from "@/components/entry/new-category-sheet";
 import { NoteSheet } from "@/components/entry/note-sheet";
+import { TypeToggle } from "@/components/type-toggle";
+import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { useToast } from "@/components/ui/toast";
+import { Motion } from "@/constants/motion";
 import { Colors, Spacing } from "@/constants/theme";
 import {
     amountReducer,
     amountSuggestions,
     initialAmount,
 } from "@/lib/amount-input";
-import { listCategories, type Category, type TxType } from "@/lib/categories";
+import { nextCategorySortOrder, type TxType } from "@/lib/categories";
 import { resolveDate, todayLocal, type LocalDate } from "@/lib/dates";
 import { formatAmountDigits } from "@/lib/money";
+import {
+    categoriesQuery,
+    setCachedCategories,
+    useRefreshOnFocus,
+} from "@/lib/queries";
 import { useToday } from "@/lib/use-today";
 import {
     validateDraft,
@@ -30,16 +40,10 @@ import {
 type Props = {
     initial?: Transaction;
     onSubmit(d: TransactionDraft): Promise<void>;
-    onDelete?(): void;
     resetAfterSubmit: boolean;
 };
 
-export function EntryForm({
-    initial,
-    onSubmit,
-    onDelete,
-    resetAfterSubmit,
-}: Props) {
+export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
     const toast = useToast();
     const [type, setType] = useState<TxType>(initial?.type ?? "expense");
     const [amount, dispatch] = useReducer(amountReducer, initial, (i) =>
@@ -47,7 +51,7 @@ export function EntryForm({
             ? amountReducer(initialAmount, { type: "set", value: i.amount })
             : initialAmount,
     );
-    const [categoryId, setCategoryId] = useState<string | null>(
+    const [pickedCategoryId, setCategoryId] = useState<string | null>(
         initial?.categoryId ?? null,
     );
     // null = "today", resolved at render and at save so the form rolls over at midnight.
@@ -55,7 +59,6 @@ export function EntryForm({
         initial?.date ?? null,
     );
     const [note, setNote] = useState(initial?.note ?? "");
-    const [categories, setCategories] = useState<Category[] | null>(null);
     const [noteOpen, setNoteOpen] = useState(false);
     const [newCategoryOpen, setNewCategoryOpen] = useState(false);
     const [keypadOpen, setKeypadOpen] = useState(false);
@@ -64,33 +67,33 @@ export function EntryForm({
     const today = useToday();
     const date = resolveDate(pickedDate, today);
 
-    useFocusEffect(
-        useCallback(() => {
-            let stale = false;
-            listCategories(type)
-                .then((list) => {
-                    if (stale) return;
-                    setCategories(list);
-                    // The selected category may have been deleted on the Danh mục screen.
-                    setCategoryId((current) =>
-                        list.some((c) => c.id === current) ? current : null,
-                    );
-                })
-                .catch(() => {
-                    if (!stale)
-                        toast.show({ message: "Không tải được danh sách mục" });
-                });
-            return () => {
-                stale = true;
-            };
-        }, [type, toast]),
-    );
+    const queryClient = useQueryClient();
+    const categoriesResult = useQuery(categoriesQuery(type));
+    const categories = categoriesResult.data ?? null;
+    useRefreshOnFocus(categoriesQuery(type).queryKey);
+
+    useEffect(() => {
+        if (categoriesResult.error)
+            toast.show({ message: "Không tải được danh sách mục" });
+    }, [categoriesResult.error, toast]);
+
+    // Load the other type's categories too, so switching Chi/Thu is instant.
+    useEffect(() => {
+        queryClient.prefetchQuery(
+            categoriesQuery(type === "expense" ? "income" : "expense"),
+        );
+    }, [type, queryClient]);
+
+    // The picked category may have been deleted on the Danh mục screen.
+    const categoryId =
+        categories && !categories.some((c) => c.id === pickedCategoryId)
+            ? null
+            : pickedCategoryId;
 
     const changeType = (next: TxType) => {
         if (next === type) return;
         setType(next);
         setCategoryId(null);
-        setCategories(null);
     };
 
     // Tapping the selected category again clears the selection.
@@ -111,9 +114,7 @@ export function EntryForm({
     };
     const canSave = validateDraft(draft) === null;
     const suggestions = amountSuggestions(amount);
-    const nextSortOrder =
-        (categories ?? []).reduce((max, c) => Math.max(max, c.sortOrder), -1) +
-        1;
+    const nextSortOrder = nextCategorySortOrder(categories ?? []);
 
     const save = async () => {
         if (savingRef.current || !canSave) return;
@@ -172,62 +173,46 @@ export function EntryForm({
             {(canSave || keypadOpen) && (
                 <View style={styles.saveSlot}>
                     {canSave && (
-                        <Pressable
-                            onPress={save}
-                            disabled={saving}
-                            accessibilityRole="button"
-                            style={[
-                                styles.saveButton,
-                                saving && styles.saveButtonBusy,
-                            ]}
+                        <Animated.View
+                            entering={Motion.fadeIn}
+                            exiting={Motion.fadeOut}
                         >
-                            <Text style={styles.saveText}>Lưu</Text>
-                        </Pressable>
+                            <Button label="Lưu" onPress={save} busy={saving} />
+                        </Animated.View>
                     )}
                 </View>
             )}
             {keypadOpen && (
-                <>
+                <Animated.View
+                    entering={Motion.riseIn}
+                    exiting={Motion.sinkOut}
+                >
                     <View style={styles.suggestions}>
                         {suggestions.map((value) => (
-                            <Pressable
+                            <PressableScale
                                 key={value}
                                 onPress={() =>
                                     dispatch({ type: "pick", value })
                                 }
                                 accessibilityRole="button"
+                                scaleTo={0.94}
                                 style={styles.suggestion}
+                                pressedStyle={styles.suggestionPressed}
                             >
                                 <Text style={styles.suggestionText}>
                                     {formatAmountDigits(value)}
                                 </Text>
-                            </Pressable>
+                            </PressableScale>
                         ))}
-                        <Pressable
+                        <IconButton
+                            name="chevron-down-outline"
                             onPress={() => setKeypadOpen(false)}
-                            accessibilityRole="button"
                             accessibilityLabel="Ẩn bàn phím"
-                            hitSlop={8}
                             style={styles.closeKeypad}
-                        >
-                            <Ionicons
-                                name="chevron-down-outline"
-                                size={22}
-                                color={Colors.icon}
-                            />
-                        </Pressable>
+                        />
                     </View>
                     <Keypad onKey={dispatch} />
-                </>
-            )}
-            {onDelete && (
-                <Pressable
-                    onPress={onDelete}
-                    accessibilityRole="button"
-                    style={styles.deleteButton}
-                >
-                    <Text style={styles.deleteText}>Xoá khoản này</Text>
-                </Pressable>
+                </Animated.View>
             )}
 
             <NoteSheet
@@ -244,7 +229,10 @@ export function EntryForm({
                 nextSortOrder={nextSortOrder}
                 onClose={() => setNewCategoryOpen(false)}
                 onCreated={(c) => {
-                    setCategories((list) => [...(list ?? []), c]);
+                    setCachedCategories(queryClient, c.type, (list) => [
+                        ...list,
+                        c,
+                    ]);
                     setCategoryId(c.id);
                     setNewCategoryOpen(false);
                 }}
@@ -282,6 +270,7 @@ const styles = StyleSheet.create({
         borderColor: Colors.border,
         borderRadius: 8,
     },
+    suggestionPressed: { backgroundColor: Colors.segment },
     suggestionText: { fontSize: 14, color: Colors.text },
     closeKeypad: {
         marginLeft: "auto",
@@ -293,14 +282,4 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         paddingHorizontal: Spacing.three,
     },
-    saveButton: {
-        alignItems: "center",
-        paddingVertical: 13,
-        backgroundColor: Colors.primary,
-        borderRadius: 12,
-    },
-    saveButtonBusy: { opacity: 0.5 },
-    saveText: { fontSize: 15, fontWeight: "600", color: Colors.onPrimary },
-    deleteButton: { alignItems: "center", paddingVertical: Spacing.three },
-    deleteText: { fontSize: 14, color: Colors.danger },
 });

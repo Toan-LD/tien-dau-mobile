@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
+
+import { PressableScale } from "@/components/ui/pressable-scale";
 
 import { Colors, Spacing } from "@/constants/theme";
 
@@ -23,15 +25,12 @@ export function MetaChip({
     accessibilityLabel,
 }: Props) {
     return (
-        <Pressable
+        <PressableScale
             onPress={onPress}
             accessibilityRole="button"
             accessibilityLabel={accessibilityLabel ?? label}
-            style={({ pressed }) => [
-                styles.chip,
-                grow && styles.grow,
-                pressed && styles.pressed,
-            ]}
+            style={[styles.chip, grow && styles.grow]}
+            pressedStyle={styles.pressed}
         >
             <Ionicons name={icon} size={16} color={Colors.icon} />
             <Text
@@ -40,7 +39,7 @@ export function MetaChip({
             >
                 {label}
             </Text>
-        </Pressable>
+        </PressableScale>
     );
 }
 

@@ -5,16 +5,18 @@ import {
     type Transaction,
 } from "@/lib/transactions";
 
+// Resolves to false when the delete failed, so a screen that hid the row
+// early can put it back.
 export async function deleteWithUndo(
     tx: Transaction,
     toast: ReturnType<typeof useToast>,
     onChanged: () => void,
-): Promise<void> {
+): Promise<boolean> {
     try {
         await deleteTransaction(tx.id);
     } catch {
         toast.show({ message: "Không xoá được" });
-        return;
+        return false;
     }
     onChanged();
 
@@ -31,4 +33,5 @@ export async function deleteWithUndo(
             );
         },
     });
+    return true;
 }

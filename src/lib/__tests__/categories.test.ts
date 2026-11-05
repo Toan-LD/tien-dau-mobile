@@ -6,6 +6,7 @@ import {
     reorderCategories,
     saveCategoryOrder,
     listCategories,
+    nextCategorySortOrder,
     normalizeCategoryName,
 } from "@/lib/categories";
 
@@ -117,6 +118,18 @@ const cat = (id: string, sortOrder: number) => ({
     icon: null,
     type: "expense" as const,
     sortOrder,
+});
+
+describe("nextCategorySortOrder", () => {
+    it("starts at 1 for an empty list", () => {
+        expect(nextCategorySortOrder([])).toBe(1);
+    });
+
+    it("goes after the highest sort order, whatever the list order", () => {
+        expect(
+            nextCategorySortOrder([cat("a", 4), cat("b", 9), cat("c", 2)]),
+        ).toBe(10);
+    });
 });
 
 describe("reorderCategories", () => {

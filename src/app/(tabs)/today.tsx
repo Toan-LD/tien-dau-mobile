@@ -1,14 +1,23 @@
-import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+    keepPreviousData,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
+import { useNavigation, useRouter } from "expo-router";
+import type { BottomTabNavigationProp } from "expo-router/js-tabs";
+import { useEffect, useRef, useState } from "react";
+import { StyleSheet, Text, type FlatList } from "react-native";
+import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { TransactionRow } from "@/components/today/transaction-row";
+import { useDatePicker } from "@/components/ui/date-picker";
+import { PeriodNav } from "@/components/ui/period-nav";
+import { StatCard, StatRow } from "@/components/ui/stat-card";
 import { useToast } from "@/components/ui/toast";
+import { Motion } from "@/constants/motion";
 import { Colors, Spacing } from "@/constants/theme";
-import { deleteWithUndo } from "@/lib/delete-with-undo";
 import {
     addDays,
     formatDayTitle,
@@ -16,13 +25,11 @@ import {
     type LocalDate,
 } from "@/lib/dates";
 import { formatVND } from "@/lib/money";
+import { dayQuery, useRefreshOnFocus } from "@/lib/queries";
 import { sumByType } from "@/lib/report";
 import { useToday } from "@/lib/use-today";
-import {
-    listTransactionsForDay,
-    subscribeTransactionsChanged,
-    type Transaction,
-} from "@/lib/transactions";
+import { useDeleteTransaction } from "@/lib/use-transaction";
+import type { Transaction } from "@/lib/transactions";
 
 const HINT_KEY = "hint.swipe.v1";
 
@@ -33,35 +40,29 @@ export default function TodayScreen() {
     // null = following today, so the screen moves on by itself after midnight.
     const [picked, setPicked] = useState<LocalDate | null>(null);
     const date = resolveDate(picked, today);
-    const [items, setItems] = useState<Transaction[] | null>(null);
+    const queryClient = useQueryClient();
+    const query = useQuery({
+        ...dayQuery(date),
+        // While another day loads, keep showing the last list (dimmed)
+        // instead of flashing an empty screen.
+        placeholderData: keepPreviousData,
+    });
+    const items = query.data ?? null;
+    const showingOldDay = query.isPlaceholderData;
+    const remove = useDeleteTransaction();
     const [hintId, setHintId] = useState<string | null>(null);
-    const requestId = useRef(0);
     const hintStarted = useRef(false);
 
-    const load = useCallback(
-        (day: string) => {
-            const id = ++requestId.current;
-            listTransactionsForDay(day)
-                .then((list) => {
-                    if (id === requestId.current) setItems(list);
-                })
-                .catch(() => {
-                    if (id === requestId.current)
-                        toast.show({ message: "Không tải được danh sách" });
-                });
-        },
-        [toast],
-    );
-
-    useFocusEffect(
-        useCallback(() => {
-            load(date);
-        }, [date, load]),
-    );
+    useRefreshOnFocus(dayQuery(date).queryKey);
 
     useEffect(() => {
-        return subscribeTransactionsChanged(() => load(date));
-    }, [date, load]);
+        if (query.error) toast.show({ message: "Không tải được danh sách" });
+    }, [query.error, toast]);
+
+    // Load the day before in the background, so tapping "‹" is instant.
+    useEffect(() => {
+        queryClient.prefetchQuery(dayQuery(addDays(date, -1)));
+    }, [date, queryClient]);
 
     const firstId = items && items.length > 0 ? items[0].id : null;
     useEffect(() => {
@@ -81,74 +82,62 @@ export default function TodayScreen() {
         };
     }, [firstId]);
 
-    const clearHint = useCallback(() => setHintId(null), []);
+    const clearHint = () => setHintId(null);
 
     const changeDay = (next: LocalDate) => {
         setPicked(next === today ? null : next);
-        setItems(null);
     };
+    const picker = useDatePicker(date, changeDay);
+
+    // Tapping the Danh sách tab while already on it goes back to today and
+    // scrolls to the top, like most apps do with their home tab.
+    const navigation =
+        useNavigation<BottomTabNavigationProp<Record<string, undefined>>>();
+    const listRef = useRef<FlatList<Transaction>>(null);
+    useEffect(
+        () =>
+            navigation.addListener("tabPress", () => {
+                if (!navigation.isFocused()) return;
+                setPicked(null);
+                listRef.current?.scrollToOffset({ offset: 0, animated: true });
+            }),
+        [navigation],
+    );
 
     const totals = sumByType(items ?? []);
     const isToday = date === today;
 
     const header = (
-        <View>
-            <View style={styles.dayRow}>
-                <Pressable
-                    onPress={() => changeDay(addDays(date, -1))}
-                    accessibilityRole="button"
-                    accessibilityLabel="Ngày trước"
-                    hitSlop={Spacing.two}
-                >
-                    <Ionicons
-                        name="chevron-back-outline"
-                        size={22}
-                        color={Colors.icon}
-                    />
-                </Pressable>
-                <Text style={styles.dayTitle}>
-                    {formatDayTitle(date, today)}
-                </Text>
-                <Pressable
-                    onPress={() => changeDay(addDays(date, 1))}
-                    disabled={isToday}
-                    accessibilityRole="button"
-                    accessibilityLabel="Ngày sau"
-                    hitSlop={Spacing.two}
-                    style={isToday && styles.dimmed}
-                >
-                    <Ionicons
-                        name="chevron-forward-outline"
-                        size={22}
-                        color={Colors.icon}
-                    />
-                </Pressable>
-            </View>
-            <View style={styles.totals}>
-                <View style={styles.totalBox}>
-                    <Text style={styles.totalLabel}>Đã chi</Text>
-                    <Text style={styles.totalValue}>
-                        {formatVND(totals.expense)}
-                    </Text>
-                </View>
-                <View style={styles.totalBox}>
-                    <Text style={styles.totalLabel}>Đã thu</Text>
-                    <Text style={styles.totalValue}>
-                        {formatVND(totals.income)}
-                    </Text>
-                </View>
-            </View>
-        </View>
+        <StatRow style={styles.totals}>
+            <StatCard label="Đã chi" value={formatVND(totals.expense)} />
+            <StatCard label="Đã thu" value={formatVND(totals.income)} />
+        </StatRow>
     );
 
     return (
         <SafeAreaView edges={["top"]} style={styles.container}>
-            <FlatList
+            <PeriodNav
+                spread
+                style={styles.dayRow}
+                title={formatDayTitle(date, today)}
+                onTitlePress={picker.open}
+                titleLabel={`${formatDayTitle(date, today)}. Chạm để chọn ngày`}
+                onPrev={() => changeDay(addDays(date, -1))}
+                onNext={() => changeDay(addDays(date, 1))}
+                nextDisabled={isToday}
+                prevLabel="Ngày trước"
+                nextLabel="Ngày sau"
+            />
+            <Animated.FlatList
+                ref={listRef}
+                // When a row is deleted the rows below glide up instead of jumping.
+                itemLayoutAnimation={Motion.reflow}
+                style={showingOldDay && styles.stale}
                 data={items ?? []}
                 keyExtractor={(tx) => tx.id}
                 ListHeaderComponent={header}
                 ListEmptyComponent={
-                    items ? (
+                    items && !showingOldDay ? (
                         <Text style={styles.empty}>Chưa có khoản nào</Text>
                     ) : undefined
                 }
@@ -157,14 +146,23 @@ export default function TodayScreen() {
                         tx={item}
                         peekHint={item.id === hintId}
                         onPeekDone={clearHint}
-                        onPress={() => router.push(`/transaction/${item.id}`)}
-                        onEdit={() => router.push(`/transaction/${item.id}`)}
-                        onDelete={() =>
-                            deleteWithUndo(item, toast, () => load(date))
+                        onPress={() =>
+                            router.push({
+                                pathname: "/transaction/[id]",
+                                params: { id: item.id },
+                            })
                         }
+                        onEdit={() =>
+                            router.push({
+                                pathname: "/transaction/[id]/edit",
+                                params: { id: item.id },
+                            })
+                        }
+                        onDelete={() => remove(item)}
                     />
                 )}
             />
+            {picker.sheet}
         </SafeAreaView>
     );
 }
@@ -172,35 +170,13 @@ export default function TodayScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.background },
     dayRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
         paddingHorizontal: Spacing.three,
         paddingVertical: Spacing.two,
     },
-    dayTitle: { fontSize: 15, fontWeight: "600", color: Colors.text },
-    dimmed: { opacity: 0.3 },
+    stale: { opacity: 0.5 },
     totals: {
-        flexDirection: "row",
-        gap: Spacing.two,
         paddingHorizontal: Spacing.three,
         paddingBottom: 10,
-    },
-    totalBox: {
-        flex: 1,
-        paddingVertical: Spacing.two,
-        paddingHorizontal: 10,
-        backgroundColor: Colors.surface,
-        borderWidth: 1,
-        borderColor: Colors.border,
-        borderRadius: 10,
-    },
-    totalLabel: { fontSize: 11, color: Colors.textSecondary },
-    totalValue: {
-        fontSize: 15,
-        fontWeight: "600",
-        color: Colors.text,
-        marginTop: 2,
     },
     empty: {
         textAlign: "center",

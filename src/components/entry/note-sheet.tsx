@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput } from "react-native";
+import { StyleSheet, TextInput } from "react-native";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Button } from "@/components/ui/button";
 import { Colors, Spacing } from "@/constants/theme";
 
 type Props = {
@@ -31,13 +32,7 @@ export function NoteSheet({ visible, note, onDone }: Props) {
                 autoFocus
                 style={styles.input}
             />
-            <Pressable
-                onPress={done}
-                accessibilityRole="button"
-                style={styles.button}
-            >
-                <Text style={styles.buttonText}>Xong</Text>
-            </Pressable>
+            <Button label="Xong" onPress={done} style={styles.button} />
         </BottomSheet>
     );
 }
@@ -55,12 +50,5 @@ const styles = StyleSheet.create({
         borderColor: Colors.border,
         borderRadius: 10,
     },
-    button: {
-        marginTop: Spacing.three,
-        alignItems: "center",
-        paddingVertical: 12,
-        backgroundColor: Colors.primary,
-        borderRadius: 12,
-    },
-    buttonText: { fontSize: 14, fontWeight: "600", color: Colors.onPrimary },
+    button: { marginTop: Spacing.three },
 });

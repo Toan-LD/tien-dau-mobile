@@ -33,7 +33,7 @@ beforeEach(() => {
 it("deletes, notifies, shows an undo toast", async () => {
     const toast = { show: jest.fn() };
     const onChanged = jest.fn();
-    await deleteWithUndo(tx, toast, onChanged);
+    await expect(deleteWithUndo(tx, toast, onChanged)).resolves.toBe(true);
     expect(mockDelete).toHaveBeenCalledWith("tx-1");
     expect(onChanged).toHaveBeenCalledTimes(1);
     expect(toast.show).toHaveBeenCalledWith(
@@ -89,7 +89,7 @@ it("toasts and skips onChanged when delete fails", async () => {
     mockDelete.mockRejectedValue(new Error("x"));
     const toast = { show: jest.fn() };
     const onChanged = jest.fn();
-    await deleteWithUndo(tx, toast, onChanged);
+    await expect(deleteWithUndo(tx, toast, onChanged)).resolves.toBe(false);
     expect(toast.show).toHaveBeenCalledWith({ message: "Không xoá được" });
     expect(onChanged).not.toHaveBeenCalled();
 });

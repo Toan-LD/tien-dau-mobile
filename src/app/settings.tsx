@@ -1,15 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
-import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
+import { Button } from "@/components/ui/button";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { Colors, Spacing } from "@/constants/theme";
 import { useAuth } from "@/lib/auth";
 
@@ -37,11 +32,10 @@ export default function SettingsScreen() {
         <View style={styles.container}>
             {name ? <Text style={styles.name}>{name}</Text> : null}
             {email ? <Text style={styles.email}>{email}</Text> : null}
-            <Pressable
-                style={({ pressed }) => [
-                    styles.menuRow,
-                    pressed && styles.menuRowPressed,
-                ]}
+            <PressableScale
+                style={styles.menuRow}
+                pressedStyle={styles.menuRowPressed}
+                scaleTo={0.98}
                 onPress={() => router.push("/categories")}
                 accessibilityRole="button"
             >
@@ -56,19 +50,14 @@ export default function SettingsScreen() {
                     size={18}
                     color={Colors.textMuted}
                 />
-            </Pressable>
-            <Pressable
-                style={[styles.signOut, busy && styles.signOutBusy]}
+            </PressableScale>
+            <Button
+                variant="danger-outline"
+                label="Đăng xuất"
                 onPress={onSignOut}
-                disabled={busy}
-                accessibilityRole="button"
-            >
-                {busy ? (
-                    <ActivityIndicator color={Colors.danger} />
-                ) : (
-                    <Text style={styles.signOutText}>Đăng xuất</Text>
-                )}
-            </Pressable>
+                busy={busy}
+                style={styles.signOut}
+            />
         </View>
     );
 }
@@ -99,15 +88,5 @@ const styles = StyleSheet.create({
     },
     menuRowPressed: { backgroundColor: Colors.segment },
     menuText: { flex: 1, fontSize: 15, color: Colors.text },
-    signOut: {
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: 48,
-        marginTop: Spacing.four,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: Colors.danger,
-    },
-    signOutBusy: { opacity: 0.6 },
-    signOutText: { color: Colors.danger, fontSize: 16, fontWeight: "500" },
+    signOut: { marginTop: Spacing.four },
 });

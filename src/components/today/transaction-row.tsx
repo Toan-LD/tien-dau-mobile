@@ -61,14 +61,22 @@ export function TransactionRow({
                     <Pressable
                         onPress={act(onEdit)}
                         accessibilityRole="button"
-                        style={[styles.action, styles.edit]}
+                        style={({ pressed }) => [
+                            styles.action,
+                            styles.edit,
+                            pressed && styles.actionPressed,
+                        ]}
                     >
                         <Text style={styles.actionText}>Sửa</Text>
                     </Pressable>
                     <Pressable
                         onPress={act(onDelete)}
                         accessibilityRole="button"
-                        style={[styles.action, styles.remove]}
+                        style={({ pressed }) => [
+                            styles.action,
+                            styles.remove,
+                            pressed && styles.actionPressed,
+                        ]}
                     >
                         <Text style={styles.actionText}>Xoá</Text>
                     </Pressable>
@@ -78,7 +86,10 @@ export function TransactionRow({
             <Pressable
                 onPress={onPress}
                 accessibilityRole="button"
-                style={styles.row}
+                style={({ pressed }) => [
+                    styles.row,
+                    pressed && styles.rowPressed,
+                ]}
             >
                 <CategoryIcon iconKey={tx.category?.icon} />
                 <View style={styles.texts}>
@@ -114,6 +125,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: Colors.border,
     },
+    rowPressed: { backgroundColor: Colors.surfaceMuted },
     texts: { flex: 1, minWidth: 0 },
     category: { fontSize: 14, color: Colors.text },
     note: { fontSize: 12, color: Colors.textSecondary },
@@ -124,5 +136,6 @@ const styles = StyleSheet.create({
     action: { width: 60, alignItems: "center", justifyContent: "center" },
     edit: { backgroundColor: Colors.icon },
     remove: { backgroundColor: Colors.danger },
+    actionPressed: { opacity: 0.8 },
     actionText: { fontSize: 13, color: Colors.onPrimary },
 });

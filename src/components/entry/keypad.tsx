@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Colors } from "@/constants/theme";
 import type { AmountAction } from "@/lib/amount-input";
 
-const CLEAR_HOLD_MS = 2000;
+const CLEAR_HOLD_MS = 1000;
 
 type Digit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
@@ -76,7 +76,7 @@ export function Keypad({ onKey }: { onKey(a: AmountAction): void }) {
                 />
                 <Key
                     label="⌫"
-                    accessibilityLabel="Xoá một số, giữ 2 giây để xoá hết"
+                    accessibilityLabel="Xoá một số, giữ 1 giây để xoá hết"
                     onPress={() => onKey({ type: "backspace" })}
                     onLongPress={() => onKey({ type: "clear" })}
                 >

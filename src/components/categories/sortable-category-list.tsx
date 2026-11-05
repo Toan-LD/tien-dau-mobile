@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import {
     GestureDetector,
     ScrollView,
@@ -15,6 +15,7 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 
 import { CategoryIcon } from "@/components/category-icon";
+import { IconButton } from "@/components/ui/icon-button";
 import { Colors, Spacing } from "@/constants/theme";
 import type { Category } from "@/lib/categories";
 
@@ -151,19 +152,14 @@ function Row({
             <Text style={styles.name} numberOfLines={1}>
                 {category.name}
             </Text>
-            <Pressable
+            <IconButton
+                name="trash-outline"
+                size={20}
+                color={Colors.danger}
                 onPress={() => onDelete(category)}
-                accessibilityRole="button"
                 accessibilityLabel={`Xoá mục ${category.name}`}
-                hitSlop={8}
                 style={styles.iconButton}
-            >
-                <Ionicons
-                    name="trash-outline"
-                    size={20}
-                    color={Colors.danger}
-                />
-            </Pressable>
+            />
             <GestureDetector gesture={pan}>
                 <View
                     style={styles.handle}

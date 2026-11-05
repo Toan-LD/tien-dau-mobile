@@ -68,7 +68,9 @@ Trước mắt app cho chính họ dùng, nhưng có thể sau này cho người
 
 ### 4.2 Điều hướng
 - Màn **Đăng nhập** khi chưa đăng nhập. Đã đăng nhập thì vào thẳng app. Phiên đăng nhập được lưu lại, mở app lần sau không phải đăng nhập lại.
-- Có 3 tab dưới cùng: **Ghi · Hôm nay · Báo cáo**. Mở app thì vào tab **Ghi**. **[người dùng]** (tên tab: **[Claude]**)
+- Có 3 tab dưới cùng: **Ghi · Danh sách · Báo cáo**. Mở app thì vào tab **Ghi**. **[người dùng]** (tên tab: **[Claude]**; tab giữa đổi từ "Hôm nay" thành "Danh sách" ngày 2026-11-05 vì tab này xem được cả ngày khác, **[người dùng]**)
+- **Thoát app (Android):** ở tab Ghi, lần quay lại đầu tiên (nút hoặc vuốt từ mép màn hình) chỉ hiện thông báo "Vuốt hoặc bấm quay lại lần nữa để thoát"; quay lại thêm lần nữa trong 2 giây mới thoát. **[người dùng, 2026-11-05]**
+- **Bấm lại tab Danh sách** khi đang ở tab đó thì quay về hôm nay và cuộn lên đầu. **[người dùng, 2026-11-05]**
 - Nút bánh răng ở góc trên trang Báo cáo mở trang **Cài đặt**. **[Claude]**
 
 ### 4.3 Màn Đăng nhập
@@ -85,7 +87,7 @@ Từ trên xuống:
 6. **Nút "Lưu"** (chữ chỉ là "Lưu"), **chỉ hiện khi đã có số tiền > 0 và đã chọn mục**. Thứ tự chọn không quan trọng.
 7. **Bàn phím số tự làm**, không dùng bàn phím hệ thống: `1–9`, `000`, `0`, `⌫`. **Mặc định ẩn**: chỉ hiện khi người dùng chạm vào ô số tiền; chọn mục hoặc bấm nút thu gọn thì ẩn đi (chủ project đổi ngày 2026-11-05).
 
-**Phím ⌫ [người dùng]:** bấm một lần xoá một chữ số. **Giữ 2 giây thì xoá hết** số tiền.
+**Phím ⌫ [người dùng]:** bấm một lần xoá một chữ số. **Giữ 1 giây thì xoá hết** số tiền.
 
 **Gợi ý số tiền [người dùng]:** gõ `3` thì hiện `3.000 | 30.000 | 300.000`. Quy tắc là số đã gõ nhân 1.000, 10.000 và 100.000. Gõ `35` thì ra `35.000 | 350.000 | 3.500.000`.
 - Bấm một gợi ý: số tiền được thay bằng giá trị đó, **dòng gợi ý ẩn đi**. **[người dùng]**
@@ -105,25 +107,27 @@ Từ trên xuống:
 
 **Thứ tự mục trong lưới [Claude]:** theo `sort_order`, cố định, **không** tự xếp theo tần suất dùng, để vị trí không nhảy lung tung. Lưới dài quá thì cuộn được.
 
-### 4.5 Tab Hôm nay **[người dùng]**
-- Đầu trang: **"Hôm nay, 05/11"** với ‹ › để chuyển ngày. Không cho chuyển tới ngày tương lai. **[Claude]**
+### 4.5 Tab Danh sách (trước đây là "Hôm nay") **[người dùng]**
+- Đầu trang: **"Hôm nay, 05/11"** với ‹ › để chuyển ngày. Không cho chuyển tới ngày tương lai. **[Claude]** Bấm vào chữ ngày thì mở lịch để chọn thẳng một ngày (không quá hôm nay). **[người dùng, 2026-11-05]**
 - Hai ô **Đã chi** và **Đã thu** của ngày đang xem. **[Claude]**
 - Danh sách các khoản có `transaction_date` bằng ngày đang xem, **khoản mới tạo nằm trên cùng** (sắp theo `created_at` giảm dần). **[người dùng]**
 - Mỗi dòng: icon, tên mục, mô tả (dòng hai, cắt bớt nếu dài), số tiền (chi có dấu `−`, thu có dấu `+`), giờ tạo.
-- **Bấm vào một dòng** thì mở **màn Sửa**: chính là màn Ghi được điền sẵn số tiền, loại, mục, ngày và mô tả. Có nút **"Lưu"** và thêm nút **"Xoá khoản này"** ở cuối. **[Claude, người dùng đồng ý]**
+- **Bấm vào một dòng** thì mở **màn Chi tiết**: số tiền, loại (chi/thu), mục, ngày, mô tả, giờ ghi. Cuối màn có 2 nút **Xoá** và **Sửa**. **[người dùng, đổi ngày 2026-11-05]**
+  - **Sửa** mở **màn Sửa**: chính là màn Ghi được điền sẵn số tiền, loại, mục, ngày và mô tả, có nút **"Lưu"**. Lưu xong thì quay về màn Chi tiết.
+  - **Xoá** hiện hộp thoại hỏi lại **"Xoá khoản này?"** với 2 lựa chọn **Huỷ** / **Xoá**. Chọn Xoá thì xoá, quay về danh sách và vẫn có thông báo **Hoàn tác**.
 - **Vuốt dòng sang trái** thì hiện 2 nút **Sửa** và **Xoá**. **[người dùng]**
 - **Gợi ý vuốt:** lần đầu tiên mở tab này mà có ít nhất một dòng, dòng trên cùng tự trượt sang trái khoảng một giây cho lộ hai nút rồi trượt về. Chỉ chạy **một lần mỗi máy** (ghi nhớ bằng AsyncStorage). **[Claude, người dùng đồng ý]**
-- **Xoá:** xoá ngay, kèm thông báo "Đã xoá … · **Hoàn tác**" trong khoảng 5 giây, không hỏi xác nhận. **[Claude]** Cách làm hoàn tác để builder quyết.
+- **Xoá bằng cách vuốt:** xoá ngay, kèm thông báo "Đã xoá … · **Hoàn tác**" trong khoảng 5 giây, không hỏi xác nhận. **[Claude]** Cách làm hoàn tác để builder quyết.
 - Ngày không có khoản nào: hiện một dòng chữ nhẹ, ví dụ "Chưa có khoản nào".
 - Sửa một khoản sang ngày khác thì khoản đó biến khỏi danh sách đang xem.
 
 ### 4.6 Tab Báo cáo **[người dùng chọn các phần 1, 2, 4 trên mockup]**
-- Chọn tháng bằng ‹ ›, mặc định tháng hiện tại. Không cho chuyển tới tháng tương lai. **[Claude]**
+- Chọn tháng bằng ‹ ›, mặc định tháng hiện tại. Không cho chuyển tới tháng tương lai. **[Claude]** Bấm vào chữ tháng thì mở sheet **Chọn tháng**: năm với ‹ › ở trên, 12 tháng bên dưới (các tháng tương lai bị làm mờ), chọn một tháng là nhảy tới ngay. **[người dùng, 2026-11-05]**
 - **Tổng tháng:** ô lớn **Còn lại (thu − chi)**, bên dưới là hai ô **Thu** và **Chi**. Chỉ là số, không có biểu đồ.
 - **Chi theo mục:** thanh ngang, **một màu xám đậm**, xếp từ lớn đến nhỏ. Mỗi dòng có icon, tên mục, thanh dài theo tỉ lệ với mục lớn nhất, và số tiền dạng rút gọn (`2,5tr`, `450k`). **[Claude]**: dùng thanh xếp hạng thay vì biểu đồ tròn vì dễ so sánh hơn và hợp phong cách một màu.
 - **Thu theo mục:** cách hiển thị giống hệt.
 - Các khoản không có mục (`category_id` null) gom vào dòng **"Không phân loại"**. **[Claude]**
-- Bấm một mục: mở danh sách các khoản của mục đó trong tháng, dùng cùng kiểu dòng như tab Hôm nay. **[Claude, tuỳ chọn]**: nếu tốn công thì để sau.
+- Bấm một mục: mở danh sách các khoản của mục đó trong tháng, dùng cùng kiểu dòng như tab Danh sách. **[Claude, tuỳ chọn]**: nếu tốn công thì để sau.
 - Tháng không có dữ liệu: các số hiện 0, các phần biểu đồ hiện một dòng chữ nhẹ.
 - Biểu đồ đơn giản, vẽ bằng `View` là đủ, **không cần thư viện chart**. **[Claude]**
 

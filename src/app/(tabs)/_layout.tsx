@@ -30,7 +30,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="today"
                 options={{
-                    title: "Hôm nay",
+                    title: "Danh sách",
                     tabBarIcon: ({ focused, size }) => (
                         <Ionicons
                             name="list-outline"

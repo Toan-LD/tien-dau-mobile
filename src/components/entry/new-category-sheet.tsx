@@ -1,15 +1,10 @@
 import { useRef, useState } from "react";
-import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
-} from "react-native";
+import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { CategoryIcon } from "@/components/category-icon";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Button } from "@/components/ui/button";
+import { SelectableTile } from "@/components/ui/selectable-tile";
 import { Colors, Spacing } from "@/constants/theme";
 import { CATEGORY_ICON_KEYS, DEFAULT_ICON_KEY } from "@/lib/category-icons";
 import {
@@ -122,37 +117,24 @@ export function NewCategorySheet({
                                 cellWidth > 0 && { width: cellWidth },
                             ]}
                         >
-                            <Pressable
+                            <SelectableTile
+                                selected={selected}
                                 onPress={() => setIconKey(key)}
-                                accessibilityRole="button"
                                 accessibilityLabel={key}
-                                accessibilityState={{ selected }}
-                                style={[
-                                    styles.iconTile,
-                                    selected && styles.iconTileSelected,
-                                ]}
+                                style={styles.iconTile}
                             >
                                 <CategoryIcon iconKey={key} size={22} />
-                            </Pressable>
+                            </SelectableTile>
                         </View>
                     );
                 })}
             </ScrollView>
-            <Pressable
+            <Button
+                label="Tạo mục"
                 onPress={create}
                 disabled={!canCreate}
-                accessibilityRole="button"
-                style={[styles.button, !canCreate && styles.buttonDisabled]}
-            >
-                <Text
-                    style={[
-                        styles.buttonText,
-                        !canCreate && styles.buttonTextDisabled,
-                    ]}
-                >
-                    Tạo mục
-                </Text>
-            </Pressable>
+                style={styles.button}
+            />
         </BottomSheet>
     );
 }
@@ -173,24 +155,6 @@ const styles = StyleSheet.create({
     icons: { maxHeight: 200, marginTop: Spacing.three },
     iconsContent: { flexDirection: "row", flexWrap: "wrap" },
     iconCell: { width: "16.66%", padding: 3 },
-    iconTile: {
-        alignItems: "center",
-        justifyContent: "center",
-        height: 44,
-        borderWidth: 1,
-        borderColor: Colors.border,
-        borderRadius: 10,
-        backgroundColor: Colors.surface,
-    },
-    iconTileSelected: { borderWidth: 1.5, borderColor: Colors.borderStrong },
-    button: {
-        marginTop: Spacing.three,
-        alignItems: "center",
-        paddingVertical: 12,
-        backgroundColor: Colors.primary,
-        borderRadius: 12,
-    },
-    buttonDisabled: { backgroundColor: Colors.segment },
-    buttonText: { fontSize: 14, fontWeight: "600", color: Colors.onPrimary },
-    buttonTextDisabled: { color: Colors.textMuted },
+    iconTile: { height: 44, borderRadius: 10 },
+    button: { marginTop: Spacing.three },
 });

@@ -3,9 +3,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { EntryForm } from "@/components/entry/entry-form";
 import { Colors } from "@/constants/theme";
+import { useBackTwiceToExit } from "@/hooks/use-back-twice-to-exit";
 import { createTransaction } from "@/lib/transactions";
 
 export default function RecordScreen() {
+    // Ghi is the first tab: a back swipe here would close the app at once.
+    useBackTwiceToExit();
+
     return (
         <SafeAreaView edges={["top"]} style={styles.container}>
             <EntryForm

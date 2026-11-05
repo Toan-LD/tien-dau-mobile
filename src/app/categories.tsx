@@ -1,63 +1,58 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
-import { useCallback, useRef, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text } from "react-native";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { Alert, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { SortableCategoryList } from "@/components/categories/sortable-category-list";
-import { TypeToggle } from "@/components/entry/entry-header";
 import { NewCategorySheet } from "@/components/entry/new-category-sheet";
+import { TypeToggle } from "@/components/type-toggle";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { Colors, Spacing } from "@/constants/theme";
 import {
     deleteCategory,
-    listCategories,
+    nextCategorySortOrder,
     reorderCategories,
     saveCategoryOrder,
     type Category,
     type TxType,
 } from "@/lib/categories";
+import {
+    categoriesQuery,
+    setCachedCategories,
+    useRefreshOnFocus,
+} from "@/lib/queries";
 
 export default function CategoriesScreen() {
     const toast = useToast();
     const [type, setType] = useState<TxType>("expense");
-    const [categories, setCategories] = useState<Category[] | null>(null);
     const [adding, setAdding] = useState(false);
-    const requestId = useRef(0);
+    const queryClient = useQueryClient();
+    const query = useQuery(categoriesQuery(type));
+    const categories = query.data ?? null;
+    useRefreshOnFocus(categoriesQuery(type).queryKey);
 
-    const load = useCallback(
-        (t: TxType) => {
-            const id = ++requestId.current;
-            listCategories(t)
-                .then((list) => {
-                    if (id === requestId.current) setCategories(list);
-                })
-                .catch(() => {
-                    if (id === requestId.current)
-                        toast.show({ message: "Không tải được danh sách mục" });
-                });
-        },
-        [toast],
-    );
+    useEffect(() => {
+        if (query.error)
+            toast.show({ message: "Không tải được danh sách mục" });
+    }, [query.error, toast]);
 
-    useFocusEffect(
-        useCallback(() => {
-            load(type);
-        }, [load, type]),
-    );
+    const reload = () =>
+        queryClient.invalidateQueries({ queryKey: ["categories", type] });
 
     const changeType = (next: TxType) => {
         if (next === type) return;
         setType(next);
-        setCategories(null);
     };
 
     const remove = async (c: Category) => {
         try {
             await deleteCategory(c.id);
-            setCategories((list) =>
-                list ? list.filter((x) => x.id !== c.id) : list,
+            setCachedCategories(queryClient, c.type, (list) =>
+                list.filter((x) => x.id !== c.id),
             );
+            // Rows in that category now show as "Không phân loại".
+            queryClient.invalidateQueries({ queryKey: ["transactions"] });
             toast.show({ message: `Đã xoá mục "${c.name}"` });
         } catch {
             toast.show({ message: "Không xoá được, thử lại nhé" });
@@ -71,12 +66,14 @@ export default function CategoriesScreen() {
         if (!categories) return;
         const next = reorderCategories(categories, ids);
         const before = categories;
-        setCategories(next);
+        // A reload still on its way would put the old order back.
+        queryClient.cancelQueries({ queryKey: ["categories", type] });
+        setCachedCategories(queryClient, type, () => next);
         saving.current = saving.current
             .then(() => saveCategoryOrder(before, next))
             .catch(() => {
                 toast.show({ message: "Không lưu được thứ tự, thử lại nhé" });
-                load(type);
+                reload();
             });
     };
 
@@ -95,9 +92,7 @@ export default function CategoriesScreen() {
         );
     };
 
-    const nextSortOrder =
-        (categories ?? []).reduce((max, c) => Math.max(max, c.sortOrder), 0) +
-        1;
+    const nextSortOrder = nextCategorySortOrder(categories ?? []);
 
     return (
         <SafeAreaView edges={["bottom"]} style={styles.container}>
@@ -119,20 +114,14 @@ export default function CategoriesScreen() {
                     }
                 />
             )}
-            <Pressable
+            <Button
+                variant="dashed"
+                icon="add-outline"
+                label={type === "expense" ? "Thêm mục chi" : "Thêm mục thu"}
                 onPress={() => setAdding(true)}
                 disabled={categories === null}
-                accessibilityRole="button"
-                style={[
-                    styles.addButton,
-                    categories === null && styles.addButtonDisabled,
-                ]}
-            >
-                <Ionicons name="add-outline" size={20} color={Colors.icon} />
-                <Text style={styles.addText}>
-                    {type === "expense" ? "Thêm mục chi" : "Thêm mục thu"}
-                </Text>
-            </Pressable>
+                style={styles.addButton}
+            />
 
             <NewCategorySheet
                 visible={adding}
@@ -140,7 +129,10 @@ export default function CategoriesScreen() {
                 nextSortOrder={nextSortOrder}
                 onClose={() => setAdding(false)}
                 onCreated={(c) => {
-                    setCategories((list) => [...(list ?? []), c]);
+                    setCachedCategories(queryClient, c.type, (list) => [
+                        ...list,
+                        c,
+                    ]);
                     setAdding(false);
                 }}
             />
@@ -163,19 +155,5 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: Colors.textMuted,
     },
-    addButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: Spacing.two,
-        margin: Spacing.three,
-        paddingVertical: 12,
-        borderWidth: 1,
-        borderStyle: "dashed",
-        borderColor: Colors.border,
-        borderRadius: 12,
-        backgroundColor: Colors.surface,
-    },
-    addButtonDisabled: { opacity: 0.4 },
-    addText: { fontSize: 15, color: Colors.text },
+    addButton: { margin: Spacing.three },
 });

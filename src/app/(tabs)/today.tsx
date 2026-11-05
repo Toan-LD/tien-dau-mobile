@@ -7,8 +7,8 @@ import {
 import { useNavigation, useRouter } from "expo-router";
 import type { BottomTabNavigationProp } from "expo-router/js-tabs";
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, type FlatList } from "react-native";
-import Animated from "react-native-reanimated";
+import { FlatList, StyleSheet, Text } from "react-native";
+import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PeriodReportSheet } from "@/components/report/period-report-sheet";
@@ -20,7 +20,6 @@ import { PeriodNav } from "@/components/ui/period-nav";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { StatCard, StatRow } from "@/components/ui/stat-card";
 import { useToast } from "@/components/ui/toast";
-import { Motion } from "@/constants/motion";
 import { Colors, Spacing } from "@/constants/theme";
 import { resolveDate, toLocalDateString, type LocalDate } from "@/lib/dates";
 import { formatVND } from "@/lib/money";
@@ -92,6 +91,11 @@ export default function ListScreen() {
     const showingOld = query.isPlaceholderData;
     const rows = toRows(mode, items ?? []);
     const remove = useDeleteTransaction();
+    // Row swipes are off while the list is being dragged or still gliding,
+    // so scrolling past a row never catches it as a swipe.
+    const swipeEnabled = useSharedValue(true);
+    const stopSwipes = () => swipeEnabled.set(false);
+    const allowSwipes = () => swipeEnabled.set(true);
     const [hintId, setHintId] = useState<string | null>(null);
     const hintStarted = useRef(false);
 
@@ -171,10 +175,13 @@ export default function ListScreen() {
         </StatRow>
     );
 
-    const openTransaction = (id: string) =>
-        router.push({ pathname: "/transaction/[id]", params: { id } });
-    const editTransaction = (id: string) =>
-        router.push({ pathname: "/transaction/[id]/edit", params: { id } });
+    const openTransaction = (tx: Transaction) =>
+        router.push({ pathname: "/transaction/[id]", params: { id: tx.id } });
+    const editTransaction = (tx: Transaction) =>
+        router.push({
+            pathname: "/transaction/[id]/edit",
+            params: { id: tx.id },
+        });
 
     return (
         <SafeAreaView edges={["top"]} style={styles.container}>
@@ -195,11 +202,22 @@ export default function ListScreen() {
                 prevLabel={`${unit} trước`}
                 nextLabel={`${unit} sau`}
             />
-            <Animated.FlatList
+            {/* A plain FlatList: Animated.FlatList wraps every row in an
+                animated view, which made long week/month lists stutter while
+                scrolling. Deleting still glides (LayoutAnimation in
+                useDeleteTransaction). Smaller batches keep each scroll step
+                light, since every row carries a swipe gesture. */}
+            <FlatList
                 ref={listRef}
-                // When a row is deleted the rows below glide up instead of jumping.
-                itemLayoutAnimation={Motion.reflow}
                 style={showingOld && styles.stale}
+                initialNumToRender={12}
+                maxToRenderPerBatch={8}
+                updateCellsBatchingPeriod={40}
+                windowSize={7}
+                onScrollBeginDrag={stopSwipes}
+                onScrollEndDrag={allowSwipes}
+                onMomentumScrollBegin={stopSwipes}
+                onMomentumScrollEnd={allowSwipes}
                 data={rows}
                 keyExtractor={(row) =>
                     row.kind === "day" ? `day-${row.group.date}` : row.tx.id
@@ -213,17 +231,19 @@ export default function ListScreen() {
                 renderItem={({ item }) =>
                     item.kind === "day" ? (
                         <DayHeader
-                            group={item.group}
                             title={formatWeekday(item.group.date, today)}
+                            expense={item.group.expense}
+                            income={item.group.income}
                         />
                     ) : (
                         <TransactionRow
                             tx={item.tx}
                             peekHint={item.tx.id === hintId}
                             onPeekDone={clearHint}
-                            onPress={() => openTransaction(item.tx.id)}
-                            onEdit={() => editTransaction(item.tx.id)}
-                            onDelete={() => remove(item.tx)}
+                            onPress={openTransaction}
+                            onEdit={editTransaction}
+                            onDelete={remove}
+                            swipeEnabled={swipeEnabled}
                         />
                     )
                 }

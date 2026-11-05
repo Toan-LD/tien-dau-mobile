@@ -3,7 +3,6 @@ import {
     FadeInDown,
     FadeOut,
     FadeOutDown,
-    LinearTransition,
     SlideInLeft,
     SlideInRight,
     SlideOutLeft,
@@ -22,8 +21,6 @@ export const Motion = {
     // A panel rises from the bottom edge (the number keypad).
     riseIn: FadeInDown.duration(180),
     sinkOut: FadeOutDown.duration(120),
-    // Neighbours glide into place when a list item is added or removed.
-    reflow: LinearTransition.duration(180),
     // A whole page swaps sideways (category grid when Chi/Thu changes).
     // Each page has a fixed side: the left page comes and goes on the left.
     pageInLeft: SlideInLeft.duration(PAGE_MS),

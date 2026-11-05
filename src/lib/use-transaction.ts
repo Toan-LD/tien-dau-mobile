@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useIsFocused, useRouter } from "expo-router";
 import { useEffect } from "react";
+import { LayoutAnimation } from "react-native";
 
 import { useToast } from "@/components/ui/toast";
 import { deleteWithUndo } from "@/lib/delete-with-undo";
@@ -44,11 +45,19 @@ export function useTransaction(id: string): Transaction | null {
 
 // Deletes a transaction with an undo toast. The row leaves every cached list at
 // once; if the delete fails the lists are reloaded and it comes back.
+const REFLOW = LayoutAnimation.create(
+    180,
+    LayoutAnimation.Types.easeInEaseOut,
+    LayoutAnimation.Properties.opacity,
+);
+
 export function useDeleteTransaction() {
     const toast = useToast();
     const queryClient = useQueryClient();
 
     return (tx: Transaction) => {
+        // The rows below glide up into the gap, once, instead of jumping.
+        LayoutAnimation.configureNext(REFLOW);
         removeCachedTransaction(queryClient, tx.id);
         deleteWithUndo(tx, toast, () => {}).then((ok) => {
             if (!ok)

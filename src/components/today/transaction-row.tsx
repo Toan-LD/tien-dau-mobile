@@ -1,8 +1,9 @@
 import ReanimatedSwipeable, {
     type SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import type { SharedValue } from "react-native-reanimated";
 
 import { CategoryIcon } from "@/components/category-icon";
 import { Colors, Spacing } from "@/constants/theme";
@@ -11,23 +12,31 @@ import { formatAmountDigits } from "@/lib/money";
 import type { Transaction } from "@/lib/transactions";
 
 const PEEK_MS = 1000;
+// How far the finger must move sideways before the row starts to slide. The
+// default 10 caught slightly diagonal scrolls and stopped the list.
+const SWIPE_START = 24;
 
 type Props = {
     tx: Transaction;
-    onPress(): void;
-    onEdit(): void;
-    onDelete(): void;
+    // Each handler gets the row's transaction, so a long list can pass the
+    // same functions to every row and memo can skip rows that didn't change.
+    onPress(tx: Transaction): void;
+    onEdit(tx: Transaction): void;
+    onDelete(tx: Transaction): void;
     peekHint?: boolean;
     onPeekDone?(): void;
+    // False while the list scrolls, so a scroll can't turn into a swipe.
+    swipeEnabled?: SharedValue<boolean>;
 };
 
-export function TransactionRow({
+export const TransactionRow = memo(function TransactionRow({
     tx,
     onPress,
     onEdit,
     onDelete,
     peekHint,
     onPeekDone,
+    swipeEnabled,
 }: Props) {
     const swipeRef = useRef<SwipeableMethods>(null);
 
@@ -44,9 +53,9 @@ export function TransactionRow({
         };
     }, [peekHint, onPeekDone]);
 
-    const act = (fn: () => void) => () => {
+    const act = (fn: (t: Transaction) => void) => () => {
         swipeRef.current?.close();
-        fn();
+        fn(tx);
     };
 
     const sign = tx.type === "expense" ? "−" : "+";
@@ -54,6 +63,9 @@ export function TransactionRow({
     return (
         <ReanimatedSwipeable
             ref={swipeRef}
+            enabled={swipeEnabled}
+            dragOffsetFromRight={-SWIPE_START}
+            dragOffsetFromLeft={SWIPE_START}
             friction={2}
             overshootRight={false}
             renderRightActions={() => (
@@ -84,7 +96,7 @@ export function TransactionRow({
             )}
         >
             <Pressable
-                onPress={onPress}
+                onPress={() => onPress(tx)}
                 accessibilityRole="button"
                 style={({ pressed }) => [
                     styles.row,
@@ -112,7 +124,7 @@ export function TransactionRow({
             </Pressable>
         </ReanimatedSwipeable>
     );
-}
+});
 
 const styles = StyleSheet.create({
     row: {

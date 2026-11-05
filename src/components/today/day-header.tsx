@@ -1,32 +1,37 @@
+import { memo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Colors, Spacing } from "@/constants/theme";
 import { formatAmountDigits } from "@/lib/money";
-import type { DayGroup } from "@/lib/periods";
-
-type Props = { group: DayGroup; title: string };
+// Plain values, not the day group object (rebuilt on every render), so memo
+// can skip headers whose numbers didn't change.
+type Props = { title: string; expense: number; income: number };
 
 // Heading above each day's rows in the week and month lists: the day on the
 // left, that day's spending and income on the right.
-export function DayHeader({ group, title }: Props) {
+export const DayHeader = memo(function DayHeader({
+    title,
+    expense,
+    income,
+}: Props) {
     return (
         <View style={styles.row}>
             <Text style={styles.title}>{title}</Text>
             <View style={styles.totals}>
-                {group.expense > 0 && (
+                {expense > 0 && (
                     <Text style={styles.amount}>
-                        −{formatAmountDigits(group.expense)}
+                        −{formatAmountDigits(expense)}
                     </Text>
                 )}
-                {group.income > 0 && (
+                {income > 0 && (
                     <Text style={styles.amount}>
-                        +{formatAmountDigits(group.income)}
+                        +{formatAmountDigits(income)}
                     </Text>
                 )}
             </View>
         </View>
     );
-}
+});
 
 const styles = StyleSheet.create({
     row: {

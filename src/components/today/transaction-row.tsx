@@ -8,8 +8,6 @@ import { formatTime } from '@/lib/dates';
 import { formatAmountDigits } from '@/lib/money';
 import type { Transaction } from '@/lib/transactions';
 
-export { deleteWithUndo } from '@/lib/delete-with-undo';
-
 const PEEK_MS = 1000;
 
 type Props = {

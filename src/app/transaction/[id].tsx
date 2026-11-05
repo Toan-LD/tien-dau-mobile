@@ -4,7 +4,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EntryForm } from '@/components/entry/entry-form';
-import { deleteWithUndo } from '@/components/today/transaction-row';
+import { deleteWithUndo } from '@/lib/delete-with-undo';
 import { useToast } from '@/components/ui/toast';
 import { Colors } from '@/constants/theme';
 import { getTransaction, updateTransaction, type Transaction } from '@/lib/transactions';

@@ -10,9 +10,10 @@ type Props = {
   selectedId: string | null;
   onSelect(id: string): void;
   onAdd(): void;
+  addDisabled?: boolean;
 };
 
-export function CategoryGrid({ categories, selectedId, onSelect, onAdd }: Props) {
+export function CategoryGrid({ categories, selectedId, onSelect, onAdd, addDisabled }: Props) {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       {categories.map((c) => {
@@ -34,7 +35,12 @@ export function CategoryGrid({ categories, selectedId, onSelect, onAdd }: Props)
         );
       })}
       <View style={styles.cell}>
-        <Pressable onPress={onAdd} accessibilityRole="button" style={[styles.tile, styles.tileAdd]}>
+        <Pressable
+          onPress={onAdd}
+          disabled={addDisabled}
+          accessibilityRole="button"
+          style={[styles.tile, styles.tileAdd, addDisabled && styles.tileDisabled]}
+        >
           <Ionicons name="add-outline" size={22} color={Colors.textMuted} />
           <Text style={styles.addName} numberOfLines={1}>
             Mục mới
@@ -61,6 +67,7 @@ const styles = StyleSheet.create({
   },
   tileSelected: { borderWidth: 1.5, borderColor: Colors.borderStrong },
   tileAdd: { borderStyle: "dashed" },
+  tileDisabled: { opacity: 0.4 },
   name: { fontSize: 12, color: Colors.text },
   nameSelected: { fontWeight: "600" },
   addName: { fontSize: 12, color: Colors.textSecondary },

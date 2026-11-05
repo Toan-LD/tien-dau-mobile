@@ -4,6 +4,7 @@ import {
   formatMonthTitle,
   formatTime,
   monthRange,
+  resolveDate,
   todayLocal,
   toLocalDateString,
 } from '../dates';
@@ -57,5 +58,20 @@ describe('formatTime', () => {
   it('shows local HH:mm', () => {
     expect(formatTime(new Date(2026, 10, 5, 7, 58).toISOString())).toBe('07:58');
     expect(formatTime(new Date(2026, 10, 5, 19, 5).toISOString())).toBe('19:05');
+  });
+});
+
+describe('resolveDate', () => {
+  it('follows today when nothing is picked', () => {
+    expect(resolveDate(null, '2026-11-06')).toBe('2026-11-06');
+  });
+  it('keeps an explicitly picked date', () => {
+    expect(resolveDate('2026-11-04', '2026-11-06')).toBe('2026-11-04');
+  });
+});
+
+describe('time zone', () => {
+  it('runs pinned to Asia/Ho_Chi_Minh', () => {
+    expect(new Date(2026, 10, 5, 6, 30).getTimezoneOffset()).toBe(-420);
   });
 });

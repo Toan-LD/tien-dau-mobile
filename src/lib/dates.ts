@@ -10,6 +10,11 @@ export function todayLocal(now: Date = new Date()): LocalDate {
   return toLocalDateString(now);
 }
 
+// null means "follow today": the day is resolved when it is needed, so it rolls over at midnight.
+export function resolveDate(picked: LocalDate | null, today: LocalDate): LocalDate {
+  return picked ?? today;
+}
+
 function parse(date: LocalDate): Date {
   const [y, m, d] = date.split('-').map(Number);
   return new Date(y, m - 1, d);

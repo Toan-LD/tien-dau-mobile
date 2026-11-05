@@ -1,6 +1,7 @@
 export const Colors = {
   background: '#fafaf9',
   surface: '#ffffff',
+  surfaceMuted: '#f5f5f4',
   text: '#1c1917',
   textSecondary: '#78716c',
   textMuted: '#a8a29e',

@@ -12,8 +12,9 @@ import { useToast } from "@/components/ui/toast";
 import { Colors, Spacing } from "@/constants/theme";
 import { amountReducer, amountSuggestions, initialAmount } from "@/lib/amount-input";
 import { listCategories, type Category, type TxType } from "@/lib/categories";
-import { todayLocal } from "@/lib/dates";
+import { resolveDate, todayLocal, type LocalDate } from "@/lib/dates";
 import { formatAmountDigits } from "@/lib/money";
+import { useToday } from "@/lib/use-today";
 import { validateDraft, type Transaction, type TransactionDraft } from "@/lib/transactions";
 
 type Props = {
@@ -30,13 +31,16 @@ export function EntryForm({ initial, onSubmit, onDelete, resetAfterSubmit }: Pro
     i ? amountReducer(initialAmount, { type: "set", value: i.amount }) : initialAmount,
   );
   const [categoryId, setCategoryId] = useState<string | null>(initial?.categoryId ?? null);
-  const [date, setDate] = useState(initial?.date ?? todayLocal());
+  // null = "today", resolved at render and at save so the form rolls over at midnight.
+  const [pickedDate, setPickedDate] = useState<LocalDate | null>(initial?.date ?? null);
   const [note, setNote] = useState(initial?.note ?? "");
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[] | null>(null);
   const [noteOpen, setNoteOpen] = useState(false);
   const [newCategoryOpen, setNewCategoryOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const today = useToday();
+  const date = resolveDate(pickedDate, today);
 
   useFocusEffect(
     useCallback(() => {
@@ -58,8 +62,10 @@ export function EntryForm({ initial, onSubmit, onDelete, resetAfterSubmit }: Pro
     if (next === type) return;
     setType(next);
     setCategoryId(null);
-    setCategories([]);
+    setCategories(null);
   };
+
+  const changeDate = (next: LocalDate) => setPickedDate(!initial && next === todayLocal() ? null : next);
 
   const draft: TransactionDraft = {
     type,
@@ -70,14 +76,14 @@ export function EntryForm({ initial, onSubmit, onDelete, resetAfterSubmit }: Pro
   };
   const canSave = validateDraft(draft) === null;
   const suggestions = amountSuggestions(amount);
-  const nextSortOrder = categories.reduce((max, c) => Math.max(max, c.sortOrder), -1) + 1;
+  const nextSortOrder = (categories ?? []).reduce((max, c) => Math.max(max, c.sortOrder), -1) + 1;
 
   const save = async () => {
     if (savingRef.current || !canSave) return;
     savingRef.current = true;
     setSaving(true);
     try {
-      await onSubmit(draft);
+      await onSubmit({ ...draft, date: resolveDate(pickedDate, todayLocal()) });
       if (resetAfterSubmit) {
         dispatch({ type: "clear" });
         setCategoryId(null);
@@ -97,7 +103,7 @@ export function EntryForm({ initial, onSubmit, onDelete, resetAfterSubmit }: Pro
       <TypeToggle type={type} onChange={changeType} />
       <AmountDisplay value={amount.value} />
       <View style={styles.metaRow}>
-        <DateField date={date} onChange={setDate} />
+        <DateField date={date} onChange={changeDate} />
         <Pressable onPress={() => setNoteOpen(true)} accessibilityRole="button" style={styles.noteButton}>
           <Text style={[styles.metaText, note !== "" && styles.noteText]} numberOfLines={1}>
             {note === "" ? "Thêm mô tả" : note}
@@ -106,9 +112,10 @@ export function EntryForm({ initial, onSubmit, onDelete, resetAfterSubmit }: Pro
       </View>
 
       <CategoryGrid
-        categories={categories}
+        categories={categories ?? []}
         selectedId={categoryId}
         onSelect={setCategoryId}
+        addDisabled={categories === null}
         onAdd={() => setNewCategoryOpen(true)}
       />
 
@@ -157,7 +164,7 @@ export function EntryForm({ initial, onSubmit, onDelete, resetAfterSubmit }: Pro
         nextSortOrder={nextSortOrder}
         onClose={() => setNewCategoryOpen(false)}
         onCreated={(c) => {
-          setCategories((list) => [...list, c]);
+          setCategories((list) => [...(list ?? []), c]);
           setCategoryId(c.id);
           setNewCategoryOpen(false);
         }}
@@ -188,7 +195,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two + Spacing.one,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
-    backgroundColor: "#f5f5f4",
+    backgroundColor: Colors.surfaceMuted,
   },
   suggestion: {
     flex: 1,

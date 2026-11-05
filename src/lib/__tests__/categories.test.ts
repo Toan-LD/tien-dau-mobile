@@ -3,7 +3,7 @@ import {
     createCategory,
     deleteCategory,
     DuplicateCategoryError,
-    moveCategory,
+    reorderCategories,
     saveCategoryOrder,
     listCategories,
     normalizeCategoryName,
@@ -119,33 +119,28 @@ const cat = (id: string, sortOrder: number) => ({
     sortOrder,
 });
 
-describe("moveCategory", () => {
+describe("reorderCategories", () => {
     const list = [cat("a", 1), cat("b", 2), cat("c", 3)];
 
-    it("moves an item up and renumbers from 1", () => {
-        expect(moveCategory(list, "c", -1)).toEqual([
-            cat("a", 1),
-            cat("c", 2),
+    it("puts categories in the dragged order and renumbers from 1", () => {
+        expect(reorderCategories(list, ["c", "a", "b"])).toEqual([
+            cat("c", 1),
+            cat("a", 2),
             cat("b", 3),
         ]);
     });
 
-    it("moves an item down", () => {
-        expect(moveCategory(list, "a", 1).map((c) => c.id)).toEqual([
-            "b",
-            "a",
-            "c",
+    it("renumbers ties and gaps so the new order sticks", () => {
+        const messy = [cat("a", 0), cat("b", 0), cat("c", 7)];
+        expect(reorderCategories(messy, ["b", "a", "c"])).toEqual([
+            cat("b", 1),
+            cat("a", 2),
+            cat("c", 3),
         ]);
     });
 
-    it("leaves the list unchanged at the edges", () => {
-        expect(moveCategory(list, "a", -1)).toBe(list);
-        expect(moveCategory(list, "c", 1)).toBe(list);
-    });
-
-    it("renumbers ties and gaps so the new order sticks", () => {
-        const messy = [cat("a", 0), cat("b", 0), cat("c", 7)];
-        expect(moveCategory(messy, "b", -1)).toEqual([
+    it("ignores unknown ids", () => {
+        expect(reorderCategories(list, ["b", "x", "a", "c"])).toEqual([
             cat("b", 1),
             cat("a", 2),
             cat("c", 3),

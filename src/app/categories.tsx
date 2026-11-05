@@ -1,17 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import {
-    Alert,
-    FlatList,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { Alert, Pressable, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { CategoryIcon } from "@/components/category-icon";
+import { SortableCategoryList } from "@/components/categories/sortable-category-list";
 import { TypeToggle } from "@/components/entry/entry-header";
 import { NewCategorySheet } from "@/components/entry/new-category-sheet";
 import { useToast } from "@/components/ui/toast";
@@ -19,7 +12,7 @@ import { Colors, Spacing } from "@/constants/theme";
 import {
     deleteCategory,
     listCategories,
-    moveCategory,
+    reorderCategories,
     saveCategoryOrder,
     type Category,
     type TxType,
@@ -71,13 +64,12 @@ export default function CategoriesScreen() {
         }
     };
 
-    // The list updates at once; saves run one after another so quick taps
+    // The list updates at once; saves run one after another so quick drags
     // reach the database in order. A failed save reloads the real order.
     const saving = useRef(Promise.resolve());
-    const move = (id: string, step: -1 | 1) => {
+    const reorder = (ids: string[]) => {
         if (!categories) return;
-        const next = moveCategory(categories, id, step);
-        if (next === categories) return;
+        const next = reorderCategories(categories, ids);
         const before = categories;
         setCategories(next);
         saving.current = saving.current
@@ -110,80 +102,23 @@ export default function CategoriesScreen() {
     return (
         <SafeAreaView edges={["bottom"]} style={styles.container}>
             <TypeToggle type={type} onChange={changeType} />
-            <FlatList
-                data={categories ?? []}
-                keyExtractor={(c) => c.id}
-                contentContainerStyle={styles.list}
-                renderItem={({ item, index }) => (
-                    <View style={styles.row}>
-                        <CategoryIcon iconKey={item.icon} size={20} />
-                        <Text style={styles.name} numberOfLines={1}>
-                            {item.name}
+            {categories !== null && categories.length === 0 ? (
+                <Text style={styles.empty}>Chưa có mục nào</Text>
+            ) : (
+                <SortableCategoryList
+                    items={categories ?? []}
+                    onReorder={reorder}
+                    onDelete={confirmDelete}
+                    footer={
+                        <Text style={styles.hint}>
+                            Nhấn giữ biểu tượng ≡ rồi kéo để đổi thứ tự. Mục ở
+                            trên cùng hiện đầu tiên ở màn Ghi. Xoá một mục không
+                            xoá các khoản đã ghi: chúng sẽ hiện là &quot;Không
+                            phân loại&quot;.
                         </Text>
-                        <Pressable
-                            onPress={() => move(item.id, -1)}
-                            disabled={index === 0}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Đưa ${item.name} lên trên`}
-                            hitSlop={4}
-                            style={[
-                                styles.iconButton,
-                                index === 0 && styles.iconButtonDisabled,
-                            ]}
-                        >
-                            <Ionicons
-                                name="chevron-up-outline"
-                                size={20}
-                                color={Colors.icon}
-                            />
-                        </Pressable>
-                        <Pressable
-                            onPress={() => move(item.id, 1)}
-                            disabled={index === (categories?.length ?? 0) - 1}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Đưa ${item.name} xuống dưới`}
-                            hitSlop={4}
-                            style={[
-                                styles.iconButton,
-                                index === (categories?.length ?? 0) - 1 &&
-                                    styles.iconButtonDisabled,
-                            ]}
-                        >
-                            <Ionicons
-                                name="chevron-down-outline"
-                                size={20}
-                                color={Colors.icon}
-                            />
-                        </Pressable>
-                        <View style={styles.divider} />
-                        <Pressable
-                            onPress={() => confirmDelete(item)}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Xoá mục ${item.name}`}
-                            hitSlop={8}
-                            style={styles.deleteButton}
-                        >
-                            <Ionicons
-                                name="trash-outline"
-                                size={20}
-                                color={Colors.danger}
-                            />
-                        </Pressable>
-                    </View>
-                )}
-                ListEmptyComponent={
-                    categories === null ? undefined : (
-                        <Text style={styles.empty}>Chưa có mục nào</Text>
-                    )
-                }
-                ListFooterComponent={
-                    <Text style={styles.hint}>
-                        Bấm mũi tên lên, xuống để đổi thứ tự. Mục ở trên cùng
-                        hiện đầu tiên ở màn Ghi. Xoá một mục không xoá các khoản
-                        đã ghi: chúng sẽ hiện là &quot;Không phân loại&quot;.
-                    </Text>
-                }
-            />
+                    }
+                />
+            )}
             <Pressable
                 onPress={() => setAdding(true)}
                 disabled={categories === null}
@@ -215,30 +150,8 @@ export default function CategoriesScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.background },
-    list: { paddingHorizontal: Spacing.three, paddingTop: Spacing.three },
-    row: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: Spacing.two,
-        paddingVertical: 12,
-        paddingHorizontal: Spacing.three,
-        marginBottom: Spacing.two,
-        backgroundColor: Colors.surface,
-        borderWidth: 1,
-        borderColor: Colors.border,
-        borderRadius: 10,
-    },
-    name: { flex: 1, fontSize: 15, color: Colors.text },
-    iconButton: { padding: Spacing.one },
-    iconButtonDisabled: { opacity: 0.25 },
-    divider: {
-        width: 1,
-        alignSelf: "stretch",
-        marginHorizontal: Spacing.one,
-        backgroundColor: Colors.border,
-    },
-    deleteButton: { padding: Spacing.one },
     empty: {
+        flex: 1,
         textAlign: "center",
         marginTop: Spacing.four,
         fontSize: 14,

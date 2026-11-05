@@ -78,19 +78,13 @@ export async function deleteCategory(id: string): Promise<void> {
     if (error) throw error;
 }
 
-// Moves one category up (-1) or down (+1) and renumbers the list 1..n, so
-// ties and gaps in sort_order can't undo the user's order.
-export function moveCategory(
-    list: Category[],
-    id: string,
-    step: -1 | 1,
-): Category[] {
-    const from = list.findIndex((c) => c.id === id);
-    const to = from + step;
-    if (from < 0 || to < 0 || to >= list.length) return list;
-    const next = [...list];
-    [next[from], next[to]] = [next[to], next[from]];
-    return next.map((c, i) => ({ ...c, sortOrder: i + 1 }));
+// Puts categories in the given id order and renumbers them 1..n, so ties
+// and gaps in sort_order can't undo the user's order.
+export function reorderCategories(list: Category[], ids: string[]): Category[] {
+    const byId = new Map(list.map((c) => [c.id, c]));
+    return ids
+        .flatMap((id) => byId.get(id) ?? [])
+        .map((c, i) => ({ ...c, sortOrder: i + 1 }));
 }
 
 export async function saveCategoryOrder(

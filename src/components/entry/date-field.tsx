@@ -4,6 +4,7 @@ import DateTimePicker, {
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text } from "react-native";
 
+import { MetaChip } from "@/components/entry/meta-chip";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Colors, Spacing } from "@/constants/theme";
 import {
@@ -40,15 +41,12 @@ export function DateField({ date, onChange }: Props) {
 
     return (
         <>
-            <Pressable
+            <MetaChip
+                icon="calendar-outline"
+                label={formatDayTitle(date, todayLocal())}
+                accessibilityLabel={`Ngày: ${formatDayTitle(date, todayLocal())}. Chạm để đổi ngày`}
                 onPress={open}
-                accessibilityRole="button"
-                hitSlop={Spacing.two}
-            >
-                <Text style={styles.text}>
-                    {formatDayTitle(date, todayLocal())}
-                </Text>
-            </Pressable>
+            />
             {Platform.OS !== "android" && (
                 <BottomSheet
                     visible={iosOpen}
@@ -78,11 +76,6 @@ export function DateField({ date, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-    text: {
-        fontSize: 13,
-        color: Colors.textSecondary,
-        textDecorationLine: "underline",
-    },
     done: {
         marginTop: Spacing.two,
         alignItems: "center",

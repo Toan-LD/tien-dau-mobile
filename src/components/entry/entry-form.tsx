@@ -7,6 +7,7 @@ import { CategoryGrid } from "@/components/entry/category-grid";
 import { DateField } from "@/components/entry/date-field";
 import { AmountDisplay, TypeToggle } from "@/components/entry/entry-header";
 import { Keypad } from "@/components/entry/keypad";
+import { MetaChip } from "@/components/entry/meta-chip";
 import { NewCategorySheet } from "@/components/entry/new-category-sheet";
 import { NoteSheet } from "@/components/entry/note-sheet";
 import { useToast } from "@/components/ui/toast";
@@ -141,21 +142,16 @@ export function EntryForm({
             />
             <View style={styles.metaRow}>
                 <DateField date={date} onChange={changeDate} />
-                <Pressable
+                <MetaChip
+                    icon="create-outline"
+                    label={note === "" ? "Thêm mô tả" : note}
+                    placeholder={note === ""}
+                    accessibilityLabel={
+                        note === "" ? "Thêm mô tả" : `Mô tả: ${note}`
+                    }
+                    grow
                     onPress={() => setNoteOpen(true)}
-                    accessibilityRole="button"
-                    style={styles.noteButton}
-                >
-                    <Text
-                        style={[
-                            styles.metaText,
-                            note !== "" && styles.noteText,
-                        ]}
-                        numberOfLines={1}
-                    >
-                        {note === "" ? "Thêm mô tả" : note}
-                    </Text>
-                </Pressable>
+                />
             </View>
 
             <CategoryGrid
@@ -256,15 +252,11 @@ const styles = StyleSheet.create({
     metaRow: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
-        gap: Spacing.three,
+        gap: Spacing.two,
         paddingHorizontal: Spacing.three,
-        paddingTop: Spacing.one,
-        paddingBottom: Spacing.two,
+        paddingTop: Spacing.three,
+        paddingBottom: Spacing.three,
     },
-    noteButton: { flex: 1, alignItems: "flex-end" },
-    metaText: { fontSize: 13, color: Colors.textMuted },
-    noteText: { color: Colors.textSecondary },
     suggestions: {
         flexDirection: "row",
         gap: Spacing.two,

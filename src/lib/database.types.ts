@@ -315,7 +315,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_own_category: { Args: { category: string }; Returns: boolean }
     }
     Enums: {
       budget_period: "weekly" | "monthly" | "yearly"

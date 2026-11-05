@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(10);
+select plan(15);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a@example.com', '{"full_name":"A"}'),
@@ -43,6 +43,27 @@ select throws_ok(
 select throws_ok(
   $$insert into public.categories (user_id, name, type) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', ' ăn uống ', 'expense')$$,
   '23505', null, 'duplicate category name differing by case and spaces is rejected');
+
+select throws_ok(
+  $$insert into public.recurring_transactions (user_id, wallet_id, type, amount, frequency, next_run_date)
+    select 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', wallet_b, 'expense', 1000, 'monthly', current_date from ids$$,
+  '42501', null, 'recurring cannot use another user''s wallet');
+select throws_ok(
+  $$insert into public.recurring_transactions (user_id, wallet_id, category_id, type, amount, frequency, next_run_date)
+    select 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', wallet_a, cat_b, 'expense', 1000, 'monthly', current_date from ids$$,
+  '42501', null, 'recurring cannot use another user''s category');
+select throws_ok(
+  $$insert into public.budgets (user_id, category_id, amount, month)
+    select 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', cat_b, 1000, current_date from ids$$,
+  '42501', null, 'budget cannot use another user''s category');
+select throws_ok(
+  $$insert into public.categories (user_id, name, type, parent_id)
+    select 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Con', 'expense', cat_b from ids$$,
+  '42501', null, 'category cannot have another user''s parent');
+select throws_ok(
+  $$update public.categories set parent_id = (select cat_b from ids)
+    where user_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and name = 'Cà phê'$$,
+  '42501', null, 'category update cannot set another user''s parent');
 
 select * from finish();
 rollback;

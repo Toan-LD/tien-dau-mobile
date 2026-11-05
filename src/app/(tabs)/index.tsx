@@ -6,13 +6,16 @@ import { Colors } from "@/constants/theme";
 import { createTransaction } from "@/lib/transactions";
 
 export default function RecordScreen() {
-  return (
-    <SafeAreaView edges={["top"]} style={styles.container}>
-      <EntryForm resetAfterSubmit onSubmit={(d) => createTransaction(d).then(() => {})} />
-    </SafeAreaView>
-  );
+    return (
+        <SafeAreaView edges={["top"]} style={styles.container}>
+            <EntryForm
+                resetAfterSubmit
+                onSubmit={(d) => createTransaction(d).then(() => {})}
+            />
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+    container: { flex: 1, backgroundColor: Colors.background },
 });

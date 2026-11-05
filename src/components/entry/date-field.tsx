@@ -43,6 +43,7 @@ export function DateField({ date, onChange }: Props) {
         <>
             <MetaChip
                 icon="calendar-outline"
+                grow
                 label={formatDayTitle(date, todayLocal())}
                 accessibilityLabel={`Ngày: ${formatDayTitle(date, todayLocal())}. Chạm để đổi ngày`}
                 onPress={open}

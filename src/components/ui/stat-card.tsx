@@ -6,6 +6,9 @@ import {
     type ViewStyle,
 } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
+
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { Colors, Spacing } from "@/constants/theme";
 
 type Props = {
@@ -13,20 +16,54 @@ type Props = {
     value: string;
     // "large" is the Còn lại box on Báo cáo; "small" sits two to a row.
     size?: "small" | "large";
+    // Makes the card a button (with a small chart icon), e.g. to open a report.
+    onPress?(): void;
+    accessibilityHint?: string;
 };
 
 // A bordered box with a small label over a money value.
-export function StatCard({ label, value, size = "small" }: Props) {
+export function StatCard({
+    label,
+    value,
+    size = "small",
+    onPress,
+    accessibilityHint,
+}: Props) {
     const large = size === "large";
-    return (
-        <View
-            style={[styles.card, large ? styles.cardLarge : styles.cardSmall]}
-        >
-            <Text style={styles.label}>{label}</Text>
+    const cardStyle = [
+        styles.card,
+        large ? styles.cardLarge : styles.cardSmall,
+    ];
+    const content = (
+        <>
+            <View style={styles.labelRow}>
+                <Text style={styles.label}>{label}</Text>
+                {onPress && (
+                    <Ionicons
+                        name="pie-chart-outline"
+                        size={13}
+                        color={Colors.textMuted}
+                    />
+                )}
+            </View>
             <Text style={large ? styles.valueLarge : styles.value}>
                 {value}
             </Text>
-        </View>
+        </>
+    );
+
+    if (!onPress) return <View style={cardStyle}>{content}</View>;
+    return (
+        <PressableScale
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityLabel={`${label}: ${value}`}
+            accessibilityHint={accessibilityHint}
+            style={cardStyle}
+            pressedStyle={styles.pressed}
+        >
+            {content}
+        </PressableScale>
     );
 }
 
@@ -55,7 +92,13 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     cardLarge: { padding: Spacing.three, borderRadius: 12 },
+    labelRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
     label: { fontSize: 11, color: Colors.textSecondary },
+    pressed: { backgroundColor: Colors.surfaceMuted },
     value: {
         fontSize: 15,
         fontWeight: "600",

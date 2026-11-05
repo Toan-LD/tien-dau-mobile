@@ -108,6 +108,8 @@ Từ trên xuống:
 **Thứ tự mục trong lưới [Claude]:** theo `sort_order`, cố định, **không** tự xếp theo tần suất dùng, để vị trí không nhảy lung tung. Lưới dài quá thì cuộn được.
 
 ### 4.5 Tab Danh sách (trước đây là "Hôm nay") **[người dùng]**
+- **Xem theo Ngày / Tuần / Tháng** (nút chọn ba lựa chọn ở đầu tab, mặc định Ngày). Tuần tính từ **thứ Hai** đến Chủ nhật. Ở chế độ Tuần và Tháng, danh sách chia theo từng ngày: mỗi ngày có dòng tiêu đề "Thứ Hai, 02/11" kèm tổng chi/thu của ngày đó. ‹ › đi lùi/tới một ngày, một tuần hoặc một tháng. Bấm vào tiêu đề: Ngày/Tuần mở lịch chọn ngày, Tháng mở sheet chọn tháng. Đổi chế độ thì vẫn giữ ngày đang xem. **[người dùng, 2026-11-05; tuần bắt đầu thứ Hai: Claude]**
+- **Bấm ô Đã chi / Đã thu** mở sheet **Báo cáo** cho đúng ngày/tuần/tháng đang xem: nút Chi/Thu (mở sẵn theo ô vừa bấm), **biểu đồ donut** theo mục (5 mục lớn nhất mỗi mục một màu, còn lại gộp "Khác" màu xám) và danh sách mục với số tiền, phần trăm. Bấm một lát hoặc một dòng thì làm nổi mục đó, giữa donut hiện tên, số tiền, phần trăm. **[người dùng, 2026-11-05; donut thay cho lựa chọn thanh ngang trước đây theo yêu cầu người dùng]**
 - Đầu trang: **"Hôm nay, 05/11"** với ‹ › để chuyển ngày. Không cho chuyển tới ngày tương lai. **[Claude]** Bấm vào chữ ngày thì mở lịch để chọn thẳng một ngày (không quá hôm nay). **[người dùng, 2026-11-05]**
 - Hai ô **Đã chi** và **Đã thu** của ngày đang xem. **[Claude]**
 - Danh sách các khoản có `transaction_date` bằng ngày đang xem, **khoản mới tạo nằm trên cùng** (sắp theo `created_at` giảm dần). **[người dùng]**
@@ -126,6 +128,7 @@ Từ trên xuống:
 - **Tổng tháng:** ô lớn **Còn lại (thu − chi)**, bên dưới là hai ô **Thu** và **Chi**. Chỉ là số, không có biểu đồ.
 - **Chi theo mục:** thanh ngang, **một màu xám đậm**, xếp từ lớn đến nhỏ. Mỗi dòng có icon, tên mục, thanh dài theo tỉ lệ với mục lớn nhất, và số tiền dạng rút gọn (`2,5tr`, `450k`). **[Claude]**: dùng thanh xếp hạng thay vì biểu đồ tròn vì dễ so sánh hơn và hợp phong cách một màu.
 - **Thu theo mục:** cách hiển thị giống hệt.
+- Mỗi dòng mục có thêm **phần trăm** trên tổng chi (hoặc tổng thu) của tháng. **Bấm một mục** mở sheet **"Chi/Thu từ trước tới nay"**: biểu đồ cột theo tháng, từ tháng đầu tiên có khoản trong mục đó tới tháng hiện tại (tháng trống là 0), tự cuộn tới tháng mới nhất; bấm một cột để xem số của tháng đó; bên dưới là Tổng, Trung bình mỗi tháng, Tháng cao nhất. **[người dùng, 2026-11-05]**
 - Các khoản không có mục (`category_id` null) gom vào dòng **"Không phân loại"**. **[Claude]**
 - Bấm một mục: mở danh sách các khoản của mục đó trong tháng, dùng cùng kiểu dòng như tab Danh sách. **[Claude, tuỳ chọn]**: nếu tốn công thì để sau.
 - Tháng không có dữ liệu: các số hiện 0, các phần biểu đồ hiện một dòng chữ nhẹ.

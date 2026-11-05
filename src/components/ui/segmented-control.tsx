@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import {
+    Pressable,
+    StyleSheet,
+    View,
+    type StyleProp,
+    type ViewStyle,
+} from "react-native";
 import Animated, {
     type SharedValue,
     useAnimatedStyle,
@@ -18,6 +24,8 @@ type Props<T extends string> = {
     options: readonly Option<T>[];
     value: T;
     onChange(value: T): void;
+    // Outer spacing only, e.g. to drop the default side margins in a sheet.
+    style?: StyleProp<ViewStyle>;
 };
 
 const PADDING = 2;
@@ -37,6 +45,7 @@ export function SegmentedControl<T extends string>({
     options,
     value,
     onChange,
+    style,
 }: Props<T>) {
     const index = Math.max(
         0,
@@ -76,7 +85,7 @@ export function SegmentedControl<T extends string>({
 
     return (
         <View
-            style={styles.segment}
+            style={[styles.segment, style]}
             onLayout={(e) => {
                 const width =
                     (e.nativeEvent.layout.width - PADDING * 2) / options.length;

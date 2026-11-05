@@ -11,58 +11,101 @@ import { StyleSheet, Text, type FlatList } from "react-native";
 import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PeriodReportSheet } from "@/components/report/period-report-sheet";
+import { DayHeader } from "@/components/today/day-header";
 import { TransactionRow } from "@/components/today/transaction-row";
 import { useDatePicker } from "@/components/ui/date-picker";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { PeriodNav } from "@/components/ui/period-nav";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { StatCard, StatRow } from "@/components/ui/stat-card";
 import { useToast } from "@/components/ui/toast";
 import { Motion } from "@/constants/motion";
 import { Colors, Spacing } from "@/constants/theme";
-import {
-    addDays,
-    formatDayTitle,
-    resolveDate,
-    type LocalDate,
-} from "@/lib/dates";
+import { resolveDate, toLocalDateString, type LocalDate } from "@/lib/dates";
 import { formatVND } from "@/lib/money";
-import { dayQuery, useRefreshOnFocus } from "@/lib/queries";
+import {
+    containsDate,
+    formatPeriodTitle,
+    formatWeekday,
+    groupByDay,
+    periodOf,
+    shiftAnchor,
+    type DayGroup,
+    type PeriodMode,
+} from "@/lib/periods";
+import { periodQuery, useRefreshOnFocus } from "@/lib/queries";
 import { sumByType } from "@/lib/report";
+import type { TxType } from "@/lib/categories";
+import type { Transaction } from "@/lib/transactions";
 import { useToday } from "@/lib/use-today";
 import { useDeleteTransaction } from "@/lib/use-transaction";
-import type { Transaction } from "@/lib/transactions";
 
 const HINT_KEY = "hint.swipe.v1";
 
-export default function TodayScreen() {
+const MODES: readonly { value: PeriodMode; label: string }[] = [
+    { value: "day", label: "Ngày" },
+    { value: "week", label: "Tuần" },
+    { value: "month", label: "Tháng" },
+];
+
+const UNIT: Record<PeriodMode, string> = {
+    day: "Ngày",
+    week: "Tuần",
+    month: "Tháng",
+};
+
+// Week and month lists put a heading above each day's rows.
+type Row = { kind: "day"; group: DayGroup } | { kind: "tx"; tx: Transaction };
+
+function toRows(mode: PeriodMode, list: Transaction[]): Row[] {
+    if (mode === "day") return list.map((tx) => ({ kind: "tx", tx }));
+    return groupByDay(list).flatMap((group): Row[] => [
+        { kind: "day", group },
+        ...group.items.map((tx): Row => ({ kind: "tx", tx })),
+    ]);
+}
+
+export default function ListScreen() {
     const router = useRouter();
     const toast = useToast();
     const today = useToday();
-    // null = following today, so the screen moves on by itself after midnight.
+    const [mode, setMode] = useState<PeriodMode>("day");
+    // A day inside the period on show. null = following today, so the
+    // current day/week/month moves on by itself after midnight.
     const [picked, setPicked] = useState<LocalDate | null>(null);
-    const date = resolveDate(picked, today);
+    const anchor = resolveDate(picked, today);
+    const period = periodOf(mode, anchor);
+    const isCurrent = containsDate(period, today);
+    const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+    // Which summary card opened the report sheet; null = closed.
+    const [reportType, setReportType] = useState<TxType | null>(null);
+
     const queryClient = useQueryClient();
     const query = useQuery({
-        ...dayQuery(date),
-        // While another day loads, keep showing the last list (dimmed)
+        ...periodQuery(mode, period),
+        // While another period loads, keep showing the last list (dimmed)
         // instead of flashing an empty screen.
         placeholderData: keepPreviousData,
     });
     const items = query.data ?? null;
-    const showingOldDay = query.isPlaceholderData;
+    const showingOld = query.isPlaceholderData;
+    const rows = toRows(mode, items ?? []);
     const remove = useDeleteTransaction();
     const [hintId, setHintId] = useState<string | null>(null);
     const hintStarted = useRef(false);
 
-    useRefreshOnFocus(dayQuery(date).queryKey);
+    useRefreshOnFocus(periodQuery(mode, period).queryKey);
 
     useEffect(() => {
         if (query.error) toast.show({ message: "Không tải được danh sách" });
     }, [query.error, toast]);
 
-    // Load the day before in the background, so tapping "‹" is instant.
+    // Load the period before in the background, so tapping "‹" is instant.
+    const prevStart = periodOf(mode, shiftAnchor(mode, anchor, -1)).start;
     useEffect(() => {
-        queryClient.prefetchQuery(dayQuery(addDays(date, -1)));
-    }, [date, queryClient]);
+        queryClient.prefetchQuery(periodQuery(mode, periodOf(mode, prevStart)));
+    }, [mode, prevStart, queryClient]);
 
     const firstId = items && items.length > 0 ? items[0].id : null;
     useEffect(() => {
@@ -84,16 +127,19 @@ export default function TodayScreen() {
 
     const clearHint = () => setHintId(null);
 
-    const changeDay = (next: LocalDate) => {
-        setPicked(next === today ? null : next);
+    // Any day inside the current period means "follow today".
+    const goTo = (next: LocalDate) => {
+        setPicked(containsDate(periodOf(mode, next), today) ? null : next);
     };
-    const picker = useDatePicker(date, changeDay);
+    const datePicker = useDatePicker(anchor, goTo);
+    const openPicker = () =>
+        mode === "month" ? setMonthPickerOpen(true) : datePicker.open();
 
-    // Tapping the Danh sách tab while already on it goes back to today and
-    // scrolls to the top, like most apps do with their home tab.
+    // Tapping the Danh sách tab while already on it goes back to the current
+    // day/week/month and scrolls to the top, like most apps' home tab.
     const navigation =
         useNavigation<BottomTabNavigationProp<Record<string, undefined>>>();
-    const listRef = useRef<FlatList<Transaction>>(null);
+    const listRef = useRef<FlatList<Row>>(null);
     useEffect(
         () =>
             navigation.addListener("tabPress", () => {
@@ -105,71 +151,114 @@ export default function TodayScreen() {
     );
 
     const totals = sumByType(items ?? []);
-    const isToday = date === today;
+    const title = formatPeriodTitle(mode, period, today);
+    const unit = UNIT[mode];
 
     const header = (
         <StatRow style={styles.totals}>
-            <StatCard label="Đã chi" value={formatVND(totals.expense)} />
-            <StatCard label="Đã thu" value={formatVND(totals.income)} />
+            <StatCard
+                label="Đã chi"
+                value={formatVND(totals.expense)}
+                onPress={() => setReportType("expense")}
+                accessibilityHint="Mở báo cáo chi theo mục"
+            />
+            <StatCard
+                label="Đã thu"
+                value={formatVND(totals.income)}
+                onPress={() => setReportType("income")}
+                accessibilityHint="Mở báo cáo thu theo mục"
+            />
         </StatRow>
     );
 
+    const openTransaction = (id: string) =>
+        router.push({ pathname: "/transaction/[id]", params: { id } });
+    const editTransaction = (id: string) =>
+        router.push({ pathname: "/transaction/[id]/edit", params: { id } });
+
     return (
         <SafeAreaView edges={["top"]} style={styles.container}>
+            <SegmentedControl<PeriodMode>
+                options={MODES}
+                value={mode}
+                onChange={setMode}
+            />
             <PeriodNav
                 spread
-                style={styles.dayRow}
-                title={formatDayTitle(date, today)}
-                onTitlePress={picker.open}
-                titleLabel={`${formatDayTitle(date, today)}. Chạm để chọn ngày`}
-                onPrev={() => changeDay(addDays(date, -1))}
-                onNext={() => changeDay(addDays(date, 1))}
-                nextDisabled={isToday}
-                prevLabel="Ngày trước"
-                nextLabel="Ngày sau"
+                style={styles.periodRow}
+                title={title}
+                onTitlePress={openPicker}
+                titleLabel={`${title}. Chạm để chọn ${unit.toLowerCase()}`}
+                onPrev={() => goTo(shiftAnchor(mode, anchor, -1))}
+                onNext={() => goTo(shiftAnchor(mode, anchor, 1))}
+                nextDisabled={isCurrent}
+                prevLabel={`${unit} trước`}
+                nextLabel={`${unit} sau`}
             />
             <Animated.FlatList
                 ref={listRef}
                 // When a row is deleted the rows below glide up instead of jumping.
                 itemLayoutAnimation={Motion.reflow}
-                style={showingOldDay && styles.stale}
-                data={items ?? []}
-                keyExtractor={(tx) => tx.id}
+                style={showingOld && styles.stale}
+                data={rows}
+                keyExtractor={(row) =>
+                    row.kind === "day" ? `day-${row.group.date}` : row.tx.id
+                }
                 ListHeaderComponent={header}
                 ListEmptyComponent={
-                    items && !showingOldDay ? (
+                    items && !showingOld ? (
                         <Text style={styles.empty}>Chưa có khoản nào</Text>
                     ) : undefined
                 }
-                renderItem={({ item }) => (
-                    <TransactionRow
-                        tx={item}
-                        peekHint={item.id === hintId}
-                        onPeekDone={clearHint}
-                        onPress={() =>
-                            router.push({
-                                pathname: "/transaction/[id]",
-                                params: { id: item.id },
-                            })
-                        }
-                        onEdit={() =>
-                            router.push({
-                                pathname: "/transaction/[id]/edit",
-                                params: { id: item.id },
-                            })
-                        }
-                        onDelete={() => remove(item)}
-                    />
-                )}
+                renderItem={({ item }) =>
+                    item.kind === "day" ? (
+                        <DayHeader
+                            group={item.group}
+                            title={formatWeekday(item.group.date, today)}
+                        />
+                    ) : (
+                        <TransactionRow
+                            tx={item.tx}
+                            peekHint={item.tx.id === hintId}
+                            onPeekDone={clearHint}
+                            onPress={() => openTransaction(item.tx.id)}
+                            onEdit={() => editTransaction(item.tx.id)}
+                            onDelete={() => remove(item.tx)}
+                        />
+                    )
+                }
             />
-            {picker.sheet}
+            {datePicker.sheet}
+            <PeriodReportSheet
+                visible={reportType !== null}
+                onClose={() => setReportType(null)}
+                periodTitle={title}
+                initialType={reportType ?? "expense"}
+                transactions={items ?? []}
+            />
+            <MonthPicker
+                visible={monthPickerOpen}
+                value={{
+                    year: Number(anchor.slice(0, 4)),
+                    month: Number(anchor.slice(5, 7)),
+                }}
+                max={{
+                    year: Number(today.slice(0, 4)),
+                    month: Number(today.slice(5, 7)),
+                }}
+                onSelect={({ year, month }) => {
+                    goTo(toLocalDateString(new Date(year, month - 1, 1)));
+                    setMonthPickerOpen(false);
+                }}
+                onClose={() => setMonthPickerOpen(false)}
+            />
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.background },
-    dayRow: {
+    periodRow: {
         paddingHorizontal: Spacing.three,
         paddingVertical: Spacing.two,
     },

@@ -9,6 +9,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CategoryBars } from "@/components/report/category-bars";
+import { CategoryHistorySheet } from "@/components/report/category-history-sheet";
 import { IconButton } from "@/components/ui/icon-button";
 import { MonthPicker, type YearMonth } from "@/components/ui/month-picker";
 import { PeriodNav } from "@/components/ui/period-nav";
@@ -17,7 +18,8 @@ import { Colors, Spacing } from "@/constants/theme";
 import { formatMonthTitle } from "@/lib/dates";
 import { formatVND } from "@/lib/money";
 import { monthQuery, useRefreshOnFocus } from "@/lib/queries";
-import { buildMonthReport } from "@/lib/report";
+import { buildMonthReport, type CategoryTotal } from "@/lib/report";
+import type { TxType } from "@/lib/categories";
 import { useToday } from "@/lib/use-today";
 
 function formatBalance(balance: number): string {
@@ -34,6 +36,11 @@ export default function ReportScreen() {
     // null = following the current month, so it moves on by itself when the month changes.
     const [picked, setPicked] = useState<YearMonth | null>(null);
     const [pickerOpen, setPickerOpen] = useState(false);
+    // The category whose history sheet is open, and whether it's Chi or Thu.
+    const [history, setHistory] = useState<{
+        item: CategoryTotal;
+        type: TxType;
+    } | null>(null);
     const view = picked ?? { year: currentYear, month: currentMonth };
     const queryClient = useQueryClient();
     const query = useQuery({
@@ -128,11 +135,17 @@ export default function ReportScreen() {
                                 title="Chi theo mục"
                                 items={report.expenseByCategory}
                                 emptyText="Chưa có khoản chi nào"
+                                onSelect={(item) =>
+                                    setHistory({ item, type: "expense" })
+                                }
                             />
                             <CategoryBars
                                 title="Thu theo mục"
                                 items={report.incomeByCategory}
                                 emptyText="Chưa có khoản thu nào"
+                                onSelect={(item) =>
+                                    setHistory({ item, type: "income" })
+                                }
                             />
                         </>
                     )}
@@ -148,6 +161,12 @@ export default function ReportScreen() {
                     setPickerOpen(false);
                 }}
                 onClose={() => setPickerOpen(false)}
+            />
+            <CategoryHistorySheet
+                category={history?.item ?? null}
+                type={history?.type ?? "expense"}
+                until={{ year: currentYear, month: currentMonth }}
+                onClose={() => setHistory(null)}
             />
         </SafeAreaView>
     );

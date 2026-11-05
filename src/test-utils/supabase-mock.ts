@@ -42,6 +42,7 @@ function builder(table: string) {
         "update",
         "delete",
         "eq",
+        "is",
         "in",
         "gte",
         "lte",

@@ -10,8 +10,11 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { listCategories, type Category, type TxType } from "@/lib/categories";
 import type { LocalDate } from "@/lib/dates";
+import type { Period, PeriodMode } from "@/lib/periods";
 import {
     getTransaction,
+    listCategoryHistory,
+    listTransactionsBetween,
     listTransactionsForDay,
     listTransactionsForMonth,
     type Transaction,
@@ -31,6 +34,31 @@ export function monthQuery(year: number, month: number) {
     return queryOptions({
         queryKey: ["transactions", "month", year, month],
         queryFn: () => listTransactionsForMonth(year, month),
+    });
+}
+
+// The Danh sách tab's list for a day, week or month. Day and month reuse the
+// keys above, so they share the cache with each other and with Báo cáo.
+export function periodQuery(mode: PeriodMode, period: Period) {
+    const [year, month] = period.start.split("-").map(Number);
+    const queryKey: QueryKey =
+        mode === "day"
+            ? dayQuery(period.start).queryKey
+            : mode === "month"
+              ? monthQuery(year, month).queryKey
+              : ["transactions", "week", period.start];
+    return queryOptions({
+        queryKey,
+        queryFn: () => listTransactionsBetween(period.start, period.end),
+    });
+}
+
+// Every amount in one category for the history chart on Báo cáo. Under
+// ["transactions"] so it refreshes after any add, edit or delete.
+export function categoryHistoryQuery(categoryId: string | null, type: TxType) {
+    return queryOptions({
+        queryKey: ["transactions", "category-history", type, categoryId],
+        queryFn: () => listCategoryHistory(categoryId, type),
     });
 }
 

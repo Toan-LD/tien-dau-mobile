@@ -24,3 +24,13 @@ export const Spacing = {
     five: 32,
     six: 64,
 } as const;
+
+// Chart colours, only for marks (donut slices, swatches), never for text.
+// Muted to sit with the stone greys, and checked with the dataviz palette
+// validator on white: lightness, chroma, colour-blind and normal-vision
+// separation and 3:1 contrast all pass. Use in this order; past five
+// categories the rest share `other`.
+export const ChartColors = {
+    series: ["#3a72c6", "#cf6331", "#16a079", "#c18b12", "#c96b93"],
+    other: "#a8a29e",
+} as const;

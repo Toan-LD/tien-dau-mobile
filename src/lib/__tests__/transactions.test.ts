@@ -3,6 +3,7 @@ import {
     clearDefaultWalletCache,
     createTransaction,
     deleteTransaction,
+    listCategoryHistory,
     listTransactionsForDay,
     restoreTransaction,
     subscribeTransactionsChanged,
@@ -166,5 +167,27 @@ describe("deleteTransaction and queries", () => {
             "transaction_date",
             "2026-11-04",
         ]);
+    });
+});
+
+describe("listCategoryHistory", () => {
+    it("filters by category and type, oldest first", async () => {
+        fake.enqueue("transactions", {
+            data: [{ transaction_date: "2026-10-02", amount: 5000 }],
+        });
+        await expect(listCategoryHistory("c1", "expense")).resolves.toEqual([
+            { date: "2026-10-02", amount: 5000 },
+        ]);
+        expect(fake.callsTo("eq")).toEqual([
+            ["type", "expense"],
+            ["category_id", "c1"],
+        ]);
+        expect(fake.callsTo("order")).toEqual([["transaction_date"]]);
+    });
+
+    it('uses "is null" for transactions without a category', async () => {
+        fake.enqueue("transactions", { data: [] });
+        await listCategoryHistory(null, "income");
+        expect(fake.callsTo("is")).toEqual([["category_id", null]]);
     });
 });

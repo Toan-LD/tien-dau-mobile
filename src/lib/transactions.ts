@@ -185,11 +185,12 @@ export async function listTransactionsForDay(
     return (data ?? []).map(toTransaction);
 }
 
-export async function listTransactionsForMonth(
-    year: number,
-    month: number,
+// Every transaction from start to end (both included), newest day first and,
+// within a day, newest entry first.
+export async function listTransactionsBetween(
+    start: LocalDate,
+    end: LocalDate,
 ): Promise<Transaction[]> {
-    const { start, end } = monthRange(year, month);
     const { data, error } = await supabase
         .from("transactions")
         .select(SELECT)
@@ -200,4 +201,34 @@ export async function listTransactionsForMonth(
         .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []).map(toTransaction);
+}
+
+// Every amount ever recorded in one category (null = "Không phân loại") for
+// one type, oldest first: the data behind the category history chart.
+export async function listCategoryHistory(
+    categoryId: string | null,
+    type: TxType,
+): Promise<{ date: LocalDate; amount: number }[]> {
+    const base = supabase
+        .from("transactions")
+        .select("transaction_date, amount")
+        .eq("type", type);
+    const filtered =
+        categoryId === null
+            ? base.is("category_id", null)
+            : base.eq("category_id", categoryId);
+    const { data, error } = await filtered.order("transaction_date");
+    if (error) throw error;
+    return (data ?? []).map((r) => ({
+        date: r.transaction_date,
+        amount: r.amount,
+    }));
+}
+
+export async function listTransactionsForMonth(
+    year: number,
+    month: number,
+): Promise<Transaction[]> {
+    const { start, end } = monthRange(year, month);
+    return listTransactionsBetween(start, end);
 }

@@ -34,6 +34,10 @@ function RootStack() {
                     options={{ headerShown: true, title: "Cài đặt" }}
                 />
                 <Stack.Screen
+                    name="categories"
+                    options={{ headerShown: true, title: "Danh mục" }}
+                />
+                <Stack.Screen
                     name="transaction/[id]"
                     options={{ headerShown: true, title: "Sửa khoản" }}
                 />

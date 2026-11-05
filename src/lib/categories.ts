@@ -70,3 +70,10 @@ export async function createCategory(input: {
     }
     return toCategory(data);
 }
+
+// Transactions in a deleted category keep their amount and show as
+// "Không phân loại": transactions.category_id is ON DELETE SET NULL.
+export async function deleteCategory(id: string): Promise<void> {
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) throw error;
+}

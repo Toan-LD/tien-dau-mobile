@@ -1,6 +1,7 @@
 import { fake } from "@/test-utils/supabase-mock";
 import {
     createCategory,
+    deleteCategory,
     DuplicateCategoryError,
     listCategories,
     normalizeCategoryName,
@@ -91,5 +92,19 @@ describe("listCategories", () => {
                 sortOrder: 1,
             },
         ]);
+    });
+});
+
+describe("deleteCategory", () => {
+    it("deletes the row by id", async () => {
+        fake.enqueue("categories", {});
+        await deleteCategory("c1");
+        expect(fake.callsTo("delete")).toHaveLength(1);
+        expect(fake.callsTo("eq")).toContainEqual(["id", "c1"]);
+    });
+
+    it("throws when the delete fails", async () => {
+        fake.enqueue("categories", { error: { code: "42501" } });
+        await expect(deleteCategory("c1")).rejects.toBeTruthy();
     });
 });

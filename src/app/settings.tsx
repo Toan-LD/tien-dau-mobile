@@ -1,3 +1,5 @@
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
     ActivityIndicator,
@@ -36,6 +38,26 @@ export default function SettingsScreen() {
             {name ? <Text style={styles.name}>{name}</Text> : null}
             {email ? <Text style={styles.email}>{email}</Text> : null}
             <Pressable
+                style={({ pressed }) => [
+                    styles.menuRow,
+                    pressed && styles.menuRowPressed,
+                ]}
+                onPress={() => router.push("/categories")}
+                accessibilityRole="button"
+            >
+                <Ionicons
+                    name="pricetags-outline"
+                    size={20}
+                    color={Colors.icon}
+                />
+                <Text style={styles.menuText}>Quản lý danh mục</Text>
+                <Ionicons
+                    name="chevron-forward-outline"
+                    size={18}
+                    color={Colors.textMuted}
+                />
+            </Pressable>
+            <Pressable
                 style={[styles.signOut, busy && styles.signOutBusy]}
                 onPress={onSignOut}
                 disabled={busy}
@@ -63,6 +85,20 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginTop: Spacing.one,
     },
+    menuRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: Spacing.three,
+        marginTop: Spacing.four,
+        paddingVertical: 14,
+        paddingHorizontal: Spacing.three,
+        backgroundColor: Colors.surface,
+        borderWidth: 1,
+        borderColor: Colors.border,
+        borderRadius: 10,
+    },
+    menuRowPressed: { backgroundColor: Colors.segment },
+    menuText: { flex: 1, fontSize: 15, color: Colors.text },
     signOut: {
         alignItems: "center",
         justifyContent: "center",

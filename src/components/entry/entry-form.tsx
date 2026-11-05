@@ -69,7 +69,12 @@ export function EntryForm({
             let stale = false;
             listCategories(type)
                 .then((list) => {
-                    if (!stale) setCategories(list);
+                    if (stale) return;
+                    setCategories(list);
+                    // The selected category may have been deleted on the Danh mục screen.
+                    setCategoryId((current) =>
+                        list.some((c) => c.id === current) ? current : null,
+                    );
                 })
                 .catch(() => {
                     if (!stale)
@@ -88,8 +93,9 @@ export function EntryForm({
         setCategories(null);
     };
 
+    // Tapping the selected category again clears the selection.
     const selectCategory = (id: string) => {
-        setCategoryId(id);
+        setCategoryId((current) => (current === id ? null : id));
         setKeypadOpen(false);
     };
 

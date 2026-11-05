@@ -15,8 +15,8 @@ export default function SettingsScreen() {
     setBusy(true);
     try {
       await signOut();
-    } catch (e) {
-      Alert.alert('Không đăng xuất được', e instanceof Error ? e.message : 'Vui lòng thử lại.');
+    } catch {
+      Alert.alert('Không đăng xuất được', 'Kiểm tra kết nối mạng rồi thử lại.');
       setBusy(false);
     }
   }

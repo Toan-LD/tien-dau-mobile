@@ -42,8 +42,8 @@ async function signInWithGoogle() {
 
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     if (exchangeError) throw exchangeError;
-  } catch (e) {
-    showError(e instanceof Error ? e.message : 'Vui lòng thử lại.');
+  } catch {
+    showError('Kiểm tra kết nối mạng rồi thử lại.');
   }
 }
 

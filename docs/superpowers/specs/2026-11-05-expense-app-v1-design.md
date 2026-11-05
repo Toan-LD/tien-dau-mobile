@@ -48,7 +48,14 @@ Trước mắt app cho chính họ dùng, nhưng có thể sau này cho người
 - **Supabase** là backend duy nhất, app gọi thẳng bằng supabase-js. Schema đã tồn tại trên project Supabase của chủ project (xem §6).
 - Tiền tệ: **VND, số nguyên**, không có phần lẻ. Hiển thị theo kiểu `30.000 đ`. Ngôn ngữ giao diện: **tiếng Việt**. **[Claude]**
 - Chủ project là người mới. Mọi bước cài đặt họ phải tự làm (Google Cloud, Supabase Dashboard, Supabase CLI) cần có **hướng dẫn từng bước bằng tiếng Việt**, đặt trong `docs/setup.md`. **[Claude]**
-- **Tình trạng Supabase [người dùng]:** chủ project mới tạo các bảng, **chưa làm gì thêm**. Chưa có user, chưa có dữ liệu, chưa bật RLS, chưa có trigger hay function. Vì vậy không cần migration bổ sung dữ liệu cho user cũ hay chuyển đổi icon emoji. Đây là project duy nhất, nhưng hiện trống nên migration chạy thẳng lên đó được.
+- **Tình trạng Supabase:** chủ project cho biết chưa có user và chưa có dữ liệu **[người dùng]**. Schema thực tế đã lấy về `supabase/migrations/20261105103009_initial_schema.sql` (2026-11-05). Trên server đã có sẵn những thứ sau:
+  - **RLS đã bật trên cả 6 bảng nhưng chưa có policy nào.** Tức là app chưa đọc hay ghi được gì cho tới khi thêm policy (§5.4).
+  - Trigger `on_auth_user_created` → `handle_new_user()`, **hiện chỉ tạo `profiles`**. Cần sửa hàm này bằng `CREATE OR REPLACE`, không tạo trigger mới (§5.3).
+  - Trigger `set_updated_at` trên các bảng, và event trigger `rls_auto_enable` (tự bật RLS cho bảng mới trong `public`).
+  - Enum `transaction_type` có các giá trị `income`, `expense`, `transfer`. `transactions.category_id` đã là `ON DELETE SET NULL`. `transactions.wallet_id` là `ON DELETE RESTRICT`.
+  - Không có trigger cập nhật `wallets.balance`.
+
+  Không cần migration bổ sung dữ liệu cho user cũ hay chuyển đổi icon emoji. Đây là project duy nhất, nhưng hiện trống nên migration chạy thẳng lên đó được.
 - **Ai chạy Supabase CLI [Claude]:** chủ project tự chạy `supabase login` và `supabase link` một lần (có hướng dẫn trong `docs/setup.md`). Sau đó builder chạy `db pull` và `db push` trên máy này.
 - **Cách dùng ở v1 [người dùng]:** "làm cho tôi xài trước, ổn định thì release". v1 chỉ cần **chạy qua Expo Go** trên điện thoại của chủ project. **Máy chính là Android [người dùng]**, nên mọi thứ phải được kiểm tra trên Android trước. iOS tính sau ("nào có tiền thì chuyển sang iOS"). Code vẫn viết theo kiểu chạy được trên cả hai nền tảng, không dùng API chỉ có trên Android. Redirect OAuth phải chạy được với URL `exp://…` của Expo Go, mà địa chỉ này đổi theo IP mạng LAN, nên cấu hình redirect trên Supabase dùng wildcard. **[Claude]**
 
@@ -136,7 +143,8 @@ Từ trên xuống:
 - Dùng Supabase OAuth provider Google, mở bằng trình duyệt trong app (expo-web-browser hoặc API tương đương của SDK 58, **tra docs**). Bắt redirect bằng deep link scheme `tiendaumobile` (đã có trong `app.json`) và cả URL kiểu `exp://` khi chạy trong Expo Go.
 - Phiên đăng nhập lưu bằng AsyncStorage qua supabase-js, tự làm mới token.
 - `docs/setup.md` phải hướng dẫn: tạo OAuth Client ID (loại Web) trên Google Cloud Console; bật provider Google trong Supabase rồi dán Client ID và Secret; thêm redirect URL của app vào Supabase (Auth → URL Configuration).
-- Cấu hình Supabase URL và anon key bằng biến môi trường `EXPO_PUBLIC_…` trong `.env`. File `.env` không commit, có `.env.example`.
+- Cấu hình Supabase URL và **publishable key** (`sb_publishable_…`; anon key là kiểu cũ, Supabase sẽ bỏ dần) qua `EXPO_PUBLIC_SUPABASE_URL` và `EXPO_PUBLIC_SUPABASE_KEY` trong file `.env.local`. File này đã nằm trong `.gitignore`. Có thêm `.env.example` để mẫu. Tuyệt đối không dùng secret/service_role key trong app.
+- Supabase CLI được cài làm devDependency và chạy bằng `npx supabase …`. Lệnh `db pull` cần Docker. Hướng dẫn cài đặt nằm ở `docs/setup.md`.
 
 ### 5.3 Khởi tạo dữ liệu cho người dùng mới **[Claude]**
 Khi có user mới trong `auth.users`, một trigger trong database tự tạo:

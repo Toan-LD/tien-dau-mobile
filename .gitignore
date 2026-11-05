@@ -31,6 +31,7 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
@@ -42,6 +43,4 @@ example
 /ios
 /android
 
-.superpowers/
-# brainstorming companion (mockups & session files)
 .superpowers/

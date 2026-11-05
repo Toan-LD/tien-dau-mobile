@@ -108,6 +108,28 @@ EXPO_PUBLIC_SUPABASE_KEY=<PUBLISHABLE_KEY>
 
 ---
 
+## Phần 6. Chạy app trên điện thoại (Expo Go)
+
+Dùng lệnh này thay cho `npx expo start`:
+
+```bash
+npm run start:phone
+```
+
+Sau đó mở Expo Go trên điện thoại và quét mã QR như bình thường. Điện thoại và máy tính phải dùng chung Wi-Fi.
+
+**Vì sao không dùng `npx expo start`:** lệnh đó cho Expo Go kết nối bằng địa chỉ IP (ví dụ `exp://192.168.1.31:8081`). Đăng nhập Google xong, Supabase phải chuyển bạn về đúng địa chỉ này, nhưng Supabase **từ chối mọi địa chỉ quay về là IP**, kể cả khi đã có `exp://**` trong Redirect URLs. Khi bị từ chối, nó chuyển sang `localhost:3000` và đăng nhập thất bại.
+
+`npm run start:phone` đổi IP thành tên miền dạng `192.168.1.31.sslip.io`. sslip.io là dịch vụ DNS miễn phí, trả về đúng IP nằm trong tên, nên điện thoại vẫn kết nối thẳng tới máy tính qua Wi-Fi như cũ. Supabase thấy đây là tên miền nên chấp nhận.
+
+**Nếu app không tải được với `start:phone`** (một số router chặn tên miền trỏ về IP nội bộ), dùng đường hầm của Expo thay thế, chậm hơn nhưng chạy được mọi mạng:
+
+```bash
+npx expo start --tunnel
+```
+
+---
+
 ## Xong thì báo cho Claude
 
 Báo theo dạng **"xong phần 1, 2, 3, 4, 5"** (hoặc phần nào bị lỗi thì dán thông báo lỗi). **Không cần gửi key hay secret.** Claude sẽ tự chạy `npx supabase db pull` để lấy schema về.

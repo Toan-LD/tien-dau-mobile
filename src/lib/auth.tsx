@@ -1,4 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
+import { isRunningInExpoGo } from "expo";
+import Constants from "expo-constants";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -22,9 +24,31 @@ function showError(message: string) {
     Alert.alert("Không đăng nhập được", message);
 }
 
+// Where Supabase sends the browser back after Google login. In Expo Go the link must use the
+// `exp://<dev server>/--/` form, because Expo Go does not register the app's own scheme. On some
+// devices `Linking.createURL` does not detect Expo Go and returns `tiendaumobile://auth/callback`,
+// which no installed app opens, so the login tab hangs. Build the Expo Go URL explicitly.
+//
+// Supabase Auth rejects any redirect URL whose host is an IP address (except loopback), whatever
+// the allow list says, and falls back to the Site URL (localhost:3000). The dev server must
+// therefore be reached through a hostname: `npm run start:phone` (see docs/setup.md).
+function authRedirectUrl() {
+    const host = Constants.expoConfig?.hostUri;
+    if (!isRunningInExpoGo() || !host) {
+        return Linking.createURL("auth/callback");
+    }
+    const hostname = host.replace(/:\d+$/, "");
+    if (/^[\d.]+$/.test(hostname) || hostname.includes(":")) {
+        throw new Error(
+            `Dev server đang chạy bằng địa chỉ IP (${hostname}), Supabase không cho đăng nhập về địa chỉ này. Tắt server rồi chạy lại bằng lệnh: npm run start:phone`,
+        );
+    }
+    return `exp://${host}/--/auth/callback`;
+}
+
 async function signInWithGoogle() {
     try {
-        const redirectTo = Linking.createURL("auth/callback");
+        const redirectTo = authRedirectUrl();
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: { redirectTo, skipBrowserRedirect: true },
@@ -47,8 +71,9 @@ async function signInWithGoogle() {
         const { error: exchangeError } =
             await supabase.auth.exchangeCodeForSession(code);
         if (exchangeError) throw exchangeError;
-    } catch {
-        showError("Kiểm tra kết nối mạng rồi thử lại.");
+    } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e);
+        showError(`Kiểm tra kết nối mạng rồi thử lại.\n\nChi tiết: ${detail}`);
     }
 }
 

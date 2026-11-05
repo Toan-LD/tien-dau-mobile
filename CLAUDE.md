@@ -15,7 +15,8 @@ The approved v1 design is in [docs/superpowers/specs/2026-11-05-expense-app-v1-d
 The package manager is npm (`package-lock.json`), so use `npx`, not `bunx`.
 
 ```bash
-npx expo start            # dev server; v1 runs in Expo Go on Android
+npm run start:phone       # dev server for Expo Go on the phone (hostname, not IP: Supabase rejects IP redirect URLs)
+npx expo start            # plain dev server; Google login fails here because Expo Go gets an IP URL
 npx expo lint             # lint (eslint-config-expo + Prettier; formatting issues are errors)
 npm run format            # format everything with Prettier (format:check to verify)
 npx tsc --noEmit          # typecheck

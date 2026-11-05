@@ -155,6 +155,6 @@ const styles = StyleSheet.create({
     icons: { maxHeight: 200, marginTop: Spacing.three },
     iconsContent: { flexDirection: "row", flexWrap: "wrap" },
     iconCell: { width: "16.66%", padding: 3 },
-    iconTile: { height: 44, borderRadius: 10 },
+    iconTile: { height: 44 },
     button: { marginTop: Spacing.three },
 });

@@ -1,7 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import Animated from "react-native-reanimated";
+import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
+import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 
 import { CategoryGrid } from "@/components/entry/category-grid";
 import { DateField } from "@/components/entry/date-field";
@@ -36,6 +38,12 @@ import {
     type Transaction,
     type TransactionDraft,
 } from "@/lib/transactions";
+
+// Horizontal swipe on the category grid: how far the finger must move
+// sideways before it counts as a swipe, and how far or fast to switch type.
+const SWIPE_START = 15;
+const SWIPE_DISTANCE = 60;
+const SWIPE_VELOCITY = 500;
 
 type Props = {
     initial?: Transaction;
@@ -95,6 +103,24 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
         setType(next);
         setCategoryId(null);
     };
+
+    // Swiping sideways over the categories switches Chi/Thu, like flipping
+    // pages: swipe left to go to Thu (the right page), right for Chi.
+    // Only a clearly horizontal move counts; vertical drags still scroll.
+    const swipe = usePanGesture({
+        activeOffsetX: [-SWIPE_START, SWIPE_START],
+        failOffsetY: [-SWIPE_START, SWIPE_START],
+        onDeactivate: (e) => {
+            if (e.canceled) return;
+            const left =
+                e.translationX < -SWIPE_DISTANCE ||
+                e.velocityX < -SWIPE_VELOCITY;
+            const right =
+                e.translationX > SWIPE_DISTANCE || e.velocityX > SWIPE_VELOCITY;
+            if (left) scheduleOnRN(changeType, "income");
+            else if (right) scheduleOnRN(changeType, "expense");
+        },
+    });
 
     // Tapping the selected category again clears the selection.
     const selectCategory = (id: string) => {
@@ -161,13 +187,37 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
                 />
             </View>
 
-            <CategoryGrid
-                categories={categories ?? []}
-                selectedId={categoryId}
-                onSelect={selectCategory}
-                addDisabled={categories === null}
-                onAdd={() => setNewCategoryOpen(true)}
-            />
+            {/* Chi and Thu are two pages: switching slides one out and the
+                other in from its side (Chi left, Thu right), like the toggle.
+                skipEntering: no slide when the screen first opens. */}
+            <GestureDetector gesture={swipe}>
+                <View style={styles.gridArea}>
+                    <LayoutAnimationConfig skipEntering>
+                        <Animated.View
+                            key={type}
+                            entering={
+                                type === "expense"
+                                    ? Motion.pageInLeft
+                                    : Motion.pageInRight
+                            }
+                            exiting={
+                                type === "expense"
+                                    ? Motion.pageOutLeft
+                                    : Motion.pageOutRight
+                            }
+                            style={styles.gridPage}
+                        >
+                            <CategoryGrid
+                                categories={categories ?? []}
+                                selectedId={categoryId}
+                                onSelect={selectCategory}
+                                addDisabled={categories === null}
+                                onAdd={() => setNewCategoryOpen(true)}
+                            />
+                        </Animated.View>
+                    </LayoutAnimationConfig>
+                </View>
+            </GestureDetector>
 
             {/* While the keypad is open the slot keeps its height so the keypad doesn't jump. */}
             {(canSave || keypadOpen) && (
@@ -243,6 +293,9 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
 
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: Colors.background },
+    // Clips the pages while they slide past the screen edges.
+    gridArea: { flex: 1, overflow: "hidden" },
+    gridPage: { flex: 1 },
     metaRow: {
         flexDirection: "row",
         alignItems: "center",

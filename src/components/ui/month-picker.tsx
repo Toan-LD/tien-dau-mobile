@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     year: { fontSize: 16, fontWeight: "600", color: Colors.text },
     grid: { gap: Spacing.two },
     row: { flexDirection: "row", gap: Spacing.two },
-    cell: { flex: 1, height: 48, borderRadius: 10 },
+    cell: { flex: 1, height: 48 },
     month: { fontSize: 14, color: Colors.text },
     monthSelected: { fontWeight: "600" },
 });

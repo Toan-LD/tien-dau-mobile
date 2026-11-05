@@ -33,6 +33,7 @@ export function CategoryGrid({
                     <View key={c.id} style={styles.cell}>
                         <SelectableTile
                             selected={selected}
+                            radius="small"
                             onPress={() => onSelect(c.id)}
                             style={styles.tile}
                         >
@@ -53,6 +54,7 @@ export function CategoryGrid({
             <View style={styles.cell}>
                 <SelectableTile
                     dashed
+                    radius="small"
                     onPress={onAdd}
                     disabled={addDisabled}
                     style={styles.tile}
@@ -84,7 +86,6 @@ const styles = StyleSheet.create({
         gap: 2,
         paddingVertical: 6,
         paddingHorizontal: 2,
-        borderRadius: 8,
     },
     name: { fontSize: 11, color: Colors.text },
     nameSelected: { fontWeight: "600" },

@@ -4,7 +4,13 @@ import {
     FadeOut,
     FadeOutDown,
     LinearTransition,
+    SlideInLeft,
+    SlideInRight,
+    SlideOutLeft,
+    SlideOutRight,
 } from "react-native-reanimated";
+
+const PAGE_MS = 200;
 
 // Shared animations, short and plain: they show where things come from without
 // slowing the user down. Use as `entering` / `exiting` / `layout` props on
@@ -18,4 +24,10 @@ export const Motion = {
     sinkOut: FadeOutDown.duration(120),
     // Neighbours glide into place when a list item is added or removed.
     reflow: LinearTransition.duration(180),
+    // A whole page swaps sideways (category grid when Chi/Thu changes).
+    // Each page has a fixed side: the left page comes and goes on the left.
+    pageInLeft: SlideInLeft.duration(PAGE_MS),
+    pageOutLeft: SlideOutLeft.duration(PAGE_MS),
+    pageInRight: SlideInRight.duration(PAGE_MS),
+    pageOutRight: SlideOutRight.duration(PAGE_MS),
 } as const;

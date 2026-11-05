@@ -67,6 +67,8 @@ export default function TodayScreen() {
     };
   }, [firstId]);
 
+  const clearHint = useCallback(() => setHintId(null), []);
+
   const changeDay = (next: string) => {
     setDate(next);
     setItems(null);
@@ -122,6 +124,7 @@ export default function TodayScreen() {
           <TransactionRow
             tx={item}
             peekHint={item.id === hintId}
+            onPeekDone={clearHint}
             onPress={() => router.push(`/transaction/${item.id}`)}
             onEdit={() => router.push(`/transaction/${item.id}`)}
             onDelete={() => deleteWithUndo(item, toast, () => load(date))}

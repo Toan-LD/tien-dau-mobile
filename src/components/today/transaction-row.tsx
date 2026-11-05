@@ -18,17 +18,24 @@ type Props = {
   onEdit(): void;
   onDelete(): void;
   peekHint?: boolean;
+  onPeekDone?(): void;
 };
 
-export function TransactionRow({ tx, onPress, onEdit, onDelete, peekHint }: Props) {
+export function TransactionRow({ tx, onPress, onEdit, onDelete, peekHint, onPeekDone }: Props) {
   const swipeRef = useRef<SwipeableMethods>(null);
 
   useEffect(() => {
     if (!peekHint) return;
     swipeRef.current?.openRight();
-    const timer = setTimeout(() => swipeRef.current?.close(), PEEK_MS);
-    return () => clearTimeout(timer);
-  }, [peekHint]);
+    const timer = setTimeout(() => {
+      swipeRef.current?.close();
+      onPeekDone?.();
+    }, PEEK_MS);
+    return () => {
+      clearTimeout(timer);
+      onPeekDone?.();
+    };
+  }, [peekHint, onPeekDone]);
 
   const act = (fn: () => void) => () => {
     swipeRef.current?.close();

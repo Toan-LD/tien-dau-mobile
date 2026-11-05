@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>01-man-ghi</title>
+<style>body{margin:0;padding:24px 16px;background:#fff;color:#1c1917;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}h2{margin:0 0 4px}.subtitle{color:#6b7280;margin:0 0 8px}.options{display:flex;flex-direction:column;gap:8px}.option{display:flex;gap:10px;border:1px solid #e7e5e4;border-radius:10px;padding:10px}.option .letter{font-weight:700}.option h3{margin:0;font-size:14px}.option p{margin:2px 0 0;font-size:13px;color:#6b7280}</style>
+<script>function toggleSelect(){}</script>
+</head>
+<body>
+<style>
+  .phones { display:flex; gap:22px; flex-wrap:wrap; justify-content:center; margin-top:16px; align-items:flex-start; }
+  .col { display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .col h3 { margin:0; font-size:14px; }
+  .col p.desc { margin:0; font-size:12.5px; color:#6b7280; max-width:240px; text-align:center; line-height:1.4; }
+  .arrow { align-self:center; font-size:22px; color:#a8a29e; }
+  .phone { width:240px; height:520px; background:#fafaf9; border:1px solid #d6d3d1; border-radius:28px; overflow:hidden; display:flex; flex-direction:column; font-family:-apple-system, "Segoe UI", Roboto, sans-serif; color:#1c1917; }
+  .bar { height:24px; }
+  .seg { display:flex; margin:6px 16px 0; background:#e7e5e4; border-radius:8px; padding:2px; font-size:12px; }
+  .seg span { flex:1; text-align:center; padding:5px 0; border-radius:6px; color:#57534e; }
+  .seg span.on { background:#fff; color:#1c1917; font-weight:600; }
+  .amt { text-align:right; font-size:30px; font-weight:600; padding:14px 18px 2px; }
+  .amt.empty { color:#d6d3d1; }
+  .amt small { font-size:15px; color:#78716c; font-weight:500; }
+  .hint { font-size:11px; color:#a8a29e; padding:0 18px; text-align:right; }
+  .lbl { font-size:11px; color:#78716c; padding:10px 16px 6px; text-transform:uppercase; letter-spacing:.5px; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:0 12px; }
+  .cat { background:#fff; border:1px solid #e7e5e4; border-radius:10px; padding:8px 4px 7px; font-size:11.5px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .cat.on { border:1.5px solid #1c1917; font-weight:600; }
+  .cat.add { border-style:dashed; color:#78716c; }
+  svg { width:19px; height:19px; fill:none; stroke:#44403c; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+  .add svg { stroke:#a8a29e; }
+  .sugg { margin-top:auto; display:flex; gap:6px; padding:8px 10px; border-top:1px solid #e7e5e4; background:#f5f5f4; }
+  .sugg span { flex:1; text-align:center; font-size:12px; background:#fff; border:1px solid #e7e5e4; border-radius:8px; padding:6px 0; }
+  .sugg span.on { background:#1c1917; color:#fff; border-color:#1c1917; }
+  .keys { display:grid; grid-template-columns:repeat(3,1fr); background:#e7e5e4; gap:1px; }
+  .keys div { background:#fafaf9; text-align:center; padding:9px 0; font-size:16px; }
+  .keys div.k0 { font-size:12px; color:#57534e; }
+  .save { margin-top:auto; padding:10px 12px 14px; }
+  .save div { background:#1c1917; color:#fff; text-align:center; border-radius:12px; padding:12px; font-size:13px; font-weight:600; }
+  .save.off div { background:#e7e5e4; color:#a8a29e; }
+  .push { margin-top:0; }
+</style>
+
+<svg style="display:none">
+  <symbol id="an" viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 3-3 6s1 4 3 4v8"/></symbol>
+  <symbol id="di" viewBox="0 0 24 24"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 17h6l-3-7h-3M14 6h3l1 4M18 10l-3 7"/></symbol>
+  <symbol id="mua" viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6L5 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></symbol>
+  <symbol id="hd" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="gt" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M10 10l4 2.5-4 2.5z"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+</svg>
+
+<h2>Kiểu A — luồng ghi một khoản</h2>
+<p class="subtitle">Gõ số → bấm số gợi ý (nếu muốn) → chọn mục → bấm Lưu. Như vậy đúng ý bạn chưa?</p>
+
+<div class="phones">
+
+  <div class="col">
+    <h3>① Gõ "3"</h3>
+    <div class="phone">
+      <div class="bar"></div>
+      <div class="seg"><span class="on">Chi</span><span>Thu</span></div>
+      <div class="amt">3 <small>đ</small></div>
+      <div class="hint">Hôm nay · Thêm ghi chú</div>
+      <div class="lbl">Chọn mục</div>
+      <div class="grid">
+        <div class="cat"><svg><use href="#an"/></svg>Ăn uống</div>
+        <div class="cat"><svg><use href="#di"/></svg>Đi lại</div>
+        <div class="cat"><svg><use href="#mua"/></svg>Mua sắm</div>
+        <div class="cat"><svg><use href="#hd"/></svg>Hoá đơn</div>
+        <div class="cat"><svg><use href="#gt"/></svg>Giải trí</div>
+        <div class="cat add"><svg><use href="#plus"/></svg>Mục mới</div>
+      </div>
+      <div class="sugg"><span>3.000</span><span>30.000</span><span>300.000</span></div>
+      <div class="keys">
+        <div>1</div><div>2</div><div>3</div>
+        <div>4</div><div>5</div><div>6</div>
+        <div>7</div><div>8</div><div>9</div>
+        <div class="k0">000</div><div>0</div><div class="k0">⌫</div>
+      </div>
+    </div>
+    <p class="desc">Vừa gõ số là hiện dòng gợi ý ngay trên bàn phím.</p>
+  </div>
+
+  <div class="arrow">→</div>
+
+  <div class="col">
+    <h3>② Bấm "30.000"</h3>
+    <div class="phone">
+      <div class="bar"></div>
+      <div class="seg"><span class="on">Chi</span><span>Thu</span></div>
+      <div class="amt">30.000 <small>đ</small></div>
+      <div class="hint">Hôm nay · Thêm ghi chú</div>
+      <div class="lbl">Chọn mục</div>
+      <div class="grid">
+        <div class="cat"><svg><use href="#an"/></svg>Ăn uống</div>
+        <div class="cat"><svg><use href="#di"/></svg>Đi lại</div>
+        <div class="cat"><svg><use href="#mua"/></svg>Mua sắm</div>
+        <div class="cat"><svg><use href="#hd"/></svg>Hoá đơn</div>
+        <div class="cat"><svg><use href="#gt"/></svg>Giải trí</div>
+        <div class="cat add"><svg><use href="#plus"/></svg>Mục mới</div>
+      </div>
+      <div class="sugg"><span>30.000</span><span>300.000</span><span>3.000.000</span></div>
+      <div class="keys">
+        <div>1</div><div>2</div><div>3</div>
+        <div>4</div><div>5</div><div>6</div>
+        <div>7</div><div>8</div><div>9</div>
+        <div class="k0">000</div><div>0</div><div class="k0">⌫</div>
+      </div>
+    </div>
+    <p class="desc">Số tiền điền luôn. Vẫn gõ tiếp hoặc xoá được.</p>
+  </div>
+
+  <div class="arrow">→</div>
+
+  <div class="col">
+    <h3>③ Chọn "Ăn uống" → Lưu</h3>
+    <div class="phone">
+      <div class="bar"></div>
+      <div class="seg"><span class="on">Chi</span><span>Thu</span></div>
+      <div class="amt">30.000 <small>đ</small></div>
+      <div class="hint">Hôm nay · Thêm ghi chú</div>
+      <div class="lbl">Chọn mục</div>
+      <div class="grid">
+        <div class="cat on"><svg style="stroke:#1c1917"><use href="#an"/></svg>Ăn uống</div>
+        <div class="cat"><svg><use href="#di"/></svg>Đi lại</div>
+        <div class="cat"><svg><use href="#mua"/></svg>Mua sắm</div>
+        <div class="cat"><svg><use href="#hd"/></svg>Hoá đơn</div>
+        <div class="cat"><svg><use href="#gt"/></svg>Giải trí</div>
+        <div class="cat add"><svg><use href="#plus"/></svg>Mục mới</div>
+      </div>
+      <div class="sugg"><span>30.000</span><span>300.000</span><span>3.000.000</span></div>
+      <div class="save push"><div>Lưu · 30.000 đ · Ăn uống</div></div>
+      <div class="keys">
+        <div>1</div><div>2</div><div>3</div>
+        <div>4</div><div>5</div><div>6</div>
+        <div>7</div><div>8</div><div>9</div>
+        <div class="k0">000</div><div>0</div><div class="k0">⌫</div>
+      </div>
+    </div>
+    <p class="desc">Có số tiền + có mục thì nút Lưu mới hiện. Lưu xong màn hình trống lại để ghi khoản tiếp.</p>
+  </div>
+
+</div>
+
+</body>
+</html>

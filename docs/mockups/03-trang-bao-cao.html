@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>03-trang-bao-cao</title>
+<style>body{margin:0;padding:24px 16px;background:#fff;color:#1c1917;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}h2{margin:0 0 4px}.subtitle{color:#6b7280;margin:0 0 8px}.options{display:flex;flex-direction:column;gap:8px}.option{display:flex;gap:10px;border:1px solid #e7e5e4;border-radius:10px;padding:10px}.option .letter{font-weight:700}.option h3{margin:0;font-size:14px}.option p{margin:2px 0 0;font-size:13px;color:#6b7280}</style>
+<script>function toggleSelect(){}</script>
+</head>
+<body>
+<style>
+  .wrap { display:flex; gap:30px; flex-wrap:wrap; justify-content:center; align-items:flex-start; margin-top:16px; }
+  .phone { width:270px; height:640px; background:#fafaf9; border:1px solid #d6d3d1; border-radius:28px; overflow:hidden; display:flex; flex-direction:column; font-family:-apple-system, "Segoe UI", Roboto, sans-serif; color:#1c1917; }
+  .scroll { flex:1; overflow:hidden; padding-bottom:8px; }
+  .bar { height:24px; }
+  .mon { display:flex; align-items:center; justify-content:space-between; padding:8px 16px 10px; font-size:14px; font-weight:600; }
+  .mon span.a { color:#a8a29e; font-weight:400; }
+  .kpi { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:0 14px; }
+  .kpi div { background:#fff; border:1px solid #e7e5e4; border-radius:10px; padding:8px 10px; font-size:10.5px; color:#78716c; }
+  .kpi b { display:block; font-size:15px; color:#1c1917; margin-top:2px; }
+  .kpi .wide { grid-column:span 2; }
+  .kpi .wide b { font-size:18px; }
+  .sec { margin:12px 14px 0; background:#fff; border:1px solid #e7e5e4; border-radius:12px; padding:10px 12px; position:relative; }
+  .sec h4 { margin:0 0 8px; font-size:12px; font-weight:600; }
+  .tag { position:absolute; top:-9px; right:10px; background:#1c1917; color:#fff; font-size:10px; font-weight:700; border-radius:10px; padding:2px 7px; }
+  .hb { display:grid; grid-template-columns:18px 64px 1fr; align-items:center; gap:6px; font-size:11px; margin-bottom:6px; }
+  .hb .tr { position:relative; height:14px; }
+  .hb .f { height:10px; margin-top:2px; background:#57534e; border-radius:0 4px 4px 0; }
+  .hb .v { font-size:10px; color:#57534e; margin-left:4px; white-space:nowrap; }
+  .hb .row { display:flex; align-items:center; }
+  svg.i { width:16px; height:16px; fill:none; stroke:#44403c; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+  .cols { display:flex; align-items:flex-end; gap:2px; height:70px; border-bottom:1px solid #d6d3d1; }
+  .cols div { flex:1; background:#57534e; border-radius:3px 3px 0 0; }
+  .cols div.t { background:#d6d3d1; }
+  .ax { display:flex; justify-content:space-between; font-size:9.5px; color:#a8a29e; margin-top:3px; }
+  .tabs { display:flex; border-top:1px solid #e7e5e4; background:#fff; padding:6px 0 12px; }
+  .tabs div { flex:1; text-align:center; font-size:10.5px; color:#a8a29e; }
+  .tabs div.on { color:#1c1917; font-weight:600; }
+  .side { max-width:330px; }
+  .side h3 { margin-top:0; }
+</style>
+
+<svg style="display:none">
+  <symbol id="an" viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 3-3 6s1 4 3 4v8"/></symbol>
+  <symbol id="di" viewBox="0 0 24 24"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 17h6l-3-7h-3M14 6h3l1 4M18 10l-3 7"/></symbol>
+  <symbol id="mua" viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6L5 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></symbol>
+  <symbol id="hd" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="gt" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M10 10l4 2.5-4 2.5z"/></symbol>
+  <symbol id="luong" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></symbol>
+  <symbol id="thuong" viewBox="0 0 24 24"><path d="M4 10h16v10H4zM2 7h20v3H2zM12 7v13M12 7c-2-4-6-3-5 0M12 7c2-4 6-3 5 0"/></symbol>
+</svg>
+
+<h2>Trang Báo cáo tháng</h2>
+<p class="subtitle">Một màu duy nhất (xám đậm) cho mọi biểu đồ — hợp với icon kiểu 2. Bấm vào phần bạn muốn GIỮ.</p>
+
+<div class="wrap">
+  <div class="phone">
+    <div class="scroll">
+      <div class="bar"></div>
+      <div class="mon"><span class="a">‹</span>Tháng 11/2026<span class="a">›</span></div>
+
+      <div class="kpi" style="position:relative">
+        <div class="wide">Còn lại (thu − chi)<b>+6.550.000 đ</b></div>
+        <div>Thu<b>15.000.000 đ</b></div>
+        <div>Chi<b>8.450.000 đ</b></div>
+        <span class="tag" style="position:absolute;top:-9px;right:4px">1</span>
+      </div>
+
+      <div class="sec"><span class="tag">2</span>
+        <h4>Chi theo mục</h4>
+        <div class="hb"><svg class="i"><use href="#hd"/></svg><span>Hoá đơn</span><div class="row"><div class="f" style="width:100px"></div><span class="v">3,2tr</span></div></div>
+        <div class="hb"><svg class="i"><use href="#an"/></svg><span>Ăn uống</span><div class="row"><div class="f" style="width:78px"></div><span class="v">2,5tr</span></div></div>
+        <div class="hb"><svg class="i"><use href="#mua"/></svg><span>Mua sắm</span><div class="row"><div class="f" style="width:44px"></div><span class="v">1,4tr</span></div></div>
+        <div class="hb"><svg class="i"><use href="#di"/></svg><span>Đi lại</span><div class="row"><div class="f" style="width:28px"></div><span class="v">0,9tr</span></div></div>
+        <div class="hb" style="margin-bottom:0"><svg class="i"><use href="#gt"/></svg><span>Giải trí</span><div class="row"><div class="f" style="width:14px"></div><span class="v">0,45tr</span></div></div>
+      </div>
+
+      <div class="sec"><span class="tag">3</span>
+        <h4>Chi theo ngày</h4>
+        <div class="cols">
+          <div style="height:30%"></div><div style="height:12%"></div><div style="height:45%"></div><div style="height:100%"></div><div style="height:22%"></div>
+          <div class="t" style="height:4%"></div><div class="t" style="height:4%"></div><div class="t" style="height:4%"></div><div class="t" style="height:4%"></div><div class="t" style="height:4%"></div>
+          <div class="t" style="height:4%"></div><div class="t" style="height:4%"></div><div class="t" style="height:4%"></div><div class="t" style="height:4%"></div><div class="t" style="height:4%"></div>
+        </div>
+        <div class="ax"><span>1</span><span>5 · hôm nay</span><span>15</span><span>30</span></div>
+      </div>
+
+      <div class="sec"><span class="tag">4</span>
+        <h4>Thu theo mục</h4>
+        <div class="hb"><svg class="i"><use href="#luong"/></svg><span>Lương</span><div class="row"><div class="f" style="width:100px"></div><span class="v">13tr</span></div></div>
+        <div class="hb" style="margin-bottom:0"><svg class="i"><use href="#thuong"/></svg><span>Thưởng</span><div class="row"><div class="f" style="width:15px"></div><span class="v">2tr</span></div></div>
+      </div>
+    </div>
+    <div class="tabs"><div>Ghi</div><div>Hôm nay</div><div class="on">Báo cáo</div></div>
+  </div>
+
+  <div class="side">
+    <h3>Giữ những phần nào?</h3>
+    <div class="options" data-multiselect>
+      <div class="option" data-choice="1-tong" onclick="toggleSelect(this)"><div class="letter">1</div><div class="content"><h3>Tổng thu · chi · còn lại</h3><p>3 con số, không cần biểu đồ.</p></div></div>
+      <div class="option" data-choice="2-chi-muc" onclick="toggleSelect(this)"><div class="letter">2</div><div class="content"><h3>Chi theo mục</h3><p>Thanh ngang xếp từ lớn đến nhỏ — biết ngay tiền đi đâu nhiều nhất. Bấm một mục để xem các khoản trong mục đó.</p></div></div>
+      <div class="option" data-choice="3-chi-ngay" onclick="toggleSelect(this)"><div class="letter">3</div><div class="content"><h3>Chi theo ngày</h3><p>Cột cho từng ngày — thấy ngày nào "vung tay".</p></div></div>
+      <div class="option" data-choice="4-thu-muc" onclick="toggleSelect(this)"><div class="letter">4</div><div class="content"><h3>Thu theo mục</h3><p>Giống phần 2 nhưng cho thu nhập.</p></div></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

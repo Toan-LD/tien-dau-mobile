@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>04-tao-muc-moi</title>
+<style>body{margin:0;padding:24px 16px;background:#fff;color:#1c1917;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}h2{margin:0 0 4px}.subtitle{color:#6b7280;margin:0 0 8px}.options{display:flex;flex-direction:column;gap:8px}.option{display:flex;gap:10px;border:1px solid #e7e5e4;border-radius:10px;padding:10px}.option .letter{font-weight:700}.option h3{margin:0;font-size:14px}.option p{margin:2px 0 0;font-size:13px;color:#6b7280}</style>
+<script>function toggleSelect(){}</script>
+</head>
+<body>
+<style>
+  .wrap { display:flex; gap:30px; flex-wrap:wrap; justify-content:center; align-items:flex-start; margin-top:16px; }
+  .phone { width:260px; height:540px; background:#fafaf9; border:1px solid #d6d3d1; border-radius:28px; overflow:hidden; display:flex; flex-direction:column; font-family:-apple-system, "Segoe UI", Roboto, sans-serif; color:#1c1917; position:relative; }
+  .dim { position:absolute; inset:0; background:rgba(28,25,23,.35); }
+  .bg { padding:40px 16px; color:#a8a29e; font-size:28px; text-align:right; font-weight:600; }
+  .sheet { position:absolute; left:0; right:0; bottom:0; background:#fff; border-radius:18px 18px 0 0; padding:10px 14px 16px; }
+  .grab { width:36px; height:4px; background:#d6d3d1; border-radius:2px; margin:0 auto 10px; }
+  .sheet h4 { margin:0 0 10px; font-size:14px; }
+  .inp { border:1px solid #d6d3d1; border-radius:10px; padding:10px; font-size:13px; display:flex; align-items:center; gap:8px; }
+  .inp .cur { width:1px; height:15px; background:#1c1917; }
+  .lbl { font-size:10.5px; color:#78716c; margin:12px 0 6px; text-transform:uppercase; letter-spacing:.5px; }
+  .type { font-size:12px; color:#57534e; margin-top:8px; }
+  .icons { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
+  .icons div { aspect-ratio:1; border:1px solid #e7e5e4; border-radius:9px; display:flex; align-items:center; justify-content:center; }
+  .icons div.on { border:1.5px solid #1c1917; background:#f5f5f4; }
+  svg { width:18px; height:18px; fill:none; stroke:#44403c; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+  .btn { margin-top:14px; background:#1c1917; color:#fff; text-align:center; border-radius:12px; padding:11px; font-size:13px; font-weight:600; }
+  .side { max-width:320px; font-size:14px; line-height:1.5; }
+  .side h3 { margin-top:0; }
+</style>
+
+<svg style="display:none">
+  <symbol id="cf" viewBox="0 0 24 24"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3"/></symbol>
+  <symbol id="an" viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 3-3 6s1 4 3 4v8"/></symbol>
+  <symbol id="di" viewBox="0 0 24 24"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 17h6l-3-7h-3M14 6h3l1 4M18 10l-3 7"/></symbol>
+  <symbol id="mua" viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6L5 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></symbol>
+  <symbol id="hd" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="gt" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M10 10l4 2.5-4 2.5z"/></symbol>
+  <symbol id="sk" viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></symbol>
+  <symbol id="gd" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5"/></symbol>
+  <symbol id="hoc" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"/></symbol>
+  <symbol id="luong" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></symbol>
+  <symbol id="qua" viewBox="0 0 24 24"><path d="M4 10h16v10H4zM2 7h20v3H2zM12 7v13M12 7c-2-4-6-3-5 0M12 7c2-4 6-3 5 0"/></symbol>
+  <symbol id="dt" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+  <symbol id="xang" viewBox="0 0 24 24"><path d="M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h14M15 9h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3"/><path d="M7 7h6v4H7z"/></symbol>
+  <symbol id="thu" viewBox="0 0 24 24"><path d="M5 12a4 4 0 0 1 4-4h2a4 4 0 1 1 0 8M9 16H7a2 2 0 0 0 0 4h10"/><circle cx="18" cy="6" r="2"/></symbol>
+  <symbol id="ao" viewBox="0 0 24 24"><path d="M8 3l-5 4 3 3 2-1v12h8V9l2 1 3-3-5-4a4 4 0 0 1-8 0z"/></symbol>
+  <symbol id="nha" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></symbol>
+  <symbol id="cho" viewBox="0 0 24 24"><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M5 9c0-3 3-5 7-5s7 2 7 5-1 8-7 8-7-5-7-8zM9 14c1.5 1 4.5 1 6 0"/></symbol>
+  <symbol id="khac" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/></symbol>
+</svg>
+
+<h2>Tạo mục mới</h2>
+<p class="subtitle">Bấm "+ Mục mới" → bảng nhỏ trượt lên từ dưới, không rời màn hình Ghi.</p>
+
+<div class="wrap">
+  <div class="phone">
+    <div class="bg">30.000 đ</div>
+    <div class="dim"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <h4>Mục chi mới</h4>
+      <div class="inp"><svg><use href="#cf"/></svg>Cà phê<span class="cur"></span></div>
+      <div class="lbl">Chọn icon</div>
+      <div class="icons">
+        <div class="on"><svg><use href="#cf"/></svg></div>
+        <div><svg><use href="#an"/></svg></div>
+        <div><svg><use href="#di"/></svg></div>
+        <div><svg><use href="#xang"/></svg></div>
+        <div><svg><use href="#mua"/></svg></div>
+        <div><svg><use href="#ao"/></svg></div>
+        <div><svg><use href="#hd"/></svg></div>
+        <div><svg><use href="#nha"/></svg></div>
+        <div><svg><use href="#dt"/></svg></div>
+        <div><svg><use href="#gt"/></svg></div>
+        <div><svg><use href="#sk"/></svg></div>
+        <div><svg><use href="#gd"/></svg></div>
+        <div><svg><use href="#hoc"/></svg></div>
+        <div><svg><use href="#cho"/></svg></div>
+        <div><svg><use href="#qua"/></svg></div>
+        <div><svg><use href="#luong"/></svg></div>
+        <div><svg><use href="#thu"/></svg></div>
+        <div><svg><use href="#khac"/></svg></div>
+      </div>
+      <div class="btn">Tạo mục</div>
+    </div>
+  </div>
+
+  <div class="side">
+    <h3>Chỉ cần 2 thứ</h3>
+    <p><b>Tên mục</b> và <b>icon</b>. Mục chi hay mục thu thì app tự biết theo nút Chi/Thu đang bật.</p>
+    <p>Tạo xong → bảng đóng lại, mục mới <b>được chọn sẵn</b> luôn. Nếu đã có số tiền thì nút Lưu hiện ngay.</p>
+    <p style="color:#78716c">Icon có sẵn khoảng 30–40 cái (đây là 18 cái mẫu). Nếu không chọn icon thì dùng icon "…" mặc định.</p>
+  </div>
+</div>
+
+</body>
+</html>

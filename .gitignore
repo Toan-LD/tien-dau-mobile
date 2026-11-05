@@ -41,3 +41,7 @@ example
 # generated native folders
 /ios
 /android
+
+.superpowers/
+# brainstorming companion (mockups & session files)
+.superpowers/

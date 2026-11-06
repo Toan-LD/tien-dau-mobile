@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import { StyleSheet } from "react-native";
 
 import { Colors } from "@/constants/theme";
+import { ChatProvider } from "@/lib/use-chat";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 type TabIconProps = { focused: boolean; size: number };
@@ -32,36 +33,47 @@ const ICONS = {
     index: tabIcon("add-circle-outline"),
     today: tabIcon("list-outline"),
     report: tabIcon("bar-chart-outline"),
+    ask: tabIcon("chatbubble-ellipses-outline"),
     settings: tabIcon("settings-outline"),
 };
 
 export default function TabsLayout() {
     return (
-        <Tabs
-            screenOptions={{
-                headerShown: false,
-                tabBarActiveTintColor: Colors.text,
-                tabBarInactiveTintColor: Colors.textMuted,
-                tabBarStyle: styles.tabBar,
-            }}
-        >
-            <Tabs.Screen
-                name="index"
-                options={{ title: "Ghi", tabBarIcon: ICONS.index }}
-            />
-            <Tabs.Screen
-                name="today"
-                options={{ title: "Danh sách", tabBarIcon: ICONS.today }}
-            />
-            <Tabs.Screen
-                name="report"
-                options={{ title: "Báo cáo", tabBarIcon: ICONS.report }}
-            />
-            <Tabs.Screen
-                name="settings"
-                options={{ title: "Cài đặt", tabBarIcon: ICONS.settings }}
-            />
-        </Tabs>
+        <ChatProvider>
+            <Tabs
+                screenOptions={{
+                    headerShown: false,
+                    tabBarActiveTintColor: Colors.text,
+                    tabBarInactiveTintColor: Colors.textMuted,
+                    tabBarStyle: styles.tabBar,
+                }}
+            >
+                <Tabs.Screen
+                    name="index"
+                    options={{ title: "Ghi", tabBarIcon: ICONS.index }}
+                />
+                <Tabs.Screen
+                    name="today"
+                    options={{ title: "Danh sách", tabBarIcon: ICONS.today }}
+                />
+                <Tabs.Screen
+                    name="report"
+                    options={{ title: "Báo cáo", tabBarIcon: ICONS.report }}
+                />
+                <Tabs.Screen
+                    name="ask"
+                    options={{
+                        title: "Hỏi",
+                        tabBarIcon: ICONS.ask,
+                        tabBarHideOnKeyboard: true,
+                    }}
+                />
+                <Tabs.Screen
+                    name="settings"
+                    options={{ title: "Cài đặt", tabBarIcon: ICONS.settings }}
+                />
+            </Tabs>
+        </ChatProvider>
     );
 }
 

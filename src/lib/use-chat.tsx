@@ -17,13 +17,15 @@ import {
 } from "@/lib/chat-state";
 import { createTransaction, validateDraft } from "@/lib/transactions";
 
+export type SaveResult = "saved" | "failed" | "ignored";
+
 type ChatContextValue = {
     messages: ChatMessage[];
     pending: boolean;
     send: (text: string) => void;
     retry: (errorId: string) => void;
     reset: () => void;
-    saveDraft: (messageId: string) => Promise<boolean>;
+    saveDraft: (messageId: string) => Promise<SaveResult>;
     dismissDraft: (messageId: string) => void;
 };
 
@@ -87,17 +89,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "reset" });
     };
 
-    const saveDraft = async (messageId: string): Promise<boolean> => {
+    const saveDraft = async (messageId: string): Promise<SaveResult> => {
         const message = state.messages.find(
             (candidate) => candidate.id === messageId,
         );
         if (message?.role !== "draft" || message.status !== "open") {
-            return false;
+            return "ignored";
         }
-        if (savingMessageIds.current.has(messageId)) return false;
+        if (savingMessageIds.current.has(messageId)) return "ignored";
         const { type, amount, categoryId, date, note } = message.draft;
         const draft = { type, amount, categoryId, date, note };
-        if (validateDraft(draft) !== null) return false;
+        if (validateDraft(draft) !== null) return "failed";
 
         const generation = conversationGeneration.current;
         const stillCurrent = () =>
@@ -106,16 +108,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "saveStart", id: messageId });
         try {
             const transaction = await createTransaction(draft);
-            if (!stillCurrent()) return false;
-            dispatch({
-                type: "saveDone",
-                id: messageId,
-                transactionId: transaction.id,
-            });
-            return true;
+            if (stillCurrent()) {
+                dispatch({
+                    type: "saveDone",
+                    id: messageId,
+                    transactionId: transaction.id,
+                });
+            }
+            return "saved";
         } catch {
             if (stillCurrent()) dispatch({ type: "saveFail", id: messageId });
-            return false;
+            return "failed";
         } finally {
             savingMessageIds.current.delete(messageId);
         }

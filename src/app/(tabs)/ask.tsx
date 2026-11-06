@@ -27,8 +27,10 @@ export default function AskScreen() {
     const toast = useToast();
 
     const handleSave = async (messageId: string) => {
-        const saved = await saveDraft(messageId);
-        if (!saved) toast.show({ message: "Không lưu được, bạn thử lại" });
+        const result = await saveDraft(messageId);
+        if (result === "failed") {
+            toast.show({ message: "Không lưu được, bạn thử lại" });
+        }
     };
 
     const items = useMemo<ListItem[]>(() => {

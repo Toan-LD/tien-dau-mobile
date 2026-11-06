@@ -3,7 +3,7 @@ import TestRenderer from "react-test-renderer";
 
 import { askChat, type AskResult, type ChatDraft } from "@/lib/chat";
 import { createTransaction, type Transaction } from "@/lib/transactions";
-import { ChatProvider, useChat } from "@/lib/use-chat";
+import { ChatProvider, useChat, type SaveResult } from "@/lib/use-chat";
 
 jest.mock("@/lib/chat", () => ({ askChat: jest.fn() }));
 jest.mock("@/lib/supabase", () => ({
@@ -177,8 +177,8 @@ it("saveDraft creates the transaction once and marks the card saved", async () =
     mockedCreateTransaction.mockReturnValueOnce(pendingSave.promise);
     const { chat, draftId } = await renderWithDraft();
 
-    let first!: Promise<boolean>;
-    let second!: Promise<boolean>;
+    let first!: Promise<SaveResult>;
+    let second!: Promise<SaveResult>;
     act(() => {
         first = chat.api.saveDraft(draftId);
         second = chat.api.saveDraft(draftId);
@@ -189,8 +189,8 @@ it("saveDraft creates the transaction once and marks the card saved", async () =
         await pendingSave.promise;
     });
 
-    expect(await first).toBe(true);
-    expect(await second).toBe(false);
+    expect(await first).toBe("saved");
+    expect(await second).toBe("ignored");
     expect(mockedCreateTransaction).toHaveBeenCalledTimes(1);
     expect(mockedCreateTransaction).toHaveBeenCalledWith({
         type: "expense",
@@ -206,27 +206,27 @@ it("saveDraft creates the transaction once and marks the card saved", async () =
     chat.unmount();
 });
 
-it("saveDraft failure returns false and reopens the card", async () => {
+it("saveDraft failure reports failed and reopens the card", async () => {
     mockedCreateTransaction.mockRejectedValueOnce(new Error("offline"));
     const { chat, draftId } = await renderWithDraft();
 
-    let result!: Promise<boolean>;
+    let result!: Promise<SaveResult>;
     await act(async () => {
         result = chat.api.saveDraft(draftId);
         await result;
     });
 
-    expect(await result).toBe(false);
+    expect(await result).toBe("failed");
     expect(draftStatus(chat, draftId)).toBe("open");
     chat.unmount();
 });
 
-it("saveDraft that finishes after reset does not touch the new conversation", async () => {
+it("saveDraft that finishes after reset reports saved and does not touch the new conversation", async () => {
     const pendingSave = deferredTransaction();
     mockedCreateTransaction.mockReturnValueOnce(pendingSave.promise);
     const { chat, draftId } = await renderWithDraft();
 
-    let result!: Promise<boolean>;
+    let result!: Promise<SaveResult>;
     act(() => {
         result = chat.api.saveDraft(draftId);
     });
@@ -236,7 +236,7 @@ it("saveDraft that finishes after reset does not touch the new conversation", as
         await pendingSave.promise;
     });
 
-    expect(await result).toBe(false);
+    expect(await result).toBe("saved");
     expect(chat.api.messages).toEqual([]);
     chat.unmount();
 });

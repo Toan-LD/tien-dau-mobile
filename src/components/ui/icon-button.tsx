@@ -8,7 +8,6 @@ import { Colors, Spacing } from "@/constants/theme";
 type Props = {
     name: ComponentProps<typeof Ionicons>["name"];
     onPress(): void;
-    // Required: an icon has no text for screen readers to read out.
     accessibilityLabel: string;
     size?: number;
     color?: string;
@@ -16,8 +15,6 @@ type Props = {
     style?: StyleProp<ViewStyle>;
 };
 
-// A tappable line icon (chevrons, settings, close, delete). Fades while pressed
-// and when disabled, and has a larger touch area than the icon itself.
 export function IconButton({
     name,
     onPress,
@@ -26,7 +23,7 @@ export function IconButton({
     color = Colors.icon,
     disabled,
     style,
-}: Props) {
+}: Readonly<Props>) {
     return (
         <PressableScale
             onPress={onPress}

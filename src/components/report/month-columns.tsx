@@ -33,8 +33,6 @@ const SVG_HEIGHT = BASELINE + 1;
 const RADIUS = 4;
 const DOT = 4;
 const DOT_SELECTED = 5.5;
-// One value drives the entrance: columns grow over the first 60%, then the
-// trend line fades in.
 const ENTER = { duration: 850, easing: Easing.out(Easing.cubic) };
 
 const BAR_COLOR = ChartColors.series[0];
@@ -42,17 +40,12 @@ const LINE_COLOR = ChartColors.series[1];
 
 type Props = {
     months: MonthTotal[];
-    // Trend line values, one per month (same unit and axis as the columns).
     trend: number[];
-    // Index of the highlighted month.
     selected: number;
     onSelect(index: number): void;
-    // Changing this plays the entrance again.
     drawKey: string;
 };
 
-// Bar path with rounded top corners, standing on the baseline. A worklet so
-// the columns can grow on the UI thread.
 function barPath(x: number, height: number): string {
     "worklet";
     if (height <= 0) return `M${x} ${BASELINE}Z`;
@@ -65,15 +58,13 @@ function barPath(x: number, height: number): string {
     );
 }
 
-// Monthly columns with a trend line, one value axis on the left (kept in
-// place while the months scroll), hairline gridlines, and a legend.
 export function MonthColumns({
     months,
     trend,
     selected,
     onSelect,
     drawKey,
-}: Props) {
+}: Readonly<Props>) {
     const scrollRef = useRef<ScrollViewInstance>(null);
     const progress = useSharedValue(0);
 
@@ -87,7 +78,7 @@ export function MonthColumns({
         trend.reduce((m, v) => Math.max(m, v), 0),
     );
     const ticks = niceTicks(max);
-    const top = ticks[ticks.length - 1];
+    const top = ticks.at(-1) ?? 1;
     const y = (value: number) => BASELINE - (value / top) * PLOT_HEIGHT;
     const width = months.length * COLUMN;
     const centerX = (i: number) => i * COLUMN + COLUMN / 2;
@@ -159,11 +150,11 @@ export function MonthColumns({
                                 />
                             ))}
                             <TrendLine d={trendPath} progress={progress} />
-                            {trend.map((v, i) => (
+                            {months.map((m, i) => (
                                 <Dot
-                                    key={i}
+                                    key={`${m.year}-${m.month}`}
                                     cx={centerX(i)}
-                                    cy={y(v)}
+                                    cy={y(trend[i] ?? 0)}
                                     selected={i === selected}
                                     progress={progress}
                                 />
@@ -222,14 +213,13 @@ function Bar({
     hasValue,
     dimmed,
     progress,
-}: {
+}: Readonly<{
     x: number;
     height: number;
     hasValue: boolean;
     dimmed: boolean;
     progress: SharedValue<number>;
-}) {
-    // A month with any amount stays visible as at least a sliver.
+}>) {
     const target = hasValue ? Math.max(height, 3) : 0;
     const animatedProps = useAnimatedProps(() => {
         const grow = Math.min(progress.get() / 0.6, 1);
@@ -247,10 +237,10 @@ function Bar({
 function TrendLine({
     d,
     progress,
-}: {
+}: Readonly<{
     d: string;
     progress: SharedValue<number>;
-}) {
+}>) {
     const animatedProps = useAnimatedProps(() => ({
         strokeOpacity: Math.max(0, (progress.get() - 0.5) / 0.5),
     }));
@@ -271,16 +261,15 @@ function Dot({
     cy,
     selected,
     progress,
-}: {
+}: Readonly<{
     cx: number;
     cy: number;
     selected: boolean;
     progress: SharedValue<number>;
-}) {
+}>) {
     const animatedProps = useAnimatedProps(() => ({
         opacity: Math.max(0, (progress.get() - 0.5) / 0.5),
     }));
-    // The white ring keeps the dot readable where it crosses a column.
     return (
         <AnimatedCircle
             cx={cx}

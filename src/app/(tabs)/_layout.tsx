@@ -1,8 +1,39 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router/js-tabs";
+import type { ComponentProps } from "react";
 import { StyleSheet } from "react-native";
 
 import { Colors } from "@/constants/theme";
+
+type IconName = ComponentProps<typeof Ionicons>["name"];
+type TabIconProps = { focused: boolean; size: number };
+
+function TabIcon({
+    name,
+    focused,
+    size,
+}: Readonly<TabIconProps & { name: IconName }>) {
+    return (
+        <Ionicons
+            name={name}
+            size={size}
+            color={focused ? Colors.text : Colors.textMuted}
+        />
+    );
+}
+
+function tabIcon(name: IconName) {
+    return function TabBarIcon({ focused, size }: TabIconProps) {
+        return <TabIcon name={name} focused={focused} size={size} />;
+    };
+}
+
+const ICONS = {
+    index: tabIcon("add-circle-outline"),
+    today: tabIcon("list-outline"),
+    report: tabIcon("bar-chart-outline"),
+    settings: tabIcon("settings-outline"),
+};
 
 export default function TabsLayout() {
     return (
@@ -16,55 +47,19 @@ export default function TabsLayout() {
         >
             <Tabs.Screen
                 name="index"
-                options={{
-                    title: "Ghi",
-                    tabBarIcon: ({ focused, size }) => (
-                        <Ionicons
-                            name="add-circle-outline"
-                            size={size}
-                            color={focused ? Colors.text : Colors.textMuted}
-                        />
-                    ),
-                }}
+                options={{ title: "Ghi", tabBarIcon: ICONS.index }}
             />
             <Tabs.Screen
                 name="today"
-                options={{
-                    title: "Danh sách",
-                    tabBarIcon: ({ focused, size }) => (
-                        <Ionicons
-                            name="list-outline"
-                            size={size}
-                            color={focused ? Colors.text : Colors.textMuted}
-                        />
-                    ),
-                }}
+                options={{ title: "Danh sách", tabBarIcon: ICONS.today }}
             />
             <Tabs.Screen
                 name="report"
-                options={{
-                    title: "Báo cáo",
-                    tabBarIcon: ({ focused, size }) => (
-                        <Ionicons
-                            name="bar-chart-outline"
-                            size={size}
-                            color={focused ? Colors.text : Colors.textMuted}
-                        />
-                    ),
-                }}
+                options={{ title: "Báo cáo", tabBarIcon: ICONS.report }}
             />
             <Tabs.Screen
                 name="settings"
-                options={{
-                    title: "Cài đặt",
-                    tabBarIcon: ({ focused, size }) => (
-                        <Ionicons
-                            name="settings-outline"
-                            size={size}
-                            color={focused ? Colors.text : Colors.textMuted}
-                        />
-                    ),
-                }}
+                options={{ title: "Cài đặt", tabBarIcon: ICONS.settings }}
             />
         </Tabs>
     );

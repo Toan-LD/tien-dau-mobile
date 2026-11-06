@@ -11,13 +11,15 @@ type Props = {
     title: string;
     items: CategoryTotal[];
     emptyText: string;
-    // Tapping a row opens that category's history.
     onSelect(item: CategoryTotal): void;
 };
 
-// Ranked bars, largest first, each with its share of the section's total and
-// its amount. Bars are scaled to the largest category.
-export function CategoryBars({ title, items, emptyText, onSelect }: Props) {
+export function CategoryBars({
+    title,
+    items,
+    emptyText,
+    onSelect,
+}: Readonly<Props>) {
     const max = items.length > 0 ? items[0].total : 0;
     const sum = items.reduce((s, c) => s + c.total, 0);
 

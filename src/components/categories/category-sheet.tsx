@@ -16,24 +16,17 @@ import {
 } from "@/lib/categories";
 import { CATEGORY_ICON_KEYS, DEFAULT_ICON_KEY } from "@/lib/category-icons";
 
-// Cells get whole-pixel widths from the measured grid: six "16.6667%" cells add up
-// to just over 100%, so Android wrapped some rows after five icons.
 const ICON_COLUMNS = 6;
 
 type Props = {
     visible: boolean;
     type: TxType;
-    // Where a new category goes in the list (ignored when editing).
     nextSortOrder: number;
-    // The category to edit; null/undefined creates a new one.
     editing?: Category | null;
     onClose(): void;
-    // The created or updated category.
     onSaved(category: Category): void;
 };
 
-// Name + icon for a category: "Mục chi mới" / "Mục thu mới" when creating,
-// "Sửa mục" when `editing` is set.
 export function CategorySheet({
     visible,
     type,
@@ -113,8 +106,6 @@ export function CategorySheet({
                 }}
                 placeholder="Tên mục"
                 placeholderTextColor={Colors.textMuted}
-                // Editing usually means picking a new icon, so don't pop the
-                // keyboard over the icon grid.
                 autoFocus={!editing}
                 maxLength={40}
                 style={[styles.input, error !== null && styles.inputError]}

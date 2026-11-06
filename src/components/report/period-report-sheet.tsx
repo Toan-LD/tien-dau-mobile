@@ -20,25 +20,20 @@ import type { Transaction } from "@/lib/transactions";
 type Props = {
     visible: boolean;
     onClose(): void;
-    // The period on show in Danh sách, e.g. "Tuần này, 02/11 – 08/11".
     periodTitle: string;
-    // Which card was tapped: Đã chi opens on Chi, Đã thu on Thu.
     initialType: TxType;
     transactions: Transaction[];
 };
 
-// Report for the day, week or month on show in Danh sách: a donut of the
-// categories and a list with each one's amount and share.
 export function PeriodReportSheet({
     visible,
     onClose,
     periodTitle,
     initialType,
     transactions,
-}: Props) {
+}: Readonly<Props>) {
     const [type, setType] = useState<TxType>(initialType);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
-    // Each time it opens, start on the card that was tapped.
     const [wasVisible, setWasVisible] = useState(visible);
     if (visible !== wasVisible) {
         setWasVisible(visible);
@@ -54,6 +49,7 @@ export function PeriodReportSheet({
         isExpense ? report.expenseByCategory : report.incomeByCategory,
     );
     const total = isExpense ? report.expense : report.income;
+    const totalLabel = isExpense ? "Tổng chi" : "Tổng thu";
     const selected = slices.find((s) => s.key === selectedKey) ?? null;
 
     const changeType = (next: TxType) => {
@@ -88,13 +84,7 @@ export function PeriodReportSheet({
                         slices={slices}
                         selectedKey={selectedKey}
                         onSelect={toggleSlice}
-                        label={
-                            selected
-                                ? selected.name
-                                : isExpense
-                                  ? "Tổng chi"
-                                  : "Tổng thu"
-                        }
+                        label={selected ? selected.name : totalLabel}
                         value={formatVND(selected ? selected.total : total)}
                         note={
                             selected ? formatShare(selected.share) : undefined
@@ -126,12 +116,12 @@ function LegendRow({
     selected,
     dimmed,
     onPress,
-}: {
+}: Readonly<{
     slice: DonutSlice;
     selected: boolean;
     dimmed: boolean;
     onPress(): void;
-}) {
+}>) {
     return (
         <PressableScale
             onPress={onPress}
@@ -166,7 +156,6 @@ function LegendRow({
     );
 }
 
-// One swatch style per chart colour, made once from the theme.
 const swatchSeries = ChartColors.series.map(
     (color) => StyleSheet.create({ swatch: { backgroundColor: color } }).swatch,
 );
@@ -175,8 +164,6 @@ const swatchOther = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-    // Fixed, so the empty body shown while sliding up and the report that
-    // replaces it are the same size; the list takes what's left and scrolls.
     body: { height: 470 },
     toggle: { marginHorizontal: 0, marginTop: 0 },
     empty: {

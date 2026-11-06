@@ -15,11 +15,11 @@ import { MonthPicker, type YearMonth } from "@/components/ui/month-picker";
 import { PeriodNav } from "@/components/ui/period-nav";
 import { StatCard, StatRow } from "@/components/ui/stat-card";
 import { Colors, Spacing } from "@/constants/theme";
+import type { TxType } from "@/lib/categories";
 import { formatMonthTitle } from "@/lib/dates";
 import { formatVND } from "@/lib/money";
 import { isWaitingForData, monthQuery, useRefreshOnFocus } from "@/lib/queries";
 import { buildMonthReport, type CategoryTotal } from "@/lib/report";
-import type { TxType } from "@/lib/categories";
 import { useToday } from "@/lib/use-today";
 
 function formatBalance(balance: number): string {
@@ -32,10 +32,8 @@ export default function ReportScreen() {
     const today = useToday();
     const currentYear = Number(today.slice(0, 4));
     const currentMonth = Number(today.slice(5, 7));
-    // null = following the current month, so it moves on by itself when the month changes.
     const [picked, setPicked] = useState<YearMonth | null>(null);
     const [pickerOpen, setPickerOpen] = useState(false);
-    // The category whose history sheet is open, and whether it's Chi or Thu.
     const [history, setHistory] = useState<{
         item: CategoryTotal;
         type: TxType;
@@ -45,7 +43,6 @@ export default function ReportScreen() {
     const query = useQuery({
         ...monthQuery(view.year, view.month),
         select: buildMonthReport,
-        // While another month loads, keep the last report on screen (dimmed).
         placeholderData: keepPreviousData,
     });
     const report = query.data ?? null;
@@ -53,8 +50,6 @@ export default function ReportScreen() {
 
     useRefreshOnFocus(monthQuery(view.year, view.month).queryKey);
 
-    // Load the months on both sides in the background, so "‹" and "›" are
-    // instant. There is no month after the current one.
     const isCurrent = view.year === currentYear && view.month === currentMonth;
     useEffect(() => {
         const prev = new Date(view.year, view.month - 2, 1);

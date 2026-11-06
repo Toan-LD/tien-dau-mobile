@@ -6,15 +6,12 @@ import { PressableScale } from "@/components/ui/pressable-scale";
 import { Colors, Spacing } from "@/constants/theme";
 
 type Props = {
-    // What the filter shows, e.g. "Ăn uống, Cà phê"; null = no filter.
     label: string | null;
     onPress(): void;
     onClear(): void;
 };
 
-// The category filter button on Danh sách: "Tất cả danh mục" when off, the
-// chosen names (with an ✕ to clear) when on.
-export function FilterChip({ label, onPress, onClear }: Props) {
+export function FilterChip({ label, onPress, onClear }: Readonly<Props>) {
     const active = label !== null;
     return (
         <View style={styles.row}>

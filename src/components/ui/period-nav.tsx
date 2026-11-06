@@ -15,19 +15,15 @@ type Props = {
     title: string;
     onPrev(): void;
     onNext(): void;
-    // Set when showing the current day/month: there is nothing after it.
     nextDisabled: boolean;
     prevLabel: string;
     nextLabel: string;
-    // Makes the title a button (with a small ▾), e.g. to open a calendar.
     onTitlePress?(): void;
     titleLabel?: string;
-    // Chevrons at both edges of the row (Danh sách) instead of beside the title.
     spread?: boolean;
     style?: StyleProp<ViewStyle>;
 };
 
-// "‹ title ›" used to step through days (Danh sách) and months (Báo cáo).
 export function PeriodNav({
     title,
     onPrev,
@@ -39,7 +35,7 @@ export function PeriodNav({
     titleLabel,
     spread,
     style,
-}: Props) {
+}: Readonly<Props>) {
     return (
         <View style={[styles.row, spread && styles.spread, style]}>
             <IconButton

@@ -15,22 +15,16 @@ import Animated, {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// Press in quickly, spring back a little softer: feels like a real button
-// without bouncing around.
 const PRESS_IN = { duration: 90 };
 const RELEASE = { damping: 18, stiffness: 320, mass: 0.6 };
 
 type Props = Omit<PressableProps, "style" | "children"> & {
     style?: StyleProp<ViewStyle>;
-    // Extra style while the finger is down (a darker background, a fade).
     pressedStyle?: StyleProp<ViewStyle>;
-    // How small it gets while pressed: 0.97 for wide buttons, smaller for icons.
     scaleTo?: number;
     children?: React.ReactNode;
 };
 
-// Pressable that shrinks slightly under the finger and springs back on release.
-// The base for every tappable control in the app, so they all feel the same.
 export function PressableScale({
     style,
     pressedStyle,

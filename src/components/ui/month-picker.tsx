@@ -9,8 +9,6 @@ import type { YearMonth } from "@/lib/calendar";
 
 export type { YearMonth } from "@/lib/calendar";
 
-// Three per row. Rows are built by hand rather than with "33.33%" widths,
-// which Android rounds so that a row can wrap early.
 const ROWS = [
     [1, 2, 3],
     [4, 5, 6],
@@ -20,16 +18,12 @@ const ROWS = [
 
 type Props = {
     visible: boolean;
-    // The month on show; its year is where the sheet opens.
     value: YearMonth;
-    // Latest month that can be picked (the current month).
     max: YearMonth;
     onSelect(value: YearMonth): void;
     onClose(): void;
 };
 
-// Bottom sheet to jump straight to a month: ‹ year › on top, 12 months below.
-// Months after `max` are greyed out.
 export function MonthPicker({
     visible,
     value,
@@ -38,7 +32,6 @@ export function MonthPicker({
     onClose,
 }: Readonly<Props>) {
     const [year, setYear] = useState(value.year);
-    // Each time it opens, start from the year being viewed.
     const [wasVisible, setWasVisible] = useState(visible);
     if (visible !== wasVisible) {
         setWasVisible(visible);

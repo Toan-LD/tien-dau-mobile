@@ -16,22 +16,23 @@ import { PeriodReportSheet } from "@/components/report/period-report-sheet";
 import { CategoryFilterSheet } from "@/components/today/category-filter-sheet";
 import { DayHeader } from "@/components/today/day-header";
 import { FilterChip } from "@/components/today/filter-chip";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { TransactionRow } from "@/components/today/transaction-row";
 import { useDatePicker } from "@/components/ui/date-picker";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { MonthPicker } from "@/components/ui/month-picker";
 import { PeriodNav } from "@/components/ui/period-nav";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { StatCard, StatRow } from "@/components/ui/stat-card";
 import { useToast } from "@/components/ui/toast";
 import { Colors, Spacing } from "@/constants/theme";
+import type { TxType } from "@/lib/categories";
 import { resolveDate, toLocalDateString, type LocalDate } from "@/lib/dates";
 import { formatVND } from "@/lib/money";
 import {
     containsDate,
+    filterByCategories,
     formatPeriodTitle,
     formatWeekday,
-    filterByCategories,
     groupByDay,
     NO_CATEGORY,
     periodOf,
@@ -46,7 +47,6 @@ import {
     useRefreshOnFocus,
 } from "@/lib/queries";
 import { sumByType } from "@/lib/report";
-import type { TxType } from "@/lib/categories";
 import type { Transaction } from "@/lib/transactions";
 import { useToday } from "@/lib/use-today";
 import { useDeleteTransaction } from "@/lib/use-transaction";
@@ -65,7 +65,6 @@ const UNIT: Record<PeriodMode, string> = {
     month: "Tháng",
 };
 
-// Week and month lists put a heading above each day's rows.
 type Row = { kind: "day"; group: DayGroup } | { kind: "tx"; tx: Transaction };
 
 function toRows(mode: PeriodMode, list: Transaction[]): Row[] {
@@ -76,8 +75,6 @@ function toRows(mode: PeriodMode, list: Transaction[]): Row[] {
     ]);
 }
 
-// Names for the filter button: "Ăn uống, Cà phê" or "Ăn uống, Cà phê +2";
-// null when nothing is filtered.
 function useFilterLabel(ids: string[]): string | null {
     const expense = useQuery(categoriesQuery("expense")).data ?? [];
     const income = useQuery(categoriesQuery("income")).data ?? [];
@@ -95,25 +92,18 @@ export default function ListScreen() {
     const toast = useToast();
     const today = useToday();
     const [mode, setMode] = useState<PeriodMode>("day");
-    // A day inside the period on show. null = following today, so the
-    // current day/week/month moves on by itself after midnight.
     const [picked, setPicked] = useState<LocalDate | null>(null);
     const anchor = resolveDate(picked, today);
     const period = periodOf(mode, anchor);
     const isCurrent = containsDate(period, today);
     const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-    // Which summary card opened the report sheet; null = closed.
     const [reportType, setReportType] = useState<TxType | null>(null);
 
     const queryClient = useQueryClient();
     const query = useQuery({
         ...periodQuery(mode, period),
-        // While another period loads, keep showing the last list (dimmed)
-        // instead of flashing an empty screen.
         placeholderData: keepPreviousData,
     });
-    // The category filter (empty = all) applies to the list, the totals and
-    // the report sheet alike.
     const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
     const [filterOpen, setFilterOpen] = useState(false);
     const items = query.data
@@ -123,8 +113,6 @@ export default function ListScreen() {
     const showingOld = query.isPlaceholderData;
     const rows = toRows(mode, items ?? []);
     const remove = useDeleteTransaction();
-    // Row swipes are off while the list is being dragged or still gliding,
-    // so scrolling past a row never catches it as a swipe.
     const swipeEnabled = useSharedValue(true);
     const stopSwipes = () => swipeEnabled.set(false);
     const allowSwipes = () => swipeEnabled.set(true);
@@ -137,7 +125,6 @@ export default function ListScreen() {
         if (query.error) toast.show({ message: "Không tải được danh sách" });
     }, [query.error, toast]);
 
-    // Load the period before in the background, so tapping "‹" is instant.
     const prevStart = periodOf(mode, shiftAnchor(mode, anchor, -1)).start;
     useEffect(() => {
         queryClient
@@ -149,15 +136,16 @@ export default function ListScreen() {
     useEffect(() => {
         if (!firstId || hintStarted.current) return;
         let cancelled = false;
-        AsyncStorage.getItem(HINT_KEY)
-            .then((seen) => {
-                if (cancelled || hintStarted.current) return;
-                hintStarted.current = true;
-                if (seen) return;
-                AsyncStorage.setItem(HINT_KEY, "1").catch(() => {});
-                setHintId(firstId);
-            })
-            .catch(() => {});
+        const showHintOnce = async () => {
+            const seen = await AsyncStorage.getItem(HINT_KEY);
+            if (cancelled || hintStarted.current) return;
+            hintStarted.current = true;
+            if (seen) return;
+            setHintId(firstId);
+            await AsyncStorage.setItem(HINT_KEY, "1");
+        };
+        // Storage errors only mean the hint may show again next time.
+        showHintOnce().catch(noop);
         return () => {
             cancelled = true;
         };
@@ -165,7 +153,6 @@ export default function ListScreen() {
 
     const clearHint = () => setHintId(null);
 
-    // Any day inside the current period means "follow today".
     const goTo = (next: LocalDate) => {
         setPicked(containsDate(periodOf(mode, next), today) ? null : next);
     };
@@ -173,8 +160,6 @@ export default function ListScreen() {
     const openPicker = () =>
         mode === "month" ? setMonthPickerOpen(true) : datePicker.open();
 
-    // Tapping the Danh sách tab while already on it goes back to the current
-    // day/week/month and scrolls to the top, like most apps' home tab.
     const navigation =
         useNavigation<BottomTabNavigationProp<Record<string, undefined>>>();
     const listRef = useRef<FlatList<Row>>(null);
@@ -242,11 +227,6 @@ export default function ListScreen() {
                 onClear={() => setCategoryFilter([])}
             />
             <View style={styles.listArea}>
-                {/* A plain FlatList: Animated.FlatList wraps every row in an
-                    animated view, which made long week/month lists stutter while
-                    scrolling. Deleting still glides (LayoutAnimation in
-                    useDeleteTransaction). Smaller batches keep each scroll step
-                    light, since every row carries a swipe gesture. */}
                 <FlatList
                     ref={listRef}
                     style={showingOld && styles.stale}

@@ -19,8 +19,6 @@ const STROKE = 26;
 const RADIUS = (SIZE - STROKE) / 2;
 const CENTER = SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-// Surface-coloured gap between slices (the sheet shows through), so
-// neighbouring colours read apart without drawing borders.
 const GAP = 2;
 const DRAW = { duration: 550, easing: Easing.out(Easing.cubic) };
 
@@ -28,8 +26,6 @@ export function sliceColor(slot: DonutSlice["slot"]): string {
     return slot === "other" ? ChartColors.other : ChartColors.series[slot];
 }
 
-// Where each slice starts on the ring and how long it is, in the same units
-// as the circle's dash pattern.
 function layoutSegments(slices: DonutSlice[]) {
     const segments: { slice: DonutSlice; start: number; length: number }[] = [];
     let start = 0;
@@ -45,16 +41,12 @@ type Props = {
     slices: DonutSlice[];
     selectedKey: string | null;
     onSelect(key: string): void;
-    // Text in the hole: a small label over a value, and an optional note.
     label: string;
     value: string;
     note?: string;
-    // Changing this redraws the ring from empty (new period or Chi/Thu).
     drawKey: string;
 };
 
-// Donut of category shares. Draws itself clockwise from the top; tapping a
-// slice dims the others (the screen shows its figures in the hole).
 export function DonutChart({
     slices,
     selectedKey,
@@ -63,7 +55,7 @@ export function DonutChart({
     value,
     note,
     drawKey,
-}: Props) {
+}: Readonly<Props>) {
     const progress = useSharedValue(0);
 
     useEffect(() => {
@@ -77,7 +69,7 @@ export function DonutChart({
     return (
         <View style={styles.wrap}>
             <Svg width={SIZE} height={SIZE}>
-                <G rotation={-90} origin={`${CENTER}, ${CENTER}`}>
+                <G transform={`rotate(-90 ${CENTER} ${CENTER})`}>
                     {segments.map(({ slice, start: from, length }) => (
                         <Segment
                             key={slice.key}
@@ -116,7 +108,7 @@ function Segment({
     dimmed,
     progress,
     onPress,
-}: {
+}: Readonly<{
     from: number;
     length: number;
     gap: number;
@@ -124,9 +116,7 @@ function Segment({
     dimmed: boolean;
     progress: SharedValue<number>;
     onPress(): void;
-}) {
-    // The ring fills from the top as progress goes 0 → 1; each slice shows
-    // the part of itself the sweep has reached.
+}>) {
     const animatedProps = useAnimatedProps(() => {
         const reached = progress.get() * CIRCUMFERENCE - from;
         const visible = Math.min(

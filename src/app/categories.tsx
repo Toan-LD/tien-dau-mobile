@@ -28,8 +28,6 @@ import {
 export default function CategoriesScreen() {
     const toast = useToast();
     const [type, setType] = useState<TxType>("expense");
-    // The add/edit sheet. `editing` stays set while the sheet slides away, so
-    // its title doesn't flip to "Mục mới" on the way out.
     const [sheet, setSheet] = useState<{
         open: boolean;
         editing: Category | null;
@@ -58,29 +56,25 @@ export default function CategoriesScreen() {
             setCachedCategories(queryClient, c.type, (list) =>
                 list.filter((x) => x.id !== c.id),
             );
-            // Rows in that category now show as "Không phân loại".
-            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+            void queryClient.invalidateQueries({ queryKey: ["transactions"] });
             toast.show({ message: `Đã xoá mục "${c.name}"` });
         } catch {
             toast.show({ message: "Không xoá được, thử lại nhé" });
         }
     };
 
-    // The list updates at once; saves run one after another so quick drags
-    // reach the database in order. A failed save reloads the real order.
     const saving = useRef(Promise.resolve());
     const reorder = (ids: string[]) => {
         if (!categories) return;
         const next = reorderCategories(categories, ids);
         const before = categories;
-        // A reload still on its way would put the old order back.
-        queryClient.cancelQueries({ queryKey: ["categories", type] });
+        void queryClient.cancelQueries({ queryKey: ["categories", type] });
         setCachedCategories(queryClient, type, () => next);
         saving.current = saving.current
             .then(() => saveCategoryOrder(before, next))
             .catch(() => {
                 toast.show({ message: "Không lưu được thứ tự, thử lại nhé" });
-                reload();
+                void reload();
             });
     };
 
@@ -146,8 +140,7 @@ export default function CategoriesScreen() {
                         setCachedCategories(queryClient, c.type, (list) =>
                             list.map((x) => (x.id === c.id ? c : x)),
                         );
-                        // Transactions show the category's name and icon.
-                        queryClient.invalidateQueries({
+                        void queryClient.invalidateQueries({
                             queryKey: ["transactions"],
                         });
                         toast.show({ message: `Đã lưu mục "${c.name}"` });

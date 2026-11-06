@@ -6,9 +6,6 @@ import { useToast } from "@/components/ui/toast";
 import { Colors, Spacing } from "@/constants/theme";
 import { deleteSampleData, insertSampleData } from "@/lib/sample-data";
 
-// Development tools on Cài đặt (rendered only when __DEV__): fill the account
-// with made-up transactions from 1 January to now, or remove them again.
-// Only rows created here are removed; entries typed in by hand stay.
 export function SampleDataPanel() {
     const toast = useToast();
     const [busy, setBusy] = useState<"create" | "delete" | null>(null);

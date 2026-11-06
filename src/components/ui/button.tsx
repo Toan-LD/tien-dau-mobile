@@ -11,13 +11,7 @@ import {
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { Colors, Spacing } from "@/constants/theme";
 
-type Variant =
-    // Dark filled button: Lưu, Xong, Tạo mục.
-    | "primary"
-    // Red outline: Đăng xuất, Xoá.
-    | "danger-outline"
-    // Dashed outline with a + icon: Thêm mục.
-    | "dashed";
+type Variant = "primary" | "danger-outline" | "dashed";
 
 type Props = {
     label: string;
@@ -25,10 +19,8 @@ type Props = {
     variant?: Variant;
     icon?: ComponentProps<typeof Ionicons>["name"];
     disabled?: boolean;
-    // Shows a spinner (or, on primary, fades the button) and ignores taps.
     busy?: boolean;
     accessibilityLabel?: string;
-    // For outer spacing only (margins), from the caller's StyleSheet.
     style?: StyleProp<ViewStyle>;
 };
 
@@ -41,7 +33,7 @@ export function Button({
     busy,
     accessibilityLabel,
     style,
-}: Props) {
+}: Readonly<Props>) {
     const inactive = disabled || busy;
     const v = variants[variant];
 

@@ -12,7 +12,7 @@ import { Colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/query-client";
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 const theme = {
     ...DefaultTheme,
@@ -23,7 +23,7 @@ function RootStack() {
     const { session, loading } = useAuth();
 
     useEffect(() => {
-        if (!loading) SplashScreen.hideAsync();
+        if (!loading) SplashScreen.hide();
     }, [loading]);
 
     if (loading) return null;

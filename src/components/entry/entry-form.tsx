@@ -41,8 +41,6 @@ import {
 } from "@/lib/transactions";
 import { useToday } from "@/lib/use-today";
 
-// Horizontal swipe on the category grid: how far the finger must move
-// sideways before it counts as a swipe, and how far or fast to switch type.
 const SWIPE_START = 15;
 const SWIPE_DISTANCE = 60;
 const SWIPE_VELOCITY = 500;
@@ -68,7 +66,6 @@ export function EntryForm({
     const [pickedCategoryId, setPickedCategoryId] = useState<string | null>(
         initial?.categoryId ?? null,
     );
-    // null = "today", resolved at render and at save so the form rolls over at midnight.
     const [pickedDate, setPickedDate] = useState<LocalDate | null>(
         initial?.date ?? null,
     );
@@ -91,14 +88,12 @@ export function EntryForm({
             toast.show({ message: "Không tải được danh sách mục" });
     }, [categoriesResult.error, toast]);
 
-    // Load the other type's categories too, so switching Chi/Thu is instant.
     useEffect(() => {
         queryClient
             .query(categoriesQuery(type === "expense" ? "income" : "expense"))
             .catch(noop);
     }, [type, queryClient]);
 
-    // The picked category may have been deleted on the Danh mục screen.
     const categoryId =
         categories && !categories.some((c) => c.id === pickedCategoryId)
             ? null
@@ -110,9 +105,6 @@ export function EntryForm({
         setPickedCategoryId(null);
     };
 
-    // Swiping sideways over the categories switches Chi/Thu, like flipping
-    // pages: swipe left to go to Thu (the right page), right for Chi.
-    // Only a clearly horizontal move counts; vertical drags still scroll.
     const swipe = usePanGesture({
         activeOffsetX: [-SWIPE_START, SWIPE_START],
         failOffsetY: [-SWIPE_START, SWIPE_START],
@@ -128,7 +120,6 @@ export function EntryForm({
         },
     });
 
-    // Tapping the selected category again clears the selection.
     const selectCategory = (id: string) => {
         setPickedCategoryId((current) => (current === id ? null : id));
         setKeypadOpen(false);
@@ -193,9 +184,6 @@ export function EntryForm({
                 />
             </View>
 
-            {/* Chi and Thu are two pages: switching slides one out and the
-                other in from its side (Chi left, Thu right), like the toggle.
-                skipEntering: no slide when the screen first opens. */}
             <GestureDetector gesture={swipe}>
                 <View style={styles.gridArea}>
                     <LayoutAnimationConfig skipEntering>
@@ -228,7 +216,6 @@ export function EntryForm({
                 </View>
             </GestureDetector>
 
-            {/* While the keypad is open the slot keeps its height so the keypad doesn't jump. */}
             {(canSave || keypadOpen) && (
                 <View style={styles.saveSlot}>
                     {canSave && (
@@ -302,7 +289,6 @@ export function EntryForm({
 
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: Colors.background },
-    // Clips the pages while they slide past the screen edges.
     gridArea: { flex: 1, overflow: "hidden" },
     gridPage: { flex: 1 },
     metaRow: {

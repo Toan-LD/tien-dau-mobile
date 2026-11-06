@@ -14,21 +14,18 @@ import { Colors, Spacing } from "@/constants/theme";
 type Props = {
     label: string;
     value: string;
-    // "large" is the Còn lại box on Báo cáo; "small" sits two to a row.
     size?: "small" | "large";
-    // Makes the card a button (with a small chart icon), e.g. to open a report.
     onPress?(): void;
     accessibilityHint?: string;
 };
 
-// A bordered box with a small label over a money value.
 export function StatCard({
     label,
     value,
     size = "small",
     onPress,
     accessibilityHint,
-}: Props) {
+}: Readonly<Props>) {
     const large = size === "large";
     const cardStyle = [
         styles.card,
@@ -67,14 +64,13 @@ export function StatCard({
     );
 }
 
-// Two small cards side by side. style is for outer padding from the caller.
 export function StatRow({
     children,
     style,
-}: {
+}: Readonly<{
     children: React.ReactNode;
     style?: StyleProp<ViewStyle>;
-}) {
+}>) {
     return <View style={[styles.row, style]}>{children}</View>;
 }
 

@@ -19,8 +19,6 @@ import { IconButton } from "@/components/ui/icon-button";
 import { Colors, Spacing } from "@/constants/theme";
 import type { Category } from "@/lib/categories";
 
-// Rows are absolutely positioned at index * ROW_HEIGHT so they can slide
-// past each other while one is dragged.
 const ROW_HEIGHT = 56;
 const ROW_GAP = Spacing.two;
 const HOLD_MS = 200;

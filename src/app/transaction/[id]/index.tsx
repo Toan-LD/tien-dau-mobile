@@ -131,12 +131,12 @@ function DetailRow({
     icon,
     last,
     children,
-}: {
+}: Readonly<{
     label: string;
     icon?: ComponentProps<typeof Ionicons>["name"];
     last?: boolean;
     children: React.ReactNode;
-}) {
+}>) {
     return (
         <View style={[styles.row, !last && styles.rowDivider]}>
             <View style={styles.rowLabel}>

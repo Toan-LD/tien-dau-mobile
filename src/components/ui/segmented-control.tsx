@@ -7,13 +7,13 @@ import {
     type ViewStyle,
 } from "react-native";
 import Animated, {
-    type SharedValue,
     useAnimatedStyle,
     useSharedValue,
     withDelay,
     withSequence,
     withSpring,
     withTiming,
+    type SharedValue,
 } from "react-native-reanimated";
 
 import { Colors, Spacing } from "@/constants/theme";
@@ -24,14 +24,11 @@ type Props<T extends string> = {
     options: readonly Option<T>[];
     value: T;
     onChange(value: T): void;
-    // Outer spacing only, e.g. to drop the default side margins in a sheet.
     style?: StyleProp<ViewStyle>;
 };
 
 const PADDING = 2;
-// Slide: quick and settles without wobbling.
 const SLIDE = { damping: 22, stiffness: 380, mass: 0.7 };
-// Lift: up fast, held while sliding, then pressed down with a small bounce.
 const LIFT_SCALE = 1.06;
 const LIFT = { duration: 80 };
 const PRESS_SCALE = 0.96;
@@ -39,19 +36,16 @@ const PRESS = { duration: 70 };
 const SETTLE = { damping: 12, stiffness: 420, mass: 0.5 };
 const HOLD_MS = 90;
 
-// Two or more options side by side, one selected (Chi | Thu). The white thumb
-// lifts, slides to the tapped option and presses down into place.
 export function SegmentedControl<T extends string>({
     options,
     value,
     onChange,
     style,
-}: Props<T>) {
+}: Readonly<Props<T>>) {
     const index = Math.max(
         0,
         options.findIndex((o) => o.value === value),
     );
-    // Width of one option, measured; 0 until the first layout.
     const optionWidth = useSharedValue(0);
     const x = useSharedValue(0);
     const scale = useSharedValue(1);
@@ -67,11 +61,9 @@ export function SegmentedControl<T extends string>({
                 withSpring(1, SETTLE),
             ),
         );
-        // Only a change of option animates; layout is handled in onLayout.
     }, [index, optionWidth, scale, x]);
 
     const thumbStyle = useAnimatedStyle(() => {
-        // 0 at rest, 1 at the top of the lift: drives the shadow.
         const lift = Math.max(0, (scale.get() - 1) / (LIFT_SCALE - 1));
         return {
             width: optionWidth.get(),
@@ -90,7 +82,6 @@ export function SegmentedControl<T extends string>({
                 const width =
                     (e.nativeEvent.layout.width - PADDING * 2) / options.length;
                 optionWidth.set(width);
-                // Jump, don't slide, when the size is first known or changes.
                 x.set(index * width);
             }}
         >
@@ -126,8 +117,6 @@ export function SegmentedControl<T extends string>({
     );
 }
 
-// 1 when the thumb sits on option `index`, 0 when it is a whole option away.
-// Before the first layout there is no thumb position, so use the selection.
 function nearness(
     x: number,
     width: number,
@@ -139,22 +128,19 @@ function nearness(
     return Math.min(1, Math.max(0, 1 - Math.abs(x / width - index)));
 }
 
-// The label follows the thumb instead of switching on tap: the closer the
-// thumb is to this option, the more the bold dark text shows over the plain
-// grey one. Bold can't be animated, so the two are stacked and cross-faded.
 function OptionLabel({
     label,
     index,
     selected,
     x,
     optionWidth,
-}: {
+}: Readonly<{
     label: string;
     index: number;
     selected: boolean;
     x: SharedValue<number>;
     optionWidth: SharedValue<number>;
-}) {
+}>) {
     const boldStyle = useAnimatedStyle(() => ({
         opacity: nearness(x.get(), optionWidth.get(), index, selected),
     }));
@@ -164,7 +150,6 @@ function OptionLabel({
 
     return (
         <View>
-            {/* The bold copy sets the size: it is the wider of the two. */}
             <Animated.Text
                 style={[styles.optionText, styles.optionTextOn, boldStyle]}
             >

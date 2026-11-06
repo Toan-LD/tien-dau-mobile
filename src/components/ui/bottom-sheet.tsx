@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
     BackHandler,
     KeyboardAvoidingView,
@@ -32,21 +32,10 @@ type Props = {
     onClose(): void;
     title: string;
     children: React.ReactNode;
-    // Heavy content (charts): slide up with an empty body first and render
-    // the children once the sheet is fully open, so building them doesn't
-    // steal frames from the slide. Give `bodyStyle` a fixed height: the empty
-    // body and the content then have the same size and the sheet never jumps.
     deferContent?: boolean;
     bodyStyle?: StyleProp<ViewStyle>;
 };
 
-// A sheet that slides up from the bottom over a dimmed backdrop.
-//
-// Drawn through the app's Portal, not React Native's Modal: a Modal opens a
-// new Android window each time, which made the slide stutter at the start.
-// One value (0 = hidden, 1 = open) drives the backdrop fade and the slide on
-// the UI thread. The sheet stays mounted until the closing slide ends; the
-// Android back button closes it.
 export function BottomSheet({
     visible,
     onClose,
@@ -54,17 +43,14 @@ export function BottomSheet({
     children,
     deferContent,
     bodyStyle,
-}: Props) {
+}: Readonly<Props>) {
     const insets = useSafeAreaInsets();
     const { height: windowHeight } = useWindowDimensions();
     const progress = useSharedValue(0);
-    // Until the sheet is measured, push it a whole screen down so the first
-    // frame can never show it in its open position.
     const sheetHeight = useSharedValue(windowHeight);
 
     const [mounted, setMounted] = useState(visible);
     if (visible && !mounted) setMounted(true);
-    // Deferred content is shown once the opening slide has finished.
     const [ready, setReady] = useState(false);
 
     useEffect(() => {
@@ -87,7 +73,6 @@ export function BottomSheet({
         }
     }, [visible, progress]);
 
-    // Back closes the sheet instead of leaving the screen.
     useEffect(() => {
         if (!visible) return;
         const sub = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -106,18 +91,16 @@ export function BottomSheet({
 
     if (!mounted) return null;
 
-    const body =
-        !deferContent || ready ? (
-            deferContent ? (
-                <Animated.View entering={CONTENT_IN} style={bodyStyle}>
-                    {children}
-                </Animated.View>
-            ) : (
-                children
-            )
+    let body: ReactNode = children;
+    if (deferContent) {
+        body = ready ? (
+            <Animated.View entering={CONTENT_IN} style={bodyStyle}>
+                {children}
+            </Animated.View>
         ) : (
             <View style={bodyStyle} />
         );
+    }
 
     return (
         <Portal>

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { CategoryIcon } from "@/components/category-icon";
@@ -19,25 +19,19 @@ import {
 } from "@/lib/report";
 
 type Props = {
-    // The category tapped on Báo cáo; null when the sheet is closed.
     category: CategoryTotal | null;
     type: TxType;
-    // The current month: the chart runs up to here.
     until: { year: number; month: number };
     onClose(): void;
 };
 
-// "From the start until now" for one category: a column per month, the
-// selected month's amount on top, and the total, monthly average and
-// biggest month underneath.
 export function CategoryHistorySheet({
     category,
     type,
     until,
     onClose,
-}: Props) {
+}: Readonly<Props>) {
     const visible = category !== null;
-    // Keep the last category while the sheet slides away.
     const [shown, setShown] = useState(category);
     if (category !== null && category !== shown) setShown(category);
 
@@ -49,7 +43,6 @@ export function CategoryHistorySheet({
     const summary = historySummary(months);
     const trend = movingAverage(months.map((m) => m.total));
 
-    // null = the latest month; a tapped column overrides it until reopened.
     const [picked, setPicked] = useState<number | null>(null);
     const [wasVisible, setWasVisible] = useState(visible);
     if (visible !== wasVisible) {
@@ -61,6 +54,65 @@ export function CategoryHistorySheet({
 
     const isExpense = type === "expense";
     const peak = summary.peak;
+    const peakLabel = peak
+        ? `Cao nhất · T${peak.month}/${String(peak.year).slice(2)}`
+        : "Cao nhất";
+
+    let content: ReactNode;
+    if (query.isPending) {
+        content = (
+            <ActivityIndicator style={styles.state} color={Colors.icon} />
+        );
+    } else if (query.isError) {
+        content = (
+            <Text style={[styles.state, styles.stateText]}>
+                Không tải được dữ liệu
+            </Text>
+        );
+    } else if (months.length === 0 || !month) {
+        content = (
+            <Text style={[styles.state, styles.stateText]}>
+                Chưa có khoản nào trong mục này
+            </Text>
+        );
+    } else {
+        content = (
+            <>
+                <View style={styles.selected}>
+                    <Text style={styles.selectedLabel}>
+                        {formatMonthTitle(month.year, month.month)}
+                    </Text>
+                    <Text style={styles.selectedValue}>
+                        {formatVND(month.total)}
+                    </Text>
+                    <Text style={styles.selectedTrend}>
+                        TB 3 tháng: {formatVND(trend[selected] ?? 0)}
+                    </Text>
+                </View>
+                <MonthColumns
+                    months={months}
+                    trend={trend}
+                    selected={selected}
+                    onSelect={setPicked}
+                    drawKey={`${shown?.categoryId}-${type}`}
+                />
+                <StatRow style={styles.summary}>
+                    <StatCard
+                        label="Tổng"
+                        value={formatCompactVND(summary.total)}
+                    />
+                    <StatCard
+                        label="TB mỗi tháng"
+                        value={formatCompactVND(summary.average)}
+                    />
+                    <StatCard
+                        label={peakLabel}
+                        value={formatCompactVND(peak?.total ?? 0)}
+                    />
+                </StatRow>
+            </>
+        );
+    }
 
     return (
         <BottomSheet
@@ -77,56 +129,7 @@ export function CategoryHistorySheet({
                 </Text>
             </View>
 
-            {query.isPending ? (
-                <ActivityIndicator style={styles.state} color={Colors.icon} />
-            ) : query.isError ? (
-                <Text style={[styles.state, styles.stateText]}>
-                    Không tải được dữ liệu
-                </Text>
-            ) : months.length === 0 || !month ? (
-                <Text style={[styles.state, styles.stateText]}>
-                    Chưa có khoản nào trong mục này
-                </Text>
-            ) : (
-                <>
-                    <View style={styles.selected}>
-                        <Text style={styles.selectedLabel}>
-                            {formatMonthTitle(month.year, month.month)}
-                        </Text>
-                        <Text style={styles.selectedValue}>
-                            {formatVND(month.total)}
-                        </Text>
-                        <Text style={styles.selectedTrend}>
-                            TB 3 tháng: {formatVND(trend[selected] ?? 0)}
-                        </Text>
-                    </View>
-                    <MonthColumns
-                        months={months}
-                        trend={trend}
-                        selected={selected}
-                        onSelect={setPicked}
-                        drawKey={`${shown?.categoryId}-${type}`}
-                    />
-                    <StatRow style={styles.summary}>
-                        <StatCard
-                            label="Tổng"
-                            value={formatCompactVND(summary.total)}
-                        />
-                        <StatCard
-                            label="TB mỗi tháng"
-                            value={formatCompactVND(summary.average)}
-                        />
-                        <StatCard
-                            label={
-                                peak
-                                    ? `Cao nhất · T${peak.month}/${String(peak.year).slice(2)}`
-                                    : "Cao nhất"
-                            }
-                            value={formatCompactVND(peak?.total ?? 0)}
-                        />
-                    </StatRow>
-                </>
-            )}
+            {content}
         </BottomSheet>
     );
 }
@@ -144,8 +147,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         color: Colors.text,
     },
-    // Fixed, so the empty body shown while sliding up and the chart that
-    // replaces it are the same size: the sheet never resizes.
     body: { height: 410 },
     state: { paddingVertical: Spacing.five },
     stateText: { textAlign: "center", fontSize: 14, color: Colors.textMuted },

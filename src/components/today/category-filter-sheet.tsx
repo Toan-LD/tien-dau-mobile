@@ -14,25 +14,20 @@ import { categoriesQuery } from "@/lib/queries";
 
 type Props = {
     visible: boolean;
-    // Category ids currently filtered on (NO_CATEGORY = "Không phân loại").
     selected: string[];
     onApply(ids: string[]): void;
     onClose(): void;
 };
 
-// Pick one or more categories to show in Danh sách. Chi and Thu are listed
-// separately; nothing picked means "all".
 export function CategoryFilterSheet({
     visible,
     selected,
     onApply,
     onClose,
-}: Props) {
+}: Readonly<Props>) {
     const expense = useQuery(categoriesQuery("expense")).data ?? [];
     const income = useQuery(categoriesQuery("income")).data ?? [];
 
-    // Edits stay a draft until "Áp dụng"; each opening starts from the
-    // filter in use.
     const [draft, setDraft] = useState<string[]>(selected);
     const [wasVisible, setWasVisible] = useState(visible);
     if (visible !== wasVisible) {
@@ -108,12 +103,12 @@ function Section({
     categories,
     draft,
     onToggle,
-}: {
+}: Readonly<{
     title: string;
     categories: Category[];
     draft: string[];
     onToggle(id: string): void;
-}) {
+}>) {
     if (categories.length === 0) return null;
     return (
         <>

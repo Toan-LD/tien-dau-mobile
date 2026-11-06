@@ -9,16 +9,13 @@ const DISAPPEAR = FadeOut.duration(120);
 
 type Props = {
     visible: boolean;
-    // "top" sits near the top of the area (long lists, where the middle may be
-    // far below the fold); "center" is the middle of the area.
     position?: "top" | "center";
 };
 
-// A spinner in a small white disc, laid over the area that is loading (the
-// area itself is usually dimmed). Put it inside a container with
-// `position: relative` (any View): it covers that container and lets taps
-// through.
-export function LoadingSpinner({ visible, position = "center" }: Props) {
+export function LoadingSpinner({
+    visible,
+    position = "center",
+}: Readonly<Props>) {
     // The cover stays mounted so the disc can fade out when loading ends.
     return (
         <View

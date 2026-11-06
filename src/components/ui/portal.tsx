@@ -9,12 +9,6 @@ import {
 } from "react";
 import { StyleSheet, View } from "react-native";
 
-// Renders things (bottom sheets) above the whole app from wherever they are
-// declared, without React Native's Modal. A Modal opens a new Android window
-// on every show, and creating it costs the first frames of the slide-in
-// animation. Content drawn through the portal lives in the app's own window,
-// inside every root provider (query cache, toast, safe area, gestures).
-
 type PortalApi = {
     set(id: string, node: React.ReactNode): void;
     remove(id: string): void;
@@ -22,7 +16,9 @@ type PortalApi = {
 
 const PortalContext = createContext<PortalApi | null>(null);
 
-export function PortalHost({ children }: { children: React.ReactNode }) {
+export function PortalHost({
+    children,
+}: Readonly<{ children: React.ReactNode }>) {
     const [nodes, setNodes] = useState<[string, React.ReactNode][]>([]);
 
     const api = useMemo<PortalApi>(
@@ -59,8 +55,7 @@ export function PortalHost({ children }: { children: React.ReactNode }) {
     );
 }
 
-// Draws its children in the PortalHost instead of in place.
-export function Portal({ children }: { children: React.ReactNode }) {
+export function Portal({ children }: Readonly<{ children: React.ReactNode }>) {
     const api = useContext(PortalContext);
     if (!api) throw new Error("Portal must be inside PortalHost");
     const id = useId();

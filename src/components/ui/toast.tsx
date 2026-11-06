@@ -34,7 +34,9 @@ export function useToast(): ToastContextValue {
     return ctx;
 }
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({
+    children,
+}: Readonly<{ children: React.ReactNode }>) {
     const insets = useSafeAreaInsets();
     const [toast, setToast] = useState<ToastOptions | null>(null);
     const [opacity] = useState(() => new Animated.Value(0));

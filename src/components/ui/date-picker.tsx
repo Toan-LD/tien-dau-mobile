@@ -20,9 +20,6 @@ type Props = {
     onClose(): void;
 };
 
-// Our own calendar sheet, the same on Android and iOS, so it matches the app
-// instead of the phone's system calendar. Tapping a day only marks it; "Xong"
-// applies it. ‹ › change month, days after `max` are greyed out.
 export function DayPicker({
     visible,
     value,
@@ -150,9 +147,6 @@ function DayCell({
     );
 }
 
-// A calendar to pick a day, no later than today. Call `open()` from a button
-// and render `sheet` anywhere in the screen; picking a day and tapping "Xong"
-// calls `onChange`.
 export function useDatePicker(
     date: LocalDate,
     onChange: (date: LocalDate) => void,

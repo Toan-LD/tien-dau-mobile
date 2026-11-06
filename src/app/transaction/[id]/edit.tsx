@@ -31,7 +31,6 @@ export default function EditTransactionScreen() {
                 resetAfterSubmit={false}
                 onSubmit={async (d) => {
                     const updated = await updateTransaction(tx.id, d);
-                    // The detail screen underneath shows the new values at once.
                     queryClient.setQueryData(
                         transactionQuery(tx.id).queryKey,
                         updated,

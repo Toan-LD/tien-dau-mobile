@@ -9,20 +9,11 @@ type Props = {
     disabled?: boolean;
     onPress(): void;
     accessibilityLabel?: string;
-    // Corner rounding, shared by the tile and its selected ring:
-    // "small" (8) for the dense category grid, "large" (10) elsewhere.
     radius?: "small" | "large";
-    // Size and padding of the tile, from the caller's StyleSheet.
     style?: StyleProp<ViewStyle>;
     children: React.ReactNode;
 };
 
-// A bordered tile that gets a dark border when selected: category tiles on Ghi,
-// icon choices in the new-category sheet, months in the month picker.
-//
-// The selected border is a ring drawn on top of the normal 1px border, not a
-// wider border: a wider border makes the tile taller and pushes the rows
-// below it down a little every time the selection changes.
 export function SelectableTile({
     selected,
     dashed,
@@ -32,7 +23,7 @@ export function SelectableTile({
     radius = "large",
     style,
     children,
-}: Props) {
+}: Readonly<Props>) {
     return (
         <PressableScale
             onPress={onPress}
@@ -69,8 +60,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Colors.border,
     },
-    // Covers the tile's own 1px border exactly (absolute children start
-    // inside the border, hence -1).
     ring: {
         position: "absolute",
         top: -1,

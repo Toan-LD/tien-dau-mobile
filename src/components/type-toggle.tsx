@@ -12,11 +12,11 @@ export function TypeToggle({
     type,
     onChange,
     style,
-}: {
+}: Readonly<{
     type: TxType;
     onChange(t: TxType): void;
     style?: StyleProp<ViewStyle>;
-}) {
+}>) {
     return (
         <SegmentedControl
             options={OPTIONS}

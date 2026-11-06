@@ -6,11 +6,6 @@ import { useToast } from "@/components/ui/toast";
 
 const WINDOW_MS = 2000;
 
-// Android: on the screen that would close the app, the first back press (or
-// edge swipe) only shows a hint; a second one within 2 seconds leaves the app.
-// An open sheet closes first: BottomSheet adds its own back handler while
-// open, and the handler added last runs first.
-// Does nothing on iOS, which has no system back.
 export function useBackTwiceToExit() {
     const toast = useToast();
     const lastPress = useRef(0);

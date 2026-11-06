@@ -13,6 +13,6 @@ export function CategoryIcon({
     iconKey,
     size = 22,
     color = Colors.icon,
-}: Props) {
+}: Readonly<Props>) {
     return <Ionicons name={ioniconFor(iconKey)} size={size} color={color} />;
 }

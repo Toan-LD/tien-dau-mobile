@@ -18,7 +18,7 @@ export interface ChatModel {
 export const MAX_TOOL_ROUNDS = 5;
 
 export const GIVE_UP_REPLY =
-    "Mình chưa trả lời được câu này, bạn thử hỏi lại ngắn gọn hơn nhé.";
+    "Mình chưa trả lời được câu này, bạn hỏi cụ thể hơn nhé.";
 
 export type RunAgentOptions = {
     model: ChatModel;

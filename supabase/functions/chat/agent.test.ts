@@ -130,3 +130,10 @@ Deno.test("lỗi từ runTool được ném ra, không nuốt", async () => {
     };
     await assertRejects(() => runAgent(options), Error, "hỏng");
 });
+
+Deno.test("GIVE_UP_REPLY đúng nguyên văn", () => {
+    assertEquals(
+        GIVE_UP_REPLY,
+        "Mình chưa trả lời được câu này, bạn hỏi cụ thể hơn nhé.",
+    );
+});

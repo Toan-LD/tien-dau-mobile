@@ -60,6 +60,8 @@
         "test": "jest",
         "test:fn": "deno test --config supabase/functions/deno.json supabase/functions",
         "check:fn": "deno check --config supabase/functions/deno.json supabase/functions/chat/index.ts",
+        "eval:seed": "deno run -A --config supabase/functions/deno.json supabase/functions/chat/eval/seed.ts",
+        "eval:chat": "deno run -A --config supabase/functions/deno.json supabase/functions/chat/eval/run.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check ."
     },

@@ -15,6 +15,7 @@ import {
     initialChatState,
     type ChatMessage,
 } from "@/lib/chat-state";
+import { createTransaction, validateDraft } from "@/lib/transactions";
 
 type ChatContextValue = {
     messages: ChatMessage[];
@@ -22,6 +23,8 @@ type ChatContextValue = {
     send: (text: string) => void;
     retry: (errorId: string) => void;
     reset: () => void;
+    saveDraft: (messageId: string) => Promise<boolean>;
+    dismissDraft: (messageId: string) => void;
 };
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -30,6 +33,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(chatReducer, initialChatState);
     const messageCounter = useRef(0);
     const conversationGeneration = useRef(0);
+    const savingMessageIds = useRef(new Set<string>());
 
     const nextId = () => {
         messageCounter.current += 1;
@@ -83,6 +87,44 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "reset" });
     };
 
+    const saveDraft = async (messageId: string): Promise<boolean> => {
+        const message = state.messages.find(
+            (candidate) => candidate.id === messageId,
+        );
+        if (message?.role !== "draft" || message.status !== "open") {
+            return false;
+        }
+        if (savingMessageIds.current.has(messageId)) return false;
+        const { type, amount, categoryId, date, note } = message.draft;
+        const draft = { type, amount, categoryId, date, note };
+        if (validateDraft(draft) !== null) return false;
+
+        const generation = conversationGeneration.current;
+        const stillCurrent = () =>
+            generation === conversationGeneration.current;
+        savingMessageIds.current.add(messageId);
+        dispatch({ type: "saveStart", id: messageId });
+        try {
+            const transaction = await createTransaction(draft);
+            if (!stillCurrent()) return false;
+            dispatch({
+                type: "saveDone",
+                id: messageId,
+                transactionId: transaction.id,
+            });
+            return true;
+        } catch {
+            if (stillCurrent()) dispatch({ type: "saveFail", id: messageId });
+            return false;
+        } finally {
+            savingMessageIds.current.delete(messageId);
+        }
+    };
+
+    const dismissDraft = (messageId: string) => {
+        dispatch({ type: "dismiss", id: messageId });
+    };
+
     return (
         <ChatContext.Provider
             value={{
@@ -91,6 +133,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 send,
                 retry,
                 reset,
+                saveDraft,
+                dismissDraft,
             }}
         >
             {children}

@@ -3,6 +3,9 @@
 //   eval "$(npx supabase status -o env | sed 's/^API_URL=/SUPABASE_URL=/')"
 //   npm run eval:chat -- --runs 2
 //
+// Hàm chat cần chạy bằng file riêng (CHAT_DAILY_LIMIT=1000, không phải .env thật):
+//   npx supabase functions serve chat --env-file supabase/functions/.env.eval.local
+//
 // Cần SUPABASE_URL (hoặc API_URL) và key publishable/anon (SUPABASE_ANON_KEY,
 // ANON_KEY hoặc PUBLISHABLE_KEY). Đã chạy `npm run eval:seed` trước đó.
 import { createClient } from "@supabase/supabase-js";

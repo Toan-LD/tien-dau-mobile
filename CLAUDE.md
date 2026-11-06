@@ -33,7 +33,7 @@ npx supabase functions serve chat --env-file supabase/functions/.env   # run the
 
 Commands that talk to the hosted project use `--remote` (Supabase CLI v3 has no `--linked`; `db push` and `gen types` default to local without it), for example `npx supabase gen types typescript --remote --schema public > src/lib/database.types.ts`. `supabase secrets set` and `supabase functions deploy` are remote-only and default to the linked project (`--remote=<ref>` picks another). Run them outside the sandbox: it blocks ports 5432/6543.
 
-`eval:*` refuse any Supabase URL that is not `127.0.0.1`/`localhost`; set `CHAT_DAILY_LIMIT=1000` in `supabase/functions/.env` while evaluating. On Fedora (SELinux) `functions serve` needs `chcon -R -t container_file_t supabase/functions` first and `restorecon -RF supabase/functions` after (see `docs/setup.md` Phần 7).
+`eval:*` refuse any Supabase URL that is not `127.0.0.1`/`localhost`; serve the function with `--env-file supabase/functions/.env.eval.local` (a copy of `.env` with `CHAT_DAILY_LIMIT=1000`, gitignored) while evaluating; `.env` stays at the production `CHAT_DAILY_LIMIT=50` because `secrets set` reads it. On Fedora (SELinux) `functions serve` needs `chcon -R -t container_file_t supabase/functions` first and `restorecon -RF supabase/functions` after (see `docs/setup.md` Phần 7).
 
 Env: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` (publishable key, never service_role) live in `.env.local` (gitignored). `.env.example` is the template.
 

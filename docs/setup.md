@@ -189,7 +189,7 @@ restorecon -RF supabase/functions
 
 Bộ này nạp một người dùng thử với khoảng 335 giao dịch giả, rồi hỏi 26 câu và chấm đạt/không đạt, để kiểm tra model trả lời đúng số liệu. **Chỉ chạy được với Supabase trên máy**: hai lệnh từ chối mọi địa chỉ khác `127.0.0.1` / `localhost`, để không đụng vào dữ liệu thật.
 
-1. Trong `supabase/functions/.env` đặt `CHAT_DAILY_LIMIT=1000` (nếu không, 26 câu nhân số lần chạy sẽ chạm giới hạn 50 câu/ngày), rồi chạy lại `functions serve` như trên.
+1. Tạo file riêng cho eval: chép `supabase/functions/.env` thành `supabase/functions/.env.eval.local`, rồi trong file mới đổi thành `CHAT_DAILY_LIMIT=1000` (nếu không, 26 câu nhân số lần chạy sẽ chạm giới hạn 50 câu/ngày). File `.env.eval.local` đã được git bỏ qua, và **không bao giờ** dùng nó cho `secrets set`. Chạy lại function bằng file này: `npx supabase functions serve chat --env-file supabase/functions/.env.eval.local`. File `.env` giữ nguyên `CHAT_DAILY_LIMIT=50`.
 2. Lấy địa chỉ và key của Supabase local, đưa vào môi trường của terminal thứ hai:
 
     ```bash
@@ -218,7 +218,7 @@ Làm sau khi chạy thử local ổn. Các lệnh này tác động lên project
 #    Thêm --dry-run để xem trước những migration sẽ chạy, rồi chạy lại không có --dry-run.
 npx supabase db push --remote
 
-# 2. Đặt secret cho function (đọc từ file .env vừa tạo)
+# 2. Đặt secret cho function (đọc từ file .env vừa tạo; kiểm tra file đó đang có CHAT_DAILY_LIMIT=50 trước khi chạy)
 npx supabase secrets set --env-file supabase/functions/.env
 
 # 3. Đưa function lên
@@ -235,10 +235,10 @@ Rồi mở app bằng Expo Go, vào tab **Hỏi** để thử.
 
 ### 7.6. Đổi model sau này
 
-Chỉ cần đổi các secret `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`, rồi đặt lại bằng `npx supabase secrets set --env-file supabase/functions/.env`. Không phải sửa code hay deploy lại. Lưu ý: model phải hỗ trợ gọi công cụ (tool calling) theo kiểu OpenAI.
+Chỉ cần đổi các secret `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`, rồi đặt lại bằng `npx supabase secrets set --env-file supabase/functions/.env`. Trước khi chạy, kiểm tra file đó đang có `CHAT_DAILY_LIMIT=50`. Không phải sửa code hay deploy lại. Lưu ý: model phải hỗ trợ gọi công cụ (tool calling) theo kiểu OpenAI.
 
 ---
 
 ## Xong thì báo cho Claude
 
-Báo theo dạng **"xong phần 1, 2, 3, 4, 5"** (hoặc phần nào bị lỗi thì dán thông báo lỗi). **Không cần gửi key hay secret.** Claude sẽ tự chạy `npx supabase db pull` để lấy schema về.
+Báo theo dạng **"xong phần 1, 2, 3, 4, 5, 7"** (hoặc phần nào bị lỗi thì dán thông báo lỗi). **Không cần gửi key hay secret.** Claude sẽ tự chạy `npx supabase db pull` để lấy schema về.

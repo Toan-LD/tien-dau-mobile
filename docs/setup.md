@@ -130,6 +130,111 @@ npx expo start --tunnel
 
 ---
 
+## Phần 7. Chatbot (tab Hỏi)
+
+Tab **Hỏi** cho bạn hỏi bằng tiếng Việt, ví dụ "Tháng này tôi chi bao nhiêu cho ăn uống?". App gửi câu hỏi tới một Edge Function tên `chat` (code nằm trong `supabase/functions/chat/`). Function này đọc dữ liệu của chính bạn rồi nhờ một model AI viết câu trả lời. **Key của model AI chỉ nằm ở phía server, không bao giờ nằm trong app.**
+
+Mỗi người dùng có giới hạn số câu hỏi mỗi ngày (mặc định 50, đổi bằng `CHAT_DAILY_LIMIT`).
+
+> Việc "nối model thật" (đặt key và tên model GLM qua zpro, rồi chỉnh prompt dựa trên bộ câu hỏi mẫu) chưa làm, vì cần key và tên model của bạn. Các bước dưới đây là để bạn chuẩn bị sẵn.
+
+### 7.1. Lấy key ở zpro
+
+Đăng nhập zpro, tạo một API key, và ghi lại ba thứ:
+
+- **Base URL**: địa chỉ API của zpro (kiểu OpenAI-compatible).
+- **API key**: chuỗi bí mật. Không dán vào chat.
+- **Tên model**: tên model GLM bạn muốn dùng.
+
+### 7.2. Tạo file `supabase/functions/.env`
+
+```bash
+cp supabase/functions/.env.example supabase/functions/.env
+```
+
+Mở file `supabase/functions/.env` và điền:
+
+```dotenv
+LLM_BASE_URL=<Base URL>
+LLM_API_KEY=<API key>
+LLM_MODEL=<tên model>
+CHAT_DAILY_LIMIT=50
+```
+
+File `.env` đã nằm trong `.gitignore`, không bị commit. File `.env.example` thì được commit và không chứa key.
+
+### 7.3. Chạy thử trên máy (local)
+
+Cần Docker đang chạy. Mở hai terminal trong thư mục `tien-dau-mobile`:
+
+```bash
+# Terminal 1: dựng Supabase trên máy, rồi chạy function
+npx supabase start
+npx supabase functions serve chat --env-file supabase/functions/.env
+```
+
+**Nếu máy bạn là Fedora (SELinux đang bật):** `functions serve` có thể báo lỗi `BOOT_ERROR` hoặc `failed to determine entrypoint`. Nguyên nhân: SELinux không cho container Docker đọc thư mục `supabase/functions` (file đang mang nhãn `user_home_t`). Cách xử lý tạm, làm trước và sau khi chạy:
+
+```bash
+# Trước khi serve: cho container được phép đọc thư mục này
+chcon -R -t container_file_t supabase/functions
+
+# Sau khi dừng serve: trả nhãn về như cũ
+restorecon -RF supabase/functions
+```
+
+`chcon` chỉ đổi nhãn bảo mật của file, không đổi nội dung. `restorecon` đặt lại nhãn mặc định. Nếu muốn làm một lần là xong, có cách vĩnh viễn là thêm quy tắc bằng `semanage fcontext`, nhưng đó là quyết định của bạn nên hướng dẫn này không làm sẵn.
+
+### 7.4. Chạy bộ câu hỏi mẫu (eval)
+
+Bộ này nạp một người dùng thử với khoảng 335 giao dịch giả, rồi hỏi 26 câu và chấm đạt/không đạt, để kiểm tra model trả lời đúng số liệu. **Chỉ chạy được với Supabase trên máy**: hai lệnh từ chối mọi địa chỉ khác `127.0.0.1` / `localhost`, để không đụng vào dữ liệu thật.
+
+1. Trong `supabase/functions/.env` đặt `CHAT_DAILY_LIMIT=1000` (nếu không, 26 câu nhân số lần chạy sẽ chạm giới hạn 50 câu/ngày), rồi chạy lại `functions serve` như trên.
+2. Lấy địa chỉ và key của Supabase local, đưa vào môi trường của terminal thứ hai:
+
+    ```bash
+    npx supabase status -o env
+    ```
+
+    Hai lệnh dưới đọc các biến `API_URL` (hoặc `SUPABASE_URL`), `SERVICE_ROLE_KEY` (hoặc `SUPABASE_SERVICE_ROLE_KEY`, chỉ `eval:seed` cần) và `ANON_KEY` (hoặc `PUBLISHABLE_KEY`, chỉ `eval:chat` cần), nên có thể `export` đúng tên mà `status -o env` in ra.
+3. Chạy:
+
+    ```bash
+    npm run eval:seed                 # nạp người dùng thử và dữ liệu mẫu
+    npm run eval:chat -- --runs 2     # hỏi 26 câu, mỗi câu 2 lần
+    ```
+
+Kết quả in từng câu hỏi, câu trả lời, đáp án mong đợi và dòng tổng: đạt, không đạt, cần xem (câu cần người đọc), lỗi.
+
+### 7.5. Đưa lên project thật
+
+Làm sau khi chạy thử local ổn. Các lệnh này tác động lên project thật, nên chạy từng lệnh một. Repo đã `link` ở Phần 2, nên mặc định CLI dùng project đã link. Muốn chọn project khác thì thêm `--remote=<project ref>`.
+
+```bash
+# 1. Cập nhật database (bảng chat_usage và hàm đếm lượt hỏi)
+npx supabase db push
+
+# 2. Đặt secret cho function (đọc từ file .env vừa tạo)
+npx supabase secrets set --env-file supabase/functions/.env
+
+# 3. Đưa function lên
+npx supabase functions deploy chat
+```
+
+Sau bước 1, sinh lại kiểu TypeScript cho database:
+
+```bash
+npx supabase gen types typescript --remote --schema public > src/lib/database.types.ts
+```
+
+Rồi mở app bằng Expo Go, vào tab **Hỏi** để thử.
+
+### 7.6. Đổi model sau này
+
+Chỉ cần đổi các secret `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`, rồi đặt lại bằng `npx supabase secrets set --env-file supabase/functions/.env`. Không phải sửa code hay deploy lại. Lưu ý: model phải hỗ trợ gọi công cụ (tool calling) theo kiểu OpenAI.
+
+---
+
 ## Xong thì báo cho Claude
 
 Báo theo dạng **"xong phần 1, 2, 3, 4, 5"** (hoặc phần nào bị lỗi thì dán thông báo lỗi). **Không cần gửi key hay secret.** Claude sẽ tự chạy `npx supabase db pull` để lấy schema về.

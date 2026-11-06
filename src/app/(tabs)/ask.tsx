@@ -33,7 +33,7 @@ export default function AskScreen() {
         <SafeAreaView edges={["top"]} style={styles.container}>
             <KeyboardAvoidingView behavior="padding" style={styles.container}>
                 <View style={styles.header}>
-                    <Text style={styles.pageTitle}>Hỏi</Text>
+                    <Text style={styles.pageTitle}>Chatbot</Text>
                     {messages.length > 0 && (
                         <IconButton
                             name="create-outline"

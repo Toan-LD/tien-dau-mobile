@@ -1,6 +1,6 @@
-export const APP_GUIDE = `Ứng dụng có 5 tab ở dưới cùng: Ghi, Danh sách, Báo cáo, Hỏi và Cài đặt.
-- Ghi một khoản: vào tab Ghi, chọn Chi hoặc Thu, gõ số tiền bằng bàn phím số của app (gõ 3 sẽ gợi ý 3.000, 30.000, 300.000), chọn mục, chọn ngày, bấm "Thêm mô tả" nếu muốn ghi chú, rồi bấm Lưu.
-- Tạo mục mới ngay lúc ghi: ở màn Ghi, bấm ô "Mục mới" trong danh sách mục, nhập Tên mục rồi bấm Tạo mục.
+export const APP_GUIDE = `Ứng dụng có 5 tab ở dưới cùng: Danh sách, Chatbot, Ghi mới (nút đậm ở giữa), Báo cáo và Cài đặt.
+- Ghi một khoản: vào tab Ghi mới, chọn Chi hoặc Thu, gõ số tiền bằng bàn phím số của app (gõ 3 sẽ gợi ý 3.000, 30.000, 300.000), chọn mục, chọn ngày, bấm "Thêm mô tả" nếu muốn ghi chú, rồi bấm Lưu.
+- Tạo mục mới ngay lúc ghi: ở màn Ghi mới, bấm ô "Mục mới" trong danh sách mục, nhập Tên mục rồi bấm Tạo mục.
 - Xem theo ngày, tuần hoặc tháng: vào tab Danh sách, chọn Ngày, Tuần hoặc Tháng ở đầu màn; tuần bắt đầu từ thứ Hai. Ô Đã chi và Đã thu cho biết tổng của khoảng đang xem.
 - Lọc theo mục: ở tab Danh sách, bấm nút "Tất cả danh mục" (Lọc theo mục), chọn một hoặc nhiều mục chi/thu rồi áp dụng. Bấm "Bỏ lọc" để xem lại tất cả.
 - Xem biểu đồ theo mục của một khoảng: ở tab Danh sách, bấm vào ô Đã chi hoặc Đã thu để xem biểu đồ tròn chia theo mục.
@@ -11,5 +11,5 @@ export const APP_GUIDE = `Ứng dụng có 5 tab ở dưới cùng: Ghi, Danh s�
 - Xem biểu đồ một mục: ở tab Báo cáo, bấm vào một mục để xem biểu đồ cột theo tháng, kèm tổng và trung bình mỗi tháng.
 - Quản lý danh mục: vào tab Cài đặt, bấm Quản lý danh mục để thêm mục (Thêm mục chi, Thêm mục thu), sửa tên hoặc biểu tượng, xoá, hoặc kéo để sắp xếp lại. Xoá một mục thì các khoản đã ghi vẫn còn và hiện là "Không phân loại".
 - Đăng xuất: vào tab Cài đặt, bấm Đăng xuất.
-- Hỏi: tab Hỏi dùng để hỏi về thu chi hoặc cách dùng app; bấm biểu tượng cây bút ở góc trên bên phải màn Hỏi để bắt đầu cuộc trò chuyện mới.
+- Chatbot: tab Chatbot dùng để hỏi về thu chi hoặc cách dùng app; bấm biểu tượng cây bút ở góc trên bên phải màn Chatbot để bắt đầu cuộc trò chuyện mới.
 - Chưa có: nhiều ví, ngân sách, giao dịch định kỳ, nhập bằng giọng nói, ghi bằng chat.`;

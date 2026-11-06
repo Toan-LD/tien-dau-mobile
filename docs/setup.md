@@ -130,9 +130,9 @@ npx expo start --tunnel
 
 ---
 
-## Phần 7. Chatbot (tab Hỏi)
+## Phần 7. Chatbot (tab Chatbot)
 
-Tab **Hỏi** cho bạn hỏi bằng tiếng Việt, ví dụ "Tháng này tôi chi bao nhiêu cho ăn uống?". App gửi câu hỏi tới một Edge Function tên `chat` (code nằm trong `supabase/functions/chat/`). Function này đọc dữ liệu của chính bạn rồi nhờ một model AI viết câu trả lời. **Key của model AI chỉ nằm ở phía server, không bao giờ nằm trong app.**
+Tab **Chatbot** cho bạn hỏi bằng tiếng Việt, ví dụ "Tháng này tôi chi bao nhiêu cho ăn uống?". App gửi câu hỏi tới một Edge Function tên `chat` (code nằm trong `supabase/functions/chat/`). Function này đọc dữ liệu của chính bạn rồi nhờ một model AI viết câu trả lời. **Key của model AI chỉ nằm ở phía server, không bao giờ nằm trong app.**
 
 Mỗi người dùng có giới hạn số câu hỏi mỗi ngày (mặc định 50, đổi bằng `CHAT_DAILY_LIMIT`).
 
@@ -231,7 +231,7 @@ Sau bước 1, sinh lại kiểu TypeScript cho database:
 npx supabase gen types typescript --remote --schema public > src/lib/database.types.ts
 ```
 
-Rồi mở app bằng Expo Go, vào tab **Hỏi** để thử.
+Rồi mở app bằng Expo Go, vào tab **Chatbot** để thử.
 
 ### 7.6. Đổi model sau này
 

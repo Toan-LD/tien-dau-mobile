@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router/js-tabs";
 import type { ComponentProps } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { Colors } from "@/constants/theme";
 import { ChatProvider } from "@/lib/use-chat";
+
+export const unstable_settings = { anchor: "index" };
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 type TabIconProps = { focused: boolean; size: number };
@@ -29,11 +31,18 @@ function tabIcon(name: IconName) {
     };
 }
 
+function NewEntryTabIcon() {
+    return (
+        <View style={styles.newEntryIcon}>
+            <Ionicons name="add" size={22} color={Colors.onPrimary} />
+        </View>
+    );
+}
+
 const ICONS = {
-    index: tabIcon("add-circle-outline"),
     today: tabIcon("list-outline"),
-    report: tabIcon("bar-chart-outline"),
     ask: tabIcon("chatbubble-ellipses-outline"),
+    report: tabIcon("bar-chart-outline"),
     settings: tabIcon("settings-outline"),
 };
 
@@ -41,6 +50,7 @@ export default function TabsLayout() {
     return (
         <ChatProvider>
             <Tabs
+                backBehavior="initialRoute"
                 screenOptions={{
                     headerShown: false,
                     tabBarActiveTintColor: Colors.text,
@@ -49,24 +59,30 @@ export default function TabsLayout() {
                 }}
             >
                 <Tabs.Screen
-                    name="index"
-                    options={{ title: "Ghi", tabBarIcon: ICONS.index }}
-                />
-                <Tabs.Screen
                     name="today"
                     options={{ title: "Danh sách", tabBarIcon: ICONS.today }}
                 />
                 <Tabs.Screen
-                    name="report"
-                    options={{ title: "Báo cáo", tabBarIcon: ICONS.report }}
-                />
-                <Tabs.Screen
                     name="ask"
                     options={{
-                        title: "Hỏi",
+                        title: "Chatbot",
                         tabBarIcon: ICONS.ask,
                         tabBarHideOnKeyboard: true,
                     }}
+                />
+                <Tabs.Screen
+                    name="index"
+                    options={{
+                        title: "Ghi mới",
+                        tabBarIcon: NewEntryTabIcon,
+                        tabBarIconStyle: styles.newEntryIconSlot,
+                        tabBarInactiveTintColor: Colors.text,
+                        tabBarLabelStyle: styles.newEntryLabel,
+                    }}
+                />
+                <Tabs.Screen
+                    name="report"
+                    options={{ title: "Báo cáo", tabBarIcon: ICONS.report }}
                 />
                 <Tabs.Screen
                     name="settings"
@@ -79,4 +95,14 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
     tabBar: { backgroundColor: Colors.surface, borderTopColor: Colors.border },
+    newEntryIconSlot: { width: 48 },
+    newEntryIcon: {
+        width: 48,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: Colors.primary,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    newEntryLabel: { fontWeight: "600" },
 });

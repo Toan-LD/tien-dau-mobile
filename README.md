@@ -7,10 +7,10 @@ Bản hiện tại là v1, chạy qua **Expo Go**, ưu tiên Android (code vẫn
 ## Tính năng
 
 - **Đăng nhập bằng Google** (Supabase OAuth trong trình duyệt nhỏ của app). Phiên được lưu, lần sau mở app không phải đăng nhập lại.
-- **Ghi**: chọn Chi/Thu, gõ số tiền bằng bàn phím số riêng của app (có gợi ý `3` → `3.000 | 30.000 | 300.000`), chọn mục, ngày, mô tả. Tạo mục mới ngay trên màn này.
+- **Ghi mới** (nút đậm ở giữa thanh tab, app mở vào đây): chọn Chi/Thu, gõ số tiền bằng bàn phím số riêng của app (có gợi ý `3` → `3.000 | 30.000 | 300.000`), chọn mục, ngày, mô tả. Tạo mục mới ngay trên màn này.
 - **Danh sách**: xem theo Ngày / Tuần / Tháng (tuần bắt đầu thứ Hai), lọc theo mục, tổng Đã chi / Đã thu. Bấm vào ô tổng để xem biểu đồ donut theo mục. Vuốt một dòng sang trái để Sửa / Xoá (xoá có Hoàn tác). Bấm vào dòng để mở màn Chi tiết.
 - **Báo cáo**: tổng tháng (Còn lại, Thu, Chi), chi và thu theo mục kèm phần trăm. Bấm một mục để xem biểu đồ cột theo tháng với đường trung bình 3 tháng.
-- **Hỏi**: hỏi bằng tiếng Việt về chính dữ liệu của bạn ("tháng này tôi chi bao nhiêu cho ăn uống?"). Câu trả lời do một model AI viết, dựa trên số liệu thật đọc từ database. Lịch sử chat chỉ giữ trong bộ nhớ, đóng app là mất. Mỗi ngày có giới hạn số câu hỏi. Cách cài đặt xem [docs/setup.md](docs/setup.md), Phần 7.
+- **Chatbot**: hỏi bằng tiếng Việt về chính dữ liệu của bạn ("tháng này tôi chi bao nhiêu cho ăn uống?"). Câu trả lời do một model AI viết, dựa trên số liệu thật đọc từ database. Lịch sử chat chỉ giữ trong bộ nhớ, đóng app là mất. Mỗi ngày có giới hạn số câu hỏi. Cách cài đặt xem [docs/setup.md](docs/setup.md), Phần 7.
 - **Cài đặt**: tài khoản đang đăng nhập, Quản lý danh mục (thêm, sửa tên/icon, xoá, kéo để sắp xếp), Đăng xuất. Khi chạy ở chế độ dev có thêm mục "Dữ liệu mẫu".
 
 Những thứ chưa làm ở v1 (nhập bằng AI/giọng nói, nhiều ví, ngân sách, giao dịch định kỳ, bản web, phát hành lên store) được liệt kê trong bản thiết kế.
@@ -87,7 +87,7 @@ npx supabase gen types typescript --remote --schema public > src/lib/database.ty
 ```text
 src/
   app/            Các màn hình (mỗi file là một route)
-    (tabs)/       Ghi (index) · Danh sách (today) · Báo cáo (report) · Hỏi (ask) · Cài đặt (settings)
+    (tabs)/       Danh sách (today) · Chatbot (ask) · Ghi mới (index) · Báo cáo (report) · Cài đặt (settings)
     transaction/  Chi tiết và Sửa một khoản
     categories.tsx, login.tsx
   components/     Component theo từng màn, và ui/ cho các khối dùng chung

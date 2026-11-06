@@ -1,8 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
+import { formatVND } from "../../_shared/money.ts";
 import { vietnamToday } from "../../_shared/periods.ts";
 import { fetchTransactions } from "../data.ts";
+import type { ProposedDraft } from "../tools.ts";
 import { buildQuestions } from "./questions.ts";
-import type { EvalContext, EvalQuestion } from "./questions.ts";
+import type { EvalContext, EvalQuestion, ExpectedDraft } from "./questions.ts";
 import { requireLocalSupabaseUrl } from "./local-only.ts";
 import { EVAL_EMAIL, EVAL_PASSWORD } from "./seed.ts";
 
@@ -12,7 +14,7 @@ const MONEY_PATTERN = /\d{1,3}(\.\d{3})+ đ/;
 const REAL_ANSWER_KEYWORDS = ["def ", "Paris", "x = 2"];
 
 type Status = "ĐẠT" | "KHÔNG ĐẠT" | "CẦN XEM" | "LỖI";
-type Outcome = { status: Status; answer: string };
+type Outcome = { status: Status; answer: string; drafts: ProposedDraft[] };
 
 function parseRuns(argumentsList: string[]): number {
     const index = argumentsList.indexOf("--runs");
@@ -34,34 +36,83 @@ function includesAny(answer: string, expected: string[]): boolean {
     return expected.some((text) => lowerAnswer.includes(text.toLowerCase()));
 }
 
-type Expectation = { strings: string[]; mode: "all" | "any" | "review" };
+type Expectation =
+    | { kind: "strings"; strings: string[]; mode: "all" | "any" }
+    | { kind: "review" }
+    | { kind: "drafts"; drafts: ExpectedDraft[] };
+
+function draftKey(draft: ExpectedDraft | ProposedDraft): string {
+    return [draft.type, draft.amount, draft.categoryName, draft.date].join("|");
+}
+
+function draftsMatch(
+    actual: ProposedDraft[],
+    expected: ExpectedDraft[],
+): boolean {
+    if (actual.length !== expected.length) return false;
+    const byKey = (left: ExpectedDraft | ProposedDraft, right: typeof left) =>
+        draftKey(left).localeCompare(draftKey(right));
+    const sortedActual = [...actual].sort(byKey);
+    const sortedExpected = [...expected].sort(byKey);
+    return sortedExpected.every((expectedDraft, index) => {
+        const actualDraft = sortedActual[index];
+        if (draftKey(actualDraft) !== draftKey(expectedDraft)) return false;
+        return (
+            expectedDraft.replaces === undefined ||
+            actualDraft.replaces === expectedDraft.replaces
+        );
+    });
+}
+
+function describeDraft(draft: ExpectedDraft | ProposedDraft): string {
+    const kind = draft.type === "expense" ? "Chi" : "Thu";
+    const replaces =
+        draft.replaces === undefined || draft.replaces === null
+            ? ""
+            : ` (thay thẻ ${draft.replaces})`;
+    return `${kind} ${formatVND(draft.amount)} · ${draft.categoryName} · ${draft.date}${replaces}`;
+}
 
 function describeExpectation(
     question: EvalQuestion,
     context: EvalContext,
 ): Expectation {
+    if (question.check === "draft") {
+        return {
+            kind: "drafts",
+            drafts: question.expectDrafts?.(context) ?? [],
+        };
+    }
     const strings = question.expect?.(context) ?? [];
     if (strings.length > 0) {
-        return { strings, mode: question.matchAny ? "any" : "all" };
+        return {
+            kind: "strings",
+            strings,
+            mode: question.matchAny ? "any" : "all",
+        };
     }
     if (question.whenEmpty) {
-        return { strings: question.whenEmpty, mode: "any" };
+        return { kind: "strings", strings: question.whenEmpty, mode: "any" };
     }
-    return { strings: [], mode: "review" };
+    return { kind: "review" };
 }
 
 function grade(
     question: EvalQuestion,
-    answer: string,
+    outcome: { answer: string; drafts: ProposedDraft[] },
     expectation: Expectation,
 ): Status {
+    const { answer, drafts } = outcome;
     if (question.check === "refuse") {
         const failed =
             MONEY_PATTERN.test(answer) ||
             REAL_ANSWER_KEYWORDS.some((keyword) => answer.includes(keyword));
         return failed ? "KHÔNG ĐẠT" : "CẦN XEM";
     }
-    if (expectation.mode === "review") return "CẦN XEM";
+    if (expectation.kind === "drafts") {
+        return draftsMatch(drafts, expectation.drafts) ? "ĐẠT" : "KHÔNG ĐẠT";
+    }
+    if (expectation.kind === "review") return "CẦN XEM";
     const passed =
         expectation.mode === "any"
             ? includesAny(answer, expectation.strings)
@@ -84,19 +135,34 @@ async function ask(
                 Authorization: `Bearer ${token}`,
                 apikey: publishableKey,
             },
-            body: JSON.stringify({ question: question.question, history: [] }),
+            body: JSON.stringify({
+                question: question.question,
+                history: question.history ?? [],
+                cards: question.cards ?? [],
+            }),
             signal: AbortSignal.timeout(REQUEST_TIMEOUT_MILLISECONDS),
         });
         if (response.status !== 200) {
             await response.body?.cancel();
-            return { status: "LỖI", answer: `LỖI ${response.status}` };
+            return {
+                status: "LỖI",
+                answer: `LỖI ${response.status}`,
+                drafts: [],
+            };
         }
         const body = await response.json();
-        const answer = typeof body.answer === "string" ? body.answer : "";
-        return { status: grade(question, answer, expectation), answer };
+        const answer = typeof body.reply === "string" ? body.reply : "";
+        const drafts: ProposedDraft[] = Array.isArray(body.drafts)
+            ? body.drafts
+            : [];
+        return {
+            status: grade(question, { answer, drafts }, expectation),
+            answer,
+            drafts,
+        };
     } catch (error) {
         const name = error instanceof Error ? error.name : "Error";
-        return { status: "LỖI", answer: `LỖI ${name}` };
+        return { status: "LỖI", answer: `LỖI ${name}`, drafts: [] };
     }
 }
 
@@ -107,7 +173,13 @@ function describeExpected(
     if (question.check === "refuse") {
         return `Đáp án  : phải từ chối; không có số tiền dạng 1.234 đ và không có ${REAL_ANSWER_KEYWORDS.map((keyword) => `"${keyword}"`).join(", ")}`;
     }
-    if (expectation.mode === "review") {
+    if (expectation.kind === "drafts") {
+        if (expectation.drafts.length === 0) {
+            return "Đáp án  : không có thẻ nháp";
+        }
+        return `Đáp án  : thẻ nháp ${expectation.drafts.map(describeDraft).join("; ")}`;
+    }
+    if (expectation.kind === "review") {
         return "Đáp án  : (không có chuỗi để so, cần người đọc xác nhận)";
     }
     const joined = expectation.strings.map((text) => `"${text}"`).join(", ");
@@ -172,6 +244,11 @@ async function main(): Promise<void> {
             console.log(`\n[${outcome.status}] ${question.id}`);
             console.log(`  Câu hỏi : ${question.question}`);
             console.log(`  Trả lời : ${outcome.answer}`);
+            if (outcome.drafts.length > 0) {
+                console.log(
+                    `  Thẻ nháp: ${outcome.drafts.map(describeDraft).join("; ")}`,
+                );
+            }
             console.log(`  ${describeExpected(question, expectation)}`);
         }
         console.log(

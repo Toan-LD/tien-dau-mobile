@@ -4,7 +4,8 @@ import type {
     ChatCompletionMessageParam,
 } from "openai/resources/chat/completions";
 import type { ChatModel } from "./agent.ts";
-import { createHandler } from "./handler.ts";
+import { GIVE_UP_REPLY, MAX_TOOL_ROUNDS } from "./agent.ts";
+import { createHandler, MAX_CARDS } from "./handler.ts";
 import type { HandlerDependencies } from "./handler.ts";
 import { createFakeClient } from "./test-fakes.ts";
 import type { FakeClientData } from "./test-fakes.ts";
@@ -15,6 +16,26 @@ const USER_ID = "user-1";
 function textReply(content: string): ChatCompletionMessage {
     return { role: "assistant", content, refusal: null };
 }
+
+function toolCallReply(
+    name: string,
+    argumentsObject: unknown,
+): ChatCompletionMessage {
+    return {
+        role: "assistant",
+        content: null,
+        refusal: null,
+        tool_calls: [
+            {
+                id: `call-${name}`,
+                type: "function",
+                function: { name, arguments: JSON.stringify(argumentsObject) },
+            },
+        ],
+    };
+}
+
+const breakfastCall = { type: "expense", amount: "30k", category: "Ăn uống" };
 
 function recordingModel(replies: ChatCompletionMessage[]) {
     const receivedMessages: ChatCompletionMessageParam[][] = [];
@@ -255,7 +276,7 @@ Deno.test(
         );
         assertEquals(await readResponse(response), {
             status: 200,
-            body: { reply: "Tháng này bạn chi 0 đ.", remaining: 7 },
+            body: { reply: "Tháng này bạn chi 0 đ.", remaining: 7, drafts: [] },
         });
         assertEquals(quotaCalls, [USER_ID]);
         const system = String(receivedMessages[0][0].content);
@@ -308,7 +329,7 @@ Deno.test("tool đọc giao dịch qua client của người dùng", async () =>
     );
     assertEquals(await readResponse(response), {
         status: 200,
-        body: { reply: "Hôm nay bạn chi 30.000 đ.", remaining: 49 },
+        body: { reply: "Hôm nay bạn chi 30.000 đ.", remaining: 49, drafts: [] },
     });
     assertEquals(clientCalls.tables, [
         "categories",
@@ -413,4 +434,123 @@ Deno.test("đếm lượt lỗi: 500 và không gọi model", async () => {
         consoleError.restore();
     }
     assertEquals(receivedMessages, []);
+});
+
+Deno.test("trả drafts khi model gọi propose_transaction", async () => {
+    const model = recordingModel([
+        toolCallReply("propose_transaction", breakfastCall),
+        textReply("Bạn kiểm tra rồi bấm Lưu nhé."),
+    ]);
+    const { handle } = setup({ model: model.model });
+    const response = await handle(
+        chatRequest({ question: "ăn sáng 30k", history: [], cards: [] }),
+    );
+    assertEquals(await readResponse(response), {
+        status: 200,
+        body: {
+            reply: "Bạn kiểm tra rồi bấm Lưu nhé.",
+            remaining: 49,
+            drafts: [
+                {
+                    type: "expense",
+                    amount: 30000,
+                    categoryId: "category-food",
+                    categoryName: "Ăn uống",
+                    date: "2026-11-06",
+                    note: null,
+                    replaces: null,
+                },
+            ],
+        },
+    });
+});
+
+Deno.test("drafts rỗng cho câu hỏi thường", async () => {
+    const { handle } = setup();
+    const response = await handle(
+        chatRequest({ question: "Tháng này tôi chi bao nhiêu?", history: [] }),
+    );
+    const { body } = await readResponse(response);
+    assertEquals(body.drafts, []);
+});
+
+Deno.test("drafts rỗng khi agent bỏ cuộc", async () => {
+    const model = recordingModel(
+        Array.from({ length: MAX_TOOL_ROUNDS + 1 }, () =>
+            toolCallReply("propose_transaction", breakfastCall),
+        ),
+    );
+    const { handle } = setup({ model: model.model });
+    const response = await handle(
+        chatRequest({ question: "ăn sáng 30k", history: [] }),
+    );
+    assertEquals(await readResponse(response), {
+        status: 200,
+        body: { reply: GIVE_UP_REPLY, remaining: 49, drafts: [] },
+    });
+});
+
+Deno.test("cards sai kiểu thì 400", async () => {
+    for (const cards of [
+        "x",
+        [{ number: "1", status: "open" }],
+        [{ number: 1, status: "saving" }],
+        [{ number: 0, status: "open" }],
+        [null],
+    ]) {
+        const { handle, quotaCalls } = setup();
+        const response = await handle(
+            chatRequest({ question: "Chào", history: [], cards }),
+        );
+        assertEquals(await readResponse(response), {
+            status: 400,
+            body: { error: "bad_request" },
+        });
+        assertEquals(quotaCalls, []);
+    }
+    const { handle } = setup();
+    const response = await handle(
+        chatRequest({ question: "Chào", history: [] }),
+    );
+    assertEquals(response.status, 200);
+    await response.body?.cancel();
+});
+
+Deno.test("chỉ giữ 20 thẻ cuối", async () => {
+    assertEquals(MAX_CARDS, 20);
+    const cards = Array.from({ length: 25 }, (_unused, index) => ({
+        number: index + 1,
+        status: "open",
+    }));
+    const model = recordingModel([
+        toolCallReply("propose_transaction", { ...breakfastCall, replaces: 1 }),
+        textReply("Mình không thấy thẻ 1."),
+    ]);
+    const { handle } = setup({ model: model.model });
+    const response = await handle(
+        chatRequest({ question: "không, 35k", history: [], cards }),
+    );
+    const { body } = await readResponse(response);
+    assertEquals(body.drafts, []);
+    const toolMessage = model.receivedMessages[1].at(-1);
+    assert(String(toolMessage?.content).includes("error"));
+});
+
+Deno.test("hôm nay theo giờ Việt Nam lúc 00:30", async () => {
+    const model = recordingModel([
+        toolCallReply("propose_transaction", {
+            ...breakfastCall,
+            date: "today",
+        }),
+        textReply("Bạn kiểm tra rồi bấm Lưu nhé."),
+    ]);
+    const { handle } = setup({
+        model: model.model,
+        now: new Date("2026-11-05T17:30:00Z"),
+    });
+    const response = await handle(
+        chatRequest({ question: "hôm nay ăn sáng 30k", history: [] }),
+    );
+    const { body } = await readResponse(response);
+    assertEquals(body.drafts[0].date, "2026-11-06");
 });

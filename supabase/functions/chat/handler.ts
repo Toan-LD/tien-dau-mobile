@@ -1,14 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { vietnamToday } from "../_shared/periods.ts";
-import { runAgent } from "./agent.ts";
+import { GIVE_UP_REPLY, runAgent } from "./agent.ts";
 import type { ChatModel, ChatTurn } from "./agent.ts";
 import { fetchCategories, fetchTransactions } from "./data.ts";
 import { buildSystemPrompt } from "./system-prompt.ts";
 import { runTool } from "./tools.ts";
+import type { CardState, CardStatus, ProposedDraft } from "./tools.ts";
 
 export const MAX_QUESTION_LENGTH = 500;
 export const MAX_HISTORY_TURNS = 10;
 export const MAX_HISTORY_CONTENT_LENGTH = 2000;
+export const MAX_CARDS = 20;
+
+const CARD_STATUSES: CardStatus[] = ["open", "saved", "dismissed", "replaced"];
 
 export type AuthenticatedUser = { userId: string; client: SupabaseClient };
 
@@ -20,7 +24,8 @@ export type HandlerDependencies = {
     timeoutMilliseconds: number;
 };
 
-type ChatInput = { question: string; history: ChatTurn[] };
+type ChatInput = { question: string; history: ChatTurn[]; cards: CardState[] };
+type ChatAnswer = { reply: string; drafts: ProposedDraft[] };
 
 function jsonResponse(status: number, body: unknown): Response {
     return new Response(JSON.stringify(body), {
@@ -39,6 +44,28 @@ function parseTurn(value: unknown): ChatTurn | null {
     if (role !== "user" && role !== "assistant") return null;
     if (typeof content !== "string") return null;
     return { role, content: content.slice(0, MAX_HISTORY_CONTENT_LENGTH) };
+}
+
+function parseCard(value: unknown): CardState | null {
+    if (!isRecord(value)) return null;
+    const { number, status } = value;
+    if (typeof number !== "number" || !Number.isInteger(number) || number < 1) {
+        return null;
+    }
+    if (!CARD_STATUSES.some((candidate) => candidate === status)) return null;
+    return { number, status: status as CardStatus };
+}
+
+function parseCards(value: unknown): CardState[] | null {
+    if (value === undefined) return [];
+    if (!Array.isArray(value)) return null;
+    const cards: CardState[] = [];
+    for (const entry of value) {
+        const card = parseCard(entry);
+        if (!card) return null;
+        cards.push(card);
+    }
+    return cards.slice(-MAX_CARDS);
 }
 
 async function readInput(request: Request): Promise<ChatInput | null> {
@@ -62,7 +89,9 @@ async function readInput(request: Request): Promise<ChatInput | null> {
         if (!turn) return null;
         history.push(turn);
     }
-    return { question, history: history.slice(-MAX_HISTORY_TURNS) };
+    const cards = parseCards(body.cards);
+    if (!cards) return null;
+    return { question, history: history.slice(-MAX_HISTORY_TURNS), cards };
 }
 
 function describeError(error: unknown): string {
@@ -77,18 +106,19 @@ export function createHandler(
         user: AuthenticatedUser,
         input: ChatInput,
         signal: AbortSignal,
-    ): Promise<string> {
+    ): Promise<ChatAnswer> {
         const today = vietnamToday(dependencies.now());
         const categories = await fetchCategories(user.client);
+        const drafts: ProposedDraft[] = [];
         const toolContext = {
             today,
             categories,
-            cards: [],
-            drafts: [],
+            cards: input.cards,
+            drafts,
             loadTransactions: (start: string, end: string) =>
                 fetchTransactions(user.client, start, end),
         };
-        return runAgent({
+        const reply = await runAgent({
             model: dependencies.model,
             system: buildSystemPrompt({ today, categories }),
             history: input.history,
@@ -97,6 +127,7 @@ export function createHandler(
                 runTool(name, argumentsJson, toolContext),
             signal,
         });
+        return { reply, drafts: reply === GIVE_UP_REPLY ? [] : drafts };
     }
 
     return async (request) => {
@@ -120,11 +151,11 @@ export function createHandler(
                     reject(controller.signal.reason);
                 }, dependencies.timeoutMilliseconds);
             });
-            const reply = await Promise.race([
+            const answered = await Promise.race([
                 answer(user, input, controller.signal),
                 timeout,
             ]);
-            return jsonResponse(200, { reply, remaining });
+            return jsonResponse(200, { ...answered, remaining });
         } catch (error) {
             if (controller.signal.aborted) {
                 return jsonResponse(504, { error: "timeout" });

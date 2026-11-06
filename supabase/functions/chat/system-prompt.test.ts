@@ -67,3 +67,22 @@ Deno.test("tên mục nhiều dòng hay quá dài không phá cấu trúc prompt
     const incomeLine = lines.find((line) => line.startsWith("Mục thu:"));
     assert(incomeLine === `Mục thu: "${"L".repeat(40)}"`);
 });
+
+Deno.test("phạm vi gồm soạn thẻ ghi khoản", () => {
+    assert(prompt.includes("## Ghi khoản thu chi"));
+    assert(!prompt.includes("sắp có"));
+});
+
+Deno.test("quy tắc ghi khoản có đủ ý chính", () => {
+    for (const phrase of ["bấm Lưu", "replaces", "Danh sách", "hỏi lại"]) {
+        assert(prompt.includes(phrase), phrase);
+    }
+});
+
+Deno.test("hướng dẫn app có ghi bằng chat", () => {
+    assert(APP_GUIDE.includes("Ghi bằng chat"));
+    const missingLine = APP_GUIDE.split("\n").find((line) =>
+        line.startsWith("- Chưa có:"),
+    );
+    assert(missingLine && !missingLine.includes("ghi bằng chat"));
+});

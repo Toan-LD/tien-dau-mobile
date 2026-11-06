@@ -11,5 +11,6 @@ export const APP_GUIDE = `Ứng dụng có 5 tab ở dưới cùng: Danh sách, 
 - Xem biểu đồ một mục: ở tab Báo cáo, bấm vào một mục để xem biểu đồ cột theo tháng, kèm tổng và trung bình mỗi tháng.
 - Quản lý danh mục: vào tab Cài đặt, bấm Quản lý danh mục để thêm mục (Thêm mục chi, Thêm mục thu), sửa tên hoặc biểu tượng, xoá, hoặc kéo để sắp xếp lại. Xoá một mục thì các khoản đã ghi vẫn còn và hiện là "Không phân loại".
 - Đăng xuất: vào tab Cài đặt, bấm Đăng xuất.
-- Chatbot: tab Chatbot dùng để hỏi về thu chi hoặc cách dùng app; bấm biểu tượng cây bút ở góc trên bên phải màn Chatbot để bắt đầu cuộc trò chuyện mới.
-- Chưa có: nhiều ví, ngân sách, giao dịch định kỳ, nhập bằng giọng nói, ghi bằng chat.`;
+- Chatbot: tab Chatbot dùng để hỏi về thu chi, ghi nhanh một khoản hoặc hỏi cách dùng app; bấm biểu tượng cây bút ở góc trên bên phải màn Chatbot để bắt đầu cuộc trò chuyện mới.
+- Ghi bằng chat: ở tab Chatbot, gõ như "ăn sáng 30k" hoặc "hôm qua đổ xăng 100k", chatbot hiện một thẻ nháp; kiểm tra rồi bấm Lưu để ghi, hoặc Bỏ. Sửa bằng cách gõ tiếp ("không, 35k"). Thẻ chưa bấm Lưu thì chưa ghi gì, và mất khi bắt đầu cuộc trò chuyện mới.
+- Chưa có: nhiều ví, ngân sách, giao dịch định kỳ, nhập bằng giọng nói, sửa hoặc xoá khoản bằng chat.`;

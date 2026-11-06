@@ -28,6 +28,8 @@ export type TransactionDraft = {
     note: string | null;
 };
 
+export const MAX_NOTE_LENGTH = 200;
+
 const SELECT = "*, category:categories(id,name,icon)";
 const APP_TYPES: TxType[] = ["expense", "income"];
 

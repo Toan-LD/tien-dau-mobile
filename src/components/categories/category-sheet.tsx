@@ -9,6 +9,7 @@ import { Colors, Spacing } from "@/constants/theme";
 import {
     createCategory,
     DuplicateCategoryError,
+    MAX_CATEGORY_NAME_LENGTH,
     normalizeCategoryName,
     updateCategory,
     type Category,
@@ -107,7 +108,7 @@ export function CategorySheet({
                 placeholder="Tên mục"
                 placeholderTextColor={Colors.textMuted}
                 autoFocus={!editing}
-                maxLength={40}
+                maxLength={MAX_CATEGORY_NAME_LENGTH}
                 style={[styles.input, error !== null && styles.inputError]}
             />
             {error !== null && <Text style={styles.error}>{error}</Text>}

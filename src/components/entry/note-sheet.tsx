@@ -4,6 +4,7 @@ import { StyleSheet, TextInput } from "react-native";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Colors, Spacing } from "@/constants/theme";
+import { MAX_NOTE_LENGTH } from "@/lib/transactions";
 
 type Props = {
     visible: boolean;
@@ -30,6 +31,7 @@ export function NoteSheet({ visible, note, onDone }: Readonly<Props>) {
                 placeholderTextColor={Colors.textMuted}
                 multiline
                 autoFocus
+                maxLength={MAX_NOTE_LENGTH}
                 style={styles.input}
             />
             <Button label="Xong" onPress={done} style={styles.button} />

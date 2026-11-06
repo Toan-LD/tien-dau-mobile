@@ -12,6 +12,8 @@ export type Category = {
 
 export class DuplicateCategoryError extends Error {}
 
+export const MAX_CATEGORY_NAME_LENGTH = 40;
+
 export function normalizeCategoryName(name: string): string {
     return name.trim().replace(/\s+/g, " ");
 }

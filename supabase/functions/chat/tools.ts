@@ -1,7 +1,7 @@
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
 import { matchCategory } from "../_shared/categories.ts";
-import { resolvePeriod } from "../_shared/periods.ts";
 import type { Period } from "../_shared/periods.ts";
+import { resolvePeriod } from "../_shared/periods.ts";
 import {
     byCategory,
     compare,
@@ -387,8 +387,6 @@ function listCategories(
     };
 }
 
-// Lỗi tham số trả { error } cho model sửa; lỗi tải dữ liệu thì ném lên cho
-// nơi gọi xử lý.
 export async function runTool(
     name: string,
     rawArguments: string,

@@ -1,4 +1,3 @@
--- Daily per-user chatbot question counter. Only service_role (Edge Function) touches it.
 create table public.chat_usage (
   user_id uuid not null references auth.users (id) on delete cascade,
   day date not null,
@@ -8,8 +7,6 @@ create table public.chat_usage (
 
 alter table public.chat_usage enable row level security;
 
--- Returns remaining questions today (p_limit - count), or -1 when the limit is reached.
--- Single insert-or-update statement so concurrent calls never over-count.
 create function public.consume_chat_quota(p_user_id uuid, p_limit int)
 returns int
 language plpgsql

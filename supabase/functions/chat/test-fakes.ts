@@ -13,23 +13,18 @@ export type FakeTransactionRow = {
 export type FakeClientData = {
     transactions?: FakeTransactionRow[];
     categories?: { id: string; name: string; type: string }[];
-    // Khi có, mọi truy vấn trả lỗi này.
     error?: { message: string };
-    // Giả lập `max_rows` của server: mỗi trang trả nhiều nhất chừng này dòng.
     maxRowsPerPage?: number;
 };
 
 export type FakeClientCalls = {
     tables: string[];
     selects: string[];
-    // Mỗi phần tử là [tên bộ lọc, ...tham số], ví dụ ["gte", "transaction_date", "2026-11-01"].
     filters: unknown[][];
     orders: string[];
     ranges: [number, number][];
 };
 
-// Client Supabase giả: chuỗi truy vấn nào cũng nối tiếp được, `await` ở bất
-// kỳ bước nào cũng trả về { data, error }. Nếu có `range` thì cắt theo trang.
 export function createFakeClient(data: FakeClientData): {
     client: SupabaseClient;
     calls: FakeClientCalls;
@@ -56,7 +51,6 @@ export function createFakeClient(data: FakeClientData): {
                 calls.orders.push(column);
                 return query;
             },
-            // Chỉ đổi kiểu khi biên dịch, không đổi dữ liệu.
             overrideTypes: () => query,
             range(from: number, to: number) {
                 calls.ranges.push([from, to]);

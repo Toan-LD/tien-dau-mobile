@@ -1,7 +1,5 @@
 const LOCAL_HOSTNAMES = ["127.0.0.1", "localhost"];
 
-// Chỉ nhận URL máy local, phân tích bằng URL để các dạng như
-// http://localhost.evil.com hay http://127.0.0.1@evil.com không lọt qua.
 export function isLocalSupabaseUrl(url: string): boolean {
     let parsed: URL;
     try {
@@ -17,7 +15,6 @@ export function isLocalSupabaseUrl(url: string): boolean {
     );
 }
 
-// Từ chối mọi URL không phải máy local để không bao giờ chạm project thật.
 export function requireLocalSupabaseUrl(): string {
     const url = Deno.env.get("SUPABASE_URL") ?? Deno.env.get("API_URL") ?? "";
     if (!isLocalSupabaseUrl(url)) {

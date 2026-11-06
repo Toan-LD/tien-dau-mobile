@@ -53,7 +53,6 @@ Deno.test("có khoản hôm qua và trong tuần trước", () => {
     const transactions = buildFixture(TODAY, categories);
     const yesterday = daysBefore(TODAY, 1);
     assert(transactions.some((transaction) => transaction.date === yesterday));
-    // 2026-11-06 là thứ Sáu: tuần trước là 26/10 – 01/11.
     assert(
         transactions.some(
             (transaction) =>

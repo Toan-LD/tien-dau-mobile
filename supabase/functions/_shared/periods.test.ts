@@ -21,7 +21,6 @@ Deno.test("vietnamToday dùng giờ Việt Nam", () => {
 });
 
 Deno.test("tuần bắt đầu thứ Hai", () => {
-    // 2026-11-06 là thứ Sáu, 2026-11-02 thứ Hai, 2026-11-08 Chủ nhật
     assertPeriod(
         "this_week",
         "2026-11-06",
@@ -84,7 +83,7 @@ Deno.test("ngày, tháng, năm", () => {
         "2026-10-31",
         "Tháng 10/2026 (01/10/2026 – 31/10/2026)",
     );
-    assertPeriod("2026-11", "2026-11-06", "2026-11-01", "2026-11-06"); // tháng hiện tại tính tới hôm nay
+    assertPeriod("2026-11", "2026-11-06", "2026-11-01", "2026-11-06");
     assertPeriod("2028-02", "2026-11-06", "2028-02-01", "2028-02-29");
     assertPeriod(
         "2026-11-03",

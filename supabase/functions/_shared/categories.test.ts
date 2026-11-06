@@ -42,7 +42,6 @@ Deno.test("matchCategory chỉ lấy mục đúng loại khi có truyền loại
 Deno.test("matchCategory báo lỗi liệt kê mục của loại đó", () => {
     const mismatch = matchCategory("xăng", categories, "expense");
     assertEquals(mismatch.ok, false);
-    // lỗi liệt kê đúng tên mục chi + "Không phân loại"
     assert(
         !mismatch.ok &&
             mismatch.error.includes("Ăn uống") &&

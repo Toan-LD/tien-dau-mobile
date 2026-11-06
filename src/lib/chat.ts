@@ -6,8 +6,6 @@ import {
 
 import { supabase } from "@/lib/supabase";
 
-// The server gives up after 30 s; React Native on Android has no read timeout
-// of its own, so without this a dropped connection waits forever.
 export const CHAT_REQUEST_TIMEOUT_MILLISECONDS = 40_000;
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };

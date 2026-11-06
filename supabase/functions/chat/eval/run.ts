@@ -1,13 +1,3 @@
-// Hỏi từng câu trong bộ câu hỏi mẫu qua hàm chat chạy local rồi chấm.
-//
-//   eval "$(npx supabase status -o env | sed 's/^API_URL=/SUPABASE_URL=/')"
-//   npm run eval:chat -- --runs 2
-//
-// Hàm chat cần chạy bằng file riêng (CHAT_DAILY_LIMIT=1000, không phải .env thật):
-//   npx supabase functions serve chat --env-file supabase/functions/.env.eval.local
-//
-// Cần SUPABASE_URL (hoặc API_URL) và key publishable/anon (SUPABASE_ANON_KEY,
-// ANON_KEY hoặc PUBLISHABLE_KEY). Đã chạy `npm run eval:seed` trước đó.
 import { createClient } from "@supabase/supabase-js";
 import { vietnamToday } from "../../_shared/periods.ts";
 import { fetchTransactions } from "../data.ts";
@@ -19,7 +9,6 @@ import { EVAL_EMAIL, EVAL_PASSWORD } from "./seed.ts";
 const DEFAULT_RUNS = 2;
 const REQUEST_TIMEOUT_MILLISECONDS = 60_000;
 const MONEY_PATTERN = /\d{1,3}(\.\d{3})+ đ/;
-// Từ khoá cho thấy model đã trả lời thật một câu lạc đề.
 const REAL_ANSWER_KEYWORDS = ["def ", "Paris", "x = 2"];
 
 type Status = "ĐẠT" | "KHÔNG ĐẠT" | "CẦN XEM" | "LỖI";
@@ -45,8 +34,6 @@ function includesAny(answer: string, expected: string[]): boolean {
     return expected.some((text) => lowerAnswer.includes(text.toLowerCase()));
 }
 
-// Những chuỗi cần tìm trong câu trả lời và cách khớp: "all" là phải có tất
-// cả, "any" là chỉ cần một, "review" là không có gì để máy chấm tự động.
 type Expectation = { strings: string[]; mode: "all" | "any" | "review" };
 
 function describeExpectation(
@@ -72,10 +59,8 @@ function grade(
         const failed =
             MONEY_PATTERN.test(answer) ||
             REAL_ANSWER_KEYWORDS.some((keyword) => answer.includes(keyword));
-        // Máy chỉ loại được các dấu hiệu rõ ràng; người đọc xác nhận phần còn lại.
         return failed ? "KHÔNG ĐẠT" : "CẦN XEM";
     }
-    // Không có gì để so thì không thể tự kết luận đạt.
     if (expectation.mode === "review") return "CẦN XEM";
     const passed =
         expectation.mode === "any"

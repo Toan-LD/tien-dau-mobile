@@ -22,7 +22,6 @@ type ListItem = ChatMessage | { id: typeof PENDING_ITEM_ID; role: "pending" };
 export default function AskScreen() {
     const { messages, pending, send, retry, reset } = useChat();
 
-    // Inverted list: newest first, so the latest message sits at the bottom.
     const items = useMemo<ListItem[]>(() => {
         const newestFirst: ListItem[] = [...messages].reverse();
         return pending

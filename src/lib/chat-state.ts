@@ -33,8 +33,6 @@ export const ERROR_TEXT: Record<ChatErrorKind, string> = {
 
 const HISTORY_LIMIT = 10;
 
-// Takes the error message and the user message right before it out of the
-// conversation. Returns null when the id is not an error message.
 function splitFailedQuestion(messages: ChatMessage[], errorId: string) {
     const errorIndex = messages.findIndex((message) => message.id === errorId);
     const failed = messages[errorIndex];
@@ -52,7 +50,6 @@ function splitFailedQuestion(messages: ChatMessage[], errorId: string) {
     return { remaining, question };
 }
 
-// History to send when retrying: every answered turn except the failed one.
 export function historyForRetry(
     messages: ChatMessage[],
     errorId: string,

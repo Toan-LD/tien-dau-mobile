@@ -27,7 +27,6 @@ function recordingModel(replies: ChatCompletionMessage[]) {
     return { model, receivedMessages };
 }
 
-// Như model thật: chỉ dừng khi bị huỷ qua signal.
 const hangingModel: ChatModel = {
     complete(_messages, _tools, signal) {
         return new Promise((_resolve, reject) => {
@@ -246,7 +245,6 @@ Deno.test(
     async () => {
         const { handle, quotaCalls, receivedMessages } = setup({
             remaining: 7,
-            // 23:30 UTC ngày 05/11 là 06:30 sáng 06/11 ở Việt Nam.
             now: new Date("2026-11-05T23:30:00Z"),
         });
         const response = await handle(
@@ -312,7 +310,6 @@ Deno.test("tool đọc giao dịch qua client của người dùng", async () =>
         status: 200,
         body: { reply: "Hôm nay bạn chi 30.000 đ.", remaining: 49 },
     });
-    // Hai lần đọc giao dịch: trang có dữ liệu, rồi trang rỗng báo hết.
     assertEquals(clientCalls.tables, [
         "categories",
         "transactions",

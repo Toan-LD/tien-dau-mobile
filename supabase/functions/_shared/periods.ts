@@ -41,11 +41,9 @@ function isValidMonth(month: string): boolean {
 }
 
 function lastDayOfMonth(year: number, month: number): string {
-    // Ngày 0 của tháng kế tiếp là ngày cuối của tháng này.
     return toIsoDate(Date.UTC(year, month, 0));
 }
 
-// "2026-11-06" -> "06/11/2026"
 export function formatDate(date: string): string {
     const [year, month, day] = date.split("-");
     return `${day}/${month}/${year}`;
@@ -108,7 +106,6 @@ export function resolvePeriod(input: string, today: string): PeriodResult {
         }
         case "this_week":
         case "last_week": {
-            // Thứ Hai là ngày đầu tuần: Chủ Nhật (0) lùi 6 ngày.
             const sinceMonday =
                 (new Date(toMilliseconds(today)).getUTCDay() + 6) % 7;
             const thisMonday = addDays(today, -sinceMonday);

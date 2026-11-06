@@ -13,10 +13,7 @@ export const MAX_HISTORY_CONTENT_LENGTH = 2000;
 export type AuthenticatedUser = { userId: string; client: SupabaseClient };
 
 export type HandlerDependencies = {
-    // Trả null khi không xác thực được người dùng. `client` mang JWT của
-    // người dùng nên mọi truy vấn đều qua RLS.
     authenticate(request: Request): Promise<AuthenticatedUser | null>;
-    // Số lượt còn lại hôm nay, hoặc -1 khi đã hết lượt.
     consumeQuota(userId: string): Promise<number>;
     model: ChatModel;
     now(): Date;
@@ -68,8 +65,6 @@ async function readInput(request: Request): Promise<ChatInput | null> {
     return { question, history: history.slice(-MAX_HISTORY_TURNS) };
 }
 
-// Chỉ ghi tên và nội dung lỗi: object lỗi của SDK có thể mang header của
-// request (key của LLM, JWT của người dùng).
 function describeError(error: unknown): string {
     if (error instanceof Error) return `${error.name}: ${error.message}`;
     return String(error);
@@ -117,7 +112,6 @@ export function createHandler(
                 return jsonResponse(429, { error: "quota_exceeded" });
             }
 
-            // Model hay truy vấn không tôn trọng signal thì vẫn bị cắt nhờ race.
             const timeout = new Promise<never>((_resolve, reject) => {
                 timer = setTimeout(() => {
                     controller.abort();

@@ -11,7 +11,6 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const RENT_AMOUNT = 4_500_000;
 const SALARY_AMOUNT = 18_500_000;
 
-// Mục chi hằng ngày, kèm khoảng số tiền (đơn vị nghìn đồng) và ghi chú mẫu.
 const DAILY_SPENDING: {
     name: string;
     minimumThousands: number;
@@ -50,7 +49,6 @@ const DAILY_SPENDING: {
     },
 ];
 
-// Bộ sinh số giả ngẫu nhiên mulberry32: cùng seed thì cùng dãy số.
 function createRandom(seed: number): () => number {
     let state = seed >>> 0;
     return () => {
@@ -103,7 +101,6 @@ export function buildFixture(
         if (categoryName !== null && !category) {
             throw new Error(`Thiếu mục "${categoryName}" (${type})`);
         }
-        // Giờ tạo tăng dần theo thứ tự thêm để việc sắp xếp ổn định.
         const minuteOfDay = transactions.length % (24 * 60);
         const hours = String(Math.floor(minuteOfDay / 60)).padStart(2, "0");
         const minutes = String(minuteOfDay % 60).padStart(2, "0");
@@ -142,7 +139,6 @@ export function buildFixture(
         if (dayOfMonth === 10) {
             add(date, "income", "Lương", SALARY_AMOUNT, "Lương tháng");
         }
-        // Các khoản đặc biệt rơi vào đầu tháng để tháng nào cũng có dữ liệu.
         if (dayOfMonth === 3) {
             add(
                 date,

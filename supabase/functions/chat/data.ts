@@ -24,10 +24,7 @@ export async function fetchTransactions(
     end: string,
 ): Promise<Transaction[]> {
     const transactions: Transaction[] = [];
-    // Server có thể giới hạn số dòng mỗi trang (max_rows) thấp hơn PAGE_SIZE,
-    // nên chỉ dừng khi nhận trang rỗng và lấy tiếp từ số dòng đã nhận được.
     for (let from = 0; ; from = transactions.length) {
-        // Sắp xếp theo khoá ổn định để các trang không chồng hay sót dòng.
         const { data, error } = await client
             .from("transactions")
             .select(

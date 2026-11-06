@@ -1,10 +1,3 @@
-// Nạp bộ dữ liệu mẫu vào Supabase LOCAL cho user eval.
-//
-//   eval "$(npx supabase status -o env | sed 's/^API_URL=/SUPABASE_URL=/')"
-//   npm run eval:seed
-//
-// Cần biến môi trường SUPABASE_URL (hoặc API_URL) và SERVICE_ROLE_KEY
-// (hoặc SUPABASE_SERVICE_ROLE_KEY), đúng tên `npx supabase status -o env` in ra.
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { vietnamToday } from "../../_shared/periods.ts";
@@ -13,7 +6,6 @@ import { buildFixture } from "./fixture.ts";
 import { requireLocalSupabaseUrl } from "./local-only.ts";
 
 export const EVAL_EMAIL = "eval@tiendau.local";
-// Chỉ tồn tại trong Supabase local, không phải bí mật.
 export const EVAL_PASSWORD = "eval-local-only-password";
 
 const INSERT_BATCH_SIZE = 500;

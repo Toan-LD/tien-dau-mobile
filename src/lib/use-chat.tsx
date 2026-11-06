@@ -28,7 +28,6 @@ const ChatContext = createContext<ChatContextValue | null>(null);
 export function ChatProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(chatReducer, initialChatState);
     const messageCounter = useRef(0);
-    // Bumped on reset so answers to the old conversation are dropped.
     const conversationGeneration = useRef(0);
 
     const nextId = () => {

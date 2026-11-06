@@ -21,8 +21,6 @@ function requireEnvironment(name: string): string {
     return value;
 }
 
-// Runtime cung cấp key kiểu mới dạng JSON {"default": "..."}; project còn
-// dùng key cũ thì chỉ có biến đơn.
 function supabaseKey(keysName: string, legacyName: string): string {
     const keys = Deno.env.get(keysName);
     if (keys) {
@@ -52,7 +50,6 @@ async function authenticate(
     return { userId, client };
 }
 
-// Chỗ duy nhất dùng secret key: hàm đếm lượt chỉ cấp quyền cho service_role.
 async function consumeQuota(userId: string): Promise<number> {
     const serviceClient = createClient(
         requireEnvironment("SUPABASE_URL"),
@@ -71,7 +68,6 @@ async function consumeQuota(userId: string): Promise<number> {
     return data;
 }
 
-// Thiếu cấu hình LLM thì từng request trả 500, function vẫn khởi động được.
 function modelFromEnvironment(): ChatModel {
     const baseURL = Deno.env.get("LLM_BASE_URL");
     const apiKey = Deno.env.get("LLM_API_KEY");

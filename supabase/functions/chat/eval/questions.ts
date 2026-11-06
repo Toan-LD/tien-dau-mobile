@@ -14,12 +14,8 @@ export type EvalQuestion = {
     id: string;
     question: string;
     check: "numbers" | "refuse" | "guide" | "redirect";
-    // Các chuỗi phải có trong câu trả lời (không phân biệt hoa thường).
     expect?: (context: EvalContext) => string[];
-    // true: chỉ cần có MỘT trong các chuỗi expect thay vì tất cả.
     matchAny?: boolean;
-    // Cách diễn đạt chấp nhận được (chỉ cần một) khi `expect` trả về rỗng,
-    // ví dụ không có mục nào tăng. Không khai báo thì kết quả là CẦN XEM.
     whenEmpty?: string[];
 };
 
@@ -38,7 +34,6 @@ function inCategory(transactions: Transaction[], name: string): Transaction[] {
     );
 }
 
-// "2026-11-06" lùi `months` tháng -> "2026-09".
 function monthsBefore(today: string, months: number): string {
     const [year, month] = today.split("-").map(Number);
     const index = year * 12 + (month - 1) - months;
@@ -54,9 +49,7 @@ function daysBefore(today: string, days: number): string {
         .slice(0, 10);
 }
 
-// Tháng cụ thể để hỏi: 2 tháng trước, tính từ hôm nay.
 const specificMonth = (today: string) => monthsBefore(today, 2);
-// Ngày cụ thể để hỏi: 3 ngày trước, bộ dữ liệu mẫu ngày nào cũng có khoản chi.
 const specificDate = (today: string) => daysBefore(today, 3);
 
 function monthQuestion(today: string): string {
@@ -177,7 +170,6 @@ const numbersQuestions: EvalQuestion[] = [
     },
     {
         id: "specific-month-balance",
-        // Câu hỏi phụ thuộc `today`, được dựng lại ở `buildQuestions`.
         question: "",
         check: "numbers",
         expect: (context) => [
@@ -286,7 +278,6 @@ const otherQuestions: EvalQuestion[] = [
     },
 ];
 
-// Hai câu có nội dung phụ thuộc ngày hôm nay (tháng và ngày cụ thể).
 export function buildQuestions(today: string): EvalQuestion[] {
     const questions = [...numbersQuestions, ...otherQuestions];
     return questions.map((question) => {

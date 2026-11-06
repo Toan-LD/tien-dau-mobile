@@ -1,12 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router/js-tabs";
+import { Tabs, type BottomTabBarButtonProps } from "expo-router/js-tabs";
 import type { ComponentProps } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-import { Colors } from "@/constants/theme";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { Colors, Spacing } from "@/constants/theme";
 import { ChatProvider } from "@/lib/use-chat";
 
 export const unstable_settings = { anchor: "index" };
+
+const NEW_ENTRY_CIRCLE_SIZE = 60;
+const NEW_ENTRY_RAISE = 24;
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 type TabIconProps = { focused: boolean; size: number };
@@ -31,11 +35,29 @@ function tabIcon(name: IconName) {
     };
 }
 
-function NewEntryTabIcon() {
+function NewEntryTabButton({
+    onPress,
+    onLongPress,
+    accessibilityState,
+    testID,
+    style,
+}: Readonly<BottomTabBarButtonProps>) {
     return (
-        <View style={styles.newEntryIcon}>
-            <Ionicons name="add" size={22} color={Colors.onPrimary} />
-        </View>
+        <PressableScale
+            onPress={onPress}
+            onLongPress={onLongPress}
+            accessibilityRole="tab"
+            accessibilityLabel="Ghi mới"
+            accessibilityState={accessibilityState}
+            testID={testID}
+            scaleTo={0.94}
+            style={[style, styles.newEntryButton]}
+        >
+            <View style={styles.newEntryCircle}>
+                <Ionicons name="add" size={32} color={Colors.onPrimary} />
+            </View>
+            <Text style={styles.newEntryLabel}>Ghi mới</Text>
+        </PressableScale>
     );
 }
 
@@ -74,10 +96,7 @@ export default function TabsLayout() {
                     name="index"
                     options={{
                         title: "Ghi mới",
-                        tabBarIcon: NewEntryTabIcon,
-                        tabBarIconStyle: styles.newEntryIconSlot,
-                        tabBarInactiveTintColor: Colors.text,
-                        tabBarLabelStyle: styles.newEntryLabel,
+                        tabBarButton: NewEntryTabButton,
                     }}
                 />
                 <Tabs.Screen
@@ -95,14 +114,23 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
     tabBar: { backgroundColor: Colors.surface, borderTopColor: Colors.border },
-    newEntryIconSlot: { width: 48 },
-    newEntryIcon: {
-        width: 48,
-        height: 28,
-        borderRadius: 14,
+    newEntryButton: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "flex-end",
+        paddingBottom: Spacing.one,
+    },
+    newEntryCircle: {
+        width: NEW_ENTRY_CIRCLE_SIZE,
+        height: NEW_ENTRY_CIRCLE_SIZE,
+        borderRadius: NEW_ENTRY_CIRCLE_SIZE / 2,
+        borderWidth: 4,
+        borderColor: Colors.surface,
         backgroundColor: Colors.primary,
         alignItems: "center",
         justifyContent: "center",
+        marginTop: -NEW_ENTRY_RAISE,
+        marginBottom: Spacing.half,
     },
-    newEntryLabel: { fontWeight: "600" },
+    newEntryLabel: { fontSize: 10, fontWeight: "600", color: Colors.text },
 });

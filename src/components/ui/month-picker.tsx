@@ -5,8 +5,9 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { IconButton } from "@/components/ui/icon-button";
 import { SelectableTile } from "@/components/ui/selectable-tile";
 import { Colors, Spacing } from "@/constants/theme";
+import type { YearMonth } from "@/lib/calendar";
 
-export type YearMonth = { year: number; month: number };
+export type { YearMonth } from "@/lib/calendar";
 
 // Three per row. Rows are built by hand rather than with "33.33%" widths,
 // which Android rounds so that a row can wrap early.
@@ -29,7 +30,13 @@ type Props = {
 
 // Bottom sheet to jump straight to a month: ‹ year › on top, 12 months below.
 // Months after `max` are greyed out.
-export function MonthPicker({ visible, value, max, onSelect, onClose }: Props) {
+export function MonthPicker({
+    visible,
+    value,
+    max,
+    onSelect,
+    onClose,
+}: Readonly<Props>) {
     const [year, setYear] = useState(value.year);
     // Each time it opens, start from the year being viewed.
     const [wasVisible, setWasVisible] = useState(visible);

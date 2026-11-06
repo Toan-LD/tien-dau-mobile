@@ -65,6 +65,7 @@ Trước mắt app cho chính họ dùng, nhưng có thể sau này cho người
 - Màu trung tính: nền trắng ngà (khoảng `#fafaf9`), chữ gần đen (khoảng `#1c1917`), viền xám nhạt, nút chính màu đen. Không gradient. Màu nhấn duy nhất là đỏ trầm cho nút Xoá.
 - **Icon nét (line icon), một màu xám đậm** cho mọi mục. Không dùng emoji. **[người dùng]**
 - **Chỉ có giao diện sáng ở v1.** **[Claude]**: giữ đơn giản. Template đang tự đổi theo chế độ tối của máy, cần khoá về sáng.
+- **Lịch chọn ngày tự vẽ, không dùng lịch của điện thoại** (lịch hệ thống trông lạc tông so với app). Sheet "Chọn ngày" với ‹ tháng ›, lưới 7 cột T2 → CN, ngày đang chọn là chấm tròn đen, hôm nay in đậm có chấm nhỏ, ngày sau hôm nay bị mờ. Bấm một ngày chỉ đánh dấu, bấm **Xong** mới áp dụng. Dùng ở mọi chỗ có chọn ngày (tab Ghi, màn Sửa, tab Danh sách). **[người dùng, 2026-11-06]**
 
 ### 4.2 Điều hướng
 - Màn **Đăng nhập** khi chưa đăng nhập. Đã đăng nhập thì vào thẳng app. Phiên đăng nhập được lưu lại, mở app lần sau không phải đăng nhập lại.

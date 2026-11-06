@@ -38,10 +38,12 @@
 ### Task 1: `parseAmount` (server)
 
 **Files:**
+
 - Modify: `supabase/functions/_shared/money.ts`
 - Test: `supabase/functions/_shared/money.test.ts`
 
 **Interfaces:**
+
 - Produces: `export const MAX_AMOUNT = 999_999_999_999;` and `export type AmountResult = { ok: true; amount: number } | { ok: false; error: string };` and `export function parseAmount(input: string): AmountResult`
 
 - [ ] **Step 1: Write the failing tests** (add to `money.test.ts`)
@@ -93,6 +95,7 @@ Expected: FAIL, `parseAmount` is not exported.
 - [ ] **Step 3: Implement `parseAmount(input: string): AmountResult` in `_shared/money.ts`**
 
 Approach:
+
 1. Normalize with `normalizeName` from `_shared/categories.ts` (lowercases, `đ`→`d`, strips diacritics).
 2. Strip a trailing currency word: `d`, `vnd`, `dong`.
 3. Match `^(\d+(?:[.,]\d+)*)\s*(k|nghin|ngan|n|tr|trieu|cu|m|ty)?\s*(\d{1,3})?$`.
@@ -119,10 +122,12 @@ git commit -m "feat(chat): parse Vietnamese shorthand amounts on the server"
 ### Task 2: `resolveEntryDate` (server)
 
 **Files:**
+
 - Modify: `supabase/functions/_shared/periods.ts`
 - Test: `supabase/functions/_shared/periods.test.ts`
 
 **Interfaces:**
+
 - Produces: `export type EntryDateResult = { ok: true; date: string } | { ok: false; error: string };` and `export function resolveEntryDate(input: string, today: string): EntryDateResult`
 
 - [ ] **Step 1: Write the failing tests** (today = `2026-11-06`, a Friday, unless stated)
@@ -186,12 +191,15 @@ git commit -m "feat(chat): resolve entry dates relative to Vietnam today"
 ### Task 3: `propose_transaction` tool
 
 **Files:**
+
 - Modify: `supabase/functions/chat/tools.ts`
 - Test: `supabase/functions/chat/tools.test.ts`
 
 **Interfaces:**
+
 - Consumes: `parseAmount`, `MAX_AMOUNT` (Task 1); `resolveEntryDate` (Task 2); `matchCategory`, `normalizeName`, `UNCATEGORIZED` from `_shared/categories.ts`; `formatVND` from `_shared/money.ts`; `weekdayTitle` from `_shared/periods.ts`.
 - Produces (exported from `tools.ts`):
+
   ```ts
   export type CardStatus = "open" | "saved" | "dismissed" | "replaced";
   export type CardState = { number: number; status: CardStatus };
@@ -279,10 +287,12 @@ git commit -m "feat(chat): add propose_transaction tool that collects draft card
 ### Task 4: Handler reads `cards`, returns `drafts`
 
 **Files:**
+
 - Modify: `supabase/functions/chat/handler.ts`
 - Test: `supabase/functions/chat/handler.test.ts`
 
 **Interfaces:**
+
 - Consumes: `CardState`, `ProposedDraft` from Task 3; `GIVE_UP_REPLY` from `agent.ts`.
 - Produces: request body `{ question: string; history: ChatTurn[]; cards?: CardState[] }`; 200 response `{ reply: string; remaining: number; drafts: ProposedDraft[] }`; `export const MAX_CARDS = 20;`
 
@@ -321,6 +331,7 @@ git commit -m "feat(chat): accept card states and return draft cards"
 ### Task 5: System prompt and app guide
 
 **Files:**
+
 - Modify: `supabase/functions/chat/system-prompt.ts`, `supabase/functions/chat/app-guide.ts`
 - Test: `supabase/functions/chat/system-prompt.test.ts`
 
@@ -338,6 +349,7 @@ Expected: FAIL.
 - [ ] **Step 3: Edit the prompt**
 
 The copy is the builder's wording, but it must cover every rule in spec §3.4:
+
 - "Phạm vi" lists three jobs.
 - A new `## Ghi khoản thu chi` section says:
   - one call per item, with the amount passed exactly as typed;
@@ -364,11 +376,14 @@ git commit -m "feat(chat): teach the prompt and app guide about recording by cha
 ### Task 6: App chat client and conversation state
 
 **Files:**
+
 - Modify: `src/lib/chat.ts`, `src/lib/chat-state.ts`
 - Test: `src/lib/__tests__/chat.test.ts`, `src/lib/__tests__/chat-state.test.ts`
 
 **Interfaces:**
+
 - Produces in `chat.ts`:
+
   ```ts
   export type ChatDraft = { type: "expense" | "income"; amount: number; categoryId: string;
       categoryName: string; date: string; note: string | null; replaces: number | null };
@@ -377,7 +392,9 @@ git commit -m "feat(chat): teach the prompt and app guide about recording by cha
   export async function askChat(question: string, history: ChatTurn[], cards: CardState[]): Promise<AskResult>
   export function parseDrafts(value: unknown): ChatDraft[]
   ```
+
 - Produces in `chat-state.ts`:
+
   ```ts
   export type DraftStatus = "open" | "saving" | "saved" | "dismissed" | "replaced";
   // ChatMessage gains:
@@ -394,10 +411,12 @@ git commit -m "feat(chat): teach the prompt and app guide about recording by cha
 - [ ] **Step 1: Write the failing tests**
 
 `chat.test.ts`:
+
 - `"sends cards and returns parsed drafts"`. `fake.invokeResult` carries one valid draft. The invoke body equals `{ question, history, cards }` and `result.drafts` has that draft.
 - `"treats missing or malformed drafts as empty and drops bad cards"`. A missing `drafts` gives `[]`. `drafts: "x"` gives `[]`. In a list of one valid draft plus `{ amount: "30k" }`, `{ amount: 0 }` and `{ type: "transfer" }`, only the valid one is kept.
 
 `chat-state.test.ts`:
+
 - `"reply with drafts appends numbered draft messages after the answer"`. Two drafts in two replies get numbers 1, 2, 3, and status `"open"`.
 - `"save flow: open → saving → saved, and saveFail returns to open"`.
 - `"saveStart is ignored unless the card is open"`. This is the double-tap guard at reducer level.
@@ -435,10 +454,12 @@ git commit -m "feat(chat): keep numbered draft cards in the conversation state"
 ### Task 7: Save and dismiss from the chat provider
 
 **Files:**
+
 - Modify: `src/lib/use-chat.tsx`
 - Test: `src/lib/__tests__/use-chat.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `createTransaction`, `validateDraft` from `@/lib/transactions`; the actions from Task 6.
 - Produces on `useChat()`: `saveDraft(messageId: string): Promise<boolean>` (true when saved), `dismissDraft(messageId: string): void`.
 
@@ -477,11 +498,13 @@ git commit -m "feat(chat): save and dismiss draft cards from the chat"
 ### Task 8: Draft card UI and Chatbot screen copy
 
 **Files:**
+
 - Create: `src/components/chat/draft-card.tsx`
 - Modify: `src/components/ui/button.tsx` (new variant `"outline"`: border `Colors.border`, text `Colors.text`, pressed `styles.pressedSurface`), `src/app/(tabs)/ask.tsx`, `src/lib/chat-state.ts` (`INTRO_TEXT`, `SUGGESTIONS`)
 - Test: `src/lib/__tests__/chat-state.test.ts` (copy)
 
 **Interfaces:**
+
 - Consumes: the `useChat()` `saveDraft`/`dismissDraft` (Task 7); the draft `ChatMessage` (Task 6); `categoriesQuery(type)` for the icon key; `useToday()`, `formatDayTitle`; `CategoryIcon`; `useToast`; `formatVND`.
 - Produces: `export const DraftCard = memo(function DraftCard(props: { message: DraftMessage; onSave(id: string): void; onDismiss(id: string): void }))`
 
@@ -497,6 +520,7 @@ Expected: FAIL.
 - [ ] **Step 3: Implement the copy, the Button variant and `DraftCard`**
 
 Card layout per spec §4.2:
+
 - **open:** "Chi"/"Thu" label, a large amount, the category icon and name, `formatDayTitle(date, today)`, the note if present, the warning line when `previousAlreadySaved`, then a row with Button "Bỏ" (`outline`) and Button "Lưu" (`primary`).
 - **saving:** Lưu is `busy` and Bỏ is `disabled`.
 - **saved:** a `checkmark-circle-outline` icon, "Đã ghi", and a text `PressableScale` "Xem" that calls `router.push({ pathname: "/transaction/[id]", params: { id } })`.
@@ -519,15 +543,18 @@ git commit -m "feat(chat): show draft cards with Lưu and Bỏ in the chat"
 ### Task 9: Eval kit grades drafts
 
 **Files:**
+
 - Modify: `supabase/functions/chat/eval/questions.ts`, `supabase/functions/chat/eval/run.ts`
 - Test: `supabase/functions/chat/eval/fixture.test.ts` (or a new `questions.test.ts` beside it)
 
 **Interfaces:**
+
 - `EvalQuestion` gains `check: "draft"`, `history?: ChatTurn[]`, `cards?: CardState[]`, and `expectDrafts?: (context: EvalContext) => { type: string; amount: number; categoryName: string; date: string; replaces?: number | null }[]` (an empty array means "no card allowed").
 
 - [ ] **Step 1: Write the failing test**
 
 `buildQuestions("2026-11-06")` has no `"redirect"` check left. It contains draft questions with these ids:
+
 - `draft-simple` ("Hôm nay ăn sáng 30k" → one expense of 30000 in Ăn uống, today)
 - `draft-many`
 - `draft-yesterday`
@@ -561,6 +588,7 @@ Run: `npm run test:fn && npm run check:fn`
 Expected: PASS.
 
 Then run the live eval. This needs local Supabase and the LLM key; skip it if they are not available and say so:
+
 - `chcon -R -t container_file_t supabase/functions`
 - `npx supabase functions serve chat --env-file supabase/functions/.env.eval.local`
 - `npm run eval:seed`
@@ -579,6 +607,7 @@ git commit -m "test(chat): grade draft cards in the local eval"
 ### Task 10: Docs and final verification
 
 **Files:**
+
 - Modify: `CLAUDE.md` (Architecture → Chat and Edge Functions lines: `propose_transaction`, `drafts`/`cards`, the card UI, saving through `createTransaction`)
 
 - [ ] **Step 1: Update `CLAUDE.md`** in two or three sentences, matching what was built.
@@ -597,5 +626,6 @@ git commit -m "docs: describe chat entry in CLAUDE.md"
 - [ ] **Step 4: Hand off to the owner** (do not deploy without their yes)
 
 Tell them:
+
 - Deploy the function before testing on the phone: `npx supabase functions deploy chat`, run outside the sandbox. An old app build against the new function would get a "bấm Lưu" answer with no card.
 - The manual phone checks from spec §5: record via chat and see it in Danh sách; tap Lưu twice quickly; Bỏ; correct by words; offline Lưu.

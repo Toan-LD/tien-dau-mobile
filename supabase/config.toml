@@ -393,6 +393,14 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Chatbot. verify_jwt rejects requests without a JWT or API key before the
+# function runs, but it lets a publishable key through, so the function also
+# verifies the user JWT itself (getClaims).
+# All functions share one Deno config, also used by `npm run test:fn`.
+[functions.chat]
+verify_jwt = true
+import_map = "./functions/deno.json"
+
 [analytics]
 enabled = true
 port = 54327

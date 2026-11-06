@@ -7,6 +7,8 @@ import {
     historyFor,
     historyForRetry,
     initialChatState,
+    INTRO_TEXT,
+    SUGGESTIONS,
     type ChatMessage,
     type ChatState,
     type DraftMessage,
@@ -420,6 +422,17 @@ describe("cardsFor", () => {
         expect(cards[0]).toEqual({ number: 3, status: "open" });
         expect(cards[18]).toEqual({ number: 21, status: "saved" });
         expect(cards[19]).toEqual({ number: 22, status: "open" });
+    });
+});
+
+describe("screen copy", () => {
+    it("mentions recording and suggests a recording sentence", () => {
+        expect(INTRO_TEXT).toBe(
+            "Hỏi về thu chi, ghi nhanh một khoản, hoặc hỏi cách dùng Tiền Đâu.",
+        );
+        expect(SUGGESTIONS).toHaveLength(4);
+        expect(SUGGESTIONS).toContain("Hôm nay ăn sáng 30k");
+        expect(SUGGESTIONS).not.toContain("Hôm qua tôi tiêu những gì?");
     });
 });
 

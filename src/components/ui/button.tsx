@@ -11,7 +11,7 @@ import {
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { Colors, Spacing } from "@/constants/theme";
 
-type Variant = "primary" | "danger-outline" | "dashed";
+type Variant = "primary" | "outline" | "danger-outline" | "dashed";
 
 type Props = {
     label: string;
@@ -80,7 +80,8 @@ const styles = StyleSheet.create({
     primary: { backgroundColor: Colors.primary },
     primaryPressed: { opacity: 0.85 },
     primaryDisabled: { backgroundColor: Colors.segment },
-    outline: { borderWidth: 1, borderColor: Colors.danger },
+    outline: { borderWidth: 1, borderColor: Colors.border },
+    dangerOutline: { borderWidth: 1, borderColor: Colors.danger },
     dashed: {
         borderWidth: 1,
         borderStyle: "dashed",
@@ -90,7 +91,12 @@ const styles = StyleSheet.create({
     pressedSurface: { backgroundColor: Colors.segment },
     faded: { opacity: 0.4 },
     primaryText: { fontSize: 15, fontWeight: "600", color: Colors.onPrimary },
-    outlineText: { fontSize: 16, fontWeight: "500", color: Colors.danger },
+    outlineText: { fontSize: 15, fontWeight: "600", color: Colors.text },
+    dangerOutlineText: {
+        fontSize: 16,
+        fontWeight: "500",
+        color: Colors.danger,
+    },
     dashedText: { fontSize: 15, color: Colors.text },
     mutedText: { color: Colors.textMuted },
 });
@@ -105,11 +111,20 @@ const variants = {
         color: Colors.onPrimary,
         icon: Colors.onPrimary,
     },
-    "danger-outline": {
+    outline: {
         box: styles.outline,
         pressed: styles.pressedSurface,
         disabled: styles.faded,
         text: styles.outlineText,
+        disabledText: null,
+        color: Colors.text,
+        icon: Colors.icon,
+    },
+    "danger-outline": {
+        box: styles.dangerOutline,
+        pressed: styles.pressedSurface,
+        disabled: styles.faded,
+        text: styles.dangerOutlineText,
         disabledText: null,
         color: Colors.danger,
         icon: Colors.danger,

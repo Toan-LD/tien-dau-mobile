@@ -40,13 +40,14 @@ export type ChatAction =
 
 export const initialChatState: ChatState = { messages: [], pending: false };
 
-export const INTRO_TEXT = "Hỏi về thu chi của bạn hoặc cách dùng Tiền Đâu.";
+export const INTRO_TEXT =
+    "Hỏi về thu chi, ghi nhanh một khoản, hoặc hỏi cách dùng Tiền Đâu.";
 
 export const SUGGESTIONS: string[] = [
+    "Hôm nay ăn sáng 30k",
     "Tháng này tôi chi bao nhiêu?",
     "Mục nào tốn nhiều nhất tháng này?",
     "So với tháng trước thì sao?",
-    "Hôm qua tôi tiêu những gì?",
 ];
 
 export const ERROR_TEXT: Record<ChatErrorKind, string> = {

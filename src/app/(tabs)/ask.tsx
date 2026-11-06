@@ -9,9 +9,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Composer } from "@/components/chat/composer";
+import { DraftCard } from "@/components/chat/draft-card";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { SuggestionList } from "@/components/chat/suggestion-list";
 import { IconButton } from "@/components/ui/icon-button";
+import { useToast } from "@/components/ui/toast";
 import { Colors, Spacing } from "@/constants/theme";
 import { type ChatMessage } from "@/lib/chat-state";
 import { useChat } from "@/lib/use-chat";
@@ -20,7 +22,14 @@ const PENDING_ITEM_ID = "pending";
 type ListItem = ChatMessage | { id: typeof PENDING_ITEM_ID; role: "pending" };
 
 export default function AskScreen() {
-    const { messages, pending, send, retry, reset } = useChat();
+    const { messages, pending, send, retry, reset, saveDraft, dismissDraft } =
+        useChat();
+    const toast = useToast();
+
+    const handleSave = async (messageId: string) => {
+        const saved = await saveDraft(messageId);
+        if (!saved) toast.show({ message: "Không lưu được, bạn thử lại" });
+    };
 
     const items = useMemo<ListItem[]>(() => {
         const newestFirst: ListItem[] = [...messages].reverse();
@@ -58,7 +67,13 @@ export default function AskScreen() {
                                 <Text style={styles.pending}>
                                     Đang trả lời…
                                 </Text>
-                            ) : item.role === "draft" ? null : (
+                            ) : item.role === "draft" ? (
+                                <DraftCard
+                                    message={item}
+                                    onSave={handleSave}
+                                    onDismiss={dismissDraft}
+                                />
+                            ) : (
                                 <MessageBubble message={item} onRetry={retry} />
                             )
                         }

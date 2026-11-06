@@ -71,7 +71,7 @@ Kết quả tool trả cho model khi thành công, ví dụ:
 `{ "ok": true, "draft": "Chi 30.000 đ · Ăn uống · Thứ Năm, 06/11/2026 · ăn sáng", "note_for_reply": "Thẻ nháp đã hiện cho người dùng; họ cần bấm Lưu để ghi." }`
 
 ### 3.2 Thẻ nháp đi ra khỏi function
-- `ToolContext` thêm chỗ cất thẻ nháp của request (ví dụ một mảng do `handler.ts` tạo cho mỗi request). Mỗi thẻ: `id` (chuỗi ngẫu nhiên do server tạo, chỉ để app phân biệt thẻ), `type`, `amount` (số), `categoryId`, `categoryName`, `date` (`YYYY-MM-DD`), `note`.
+- `ToolContext` thêm chỗ cất thẻ nháp của request (ví dụ một mảng do `handler.ts` tạo cho mỗi request). Mỗi thẻ: `type`, `amount` (số), `categoryId`, `categoryName`, `date` (`YYYY-MM-DD`), `note`, `replaces` (số hoặc `null`). App tự gán id và số thứ tự khi nhận.
 - Response 200 đổi từ `{ reply, remaining }` thành `{ reply, remaining, drafts }` (`drafts` luôn là mảng, có thể rỗng). App cũ đọc thiếu `drafts` vẫn chạy.
 - Nếu vòng lặp agent kết thúc bằng `GIVE_UP_REPLY` thì `drafts` rỗng. **[Claude]**
 

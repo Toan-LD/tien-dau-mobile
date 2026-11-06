@@ -82,9 +82,9 @@ function setup(
 
 function chatRequest(
     body: unknown,
-    init: { method?: string; rawBody?: string } = {},
+    requestOptions: { method?: string; rawBody?: string } = {},
 ): Request {
-    const method = init.method ?? "POST";
+    const method = requestOptions.method ?? "POST";
     return new Request("http://localhost/chat", {
         method,
         headers: {
@@ -94,7 +94,7 @@ function chatRequest(
         body:
             method === "GET"
                 ? undefined
-                : (init.rawBody ?? JSON.stringify(body)),
+                : (requestOptions.rawBody ?? JSON.stringify(body)),
     });
 }
 

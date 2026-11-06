@@ -221,8 +221,8 @@ npx supabase db push --remote
 # 2. Đặt secret cho function (đọc từ file .env vừa tạo; kiểm tra file đó đang có CHAT_DAILY_LIMIT=50 trước khi chạy)
 npx supabase secrets set --env-file supabase/functions/.env
 
-# 3. Đưa function lên
-npx supabase functions deploy chat
+# 3. Đưa function lên (--use-api: đóng gói trên server Supabase, không cần Docker)
+npx supabase functions deploy chat --use-api
 ```
 
 Sau bước 1, sinh lại kiểu TypeScript cho database:

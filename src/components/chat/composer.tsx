@@ -2,7 +2,8 @@ import { useState } from "react";
 import { StyleSheet, TextInput, View } from "react-native";
 
 import { IconButton } from "@/components/ui/icon-button";
-import { Colors, Spacing } from "@/constants/theme";
+import { Colors, NewEntryButton, Spacing } from "@/constants/theme";
+import { useKeyboardVisible } from "@/hooks/use-keyboard-visible";
 
 type Props = {
     pending: boolean;
@@ -11,6 +12,7 @@ type Props = {
 
 export function Composer({ pending, onSend }: Readonly<Props>) {
     const [text, setText] = useState("");
+    const keyboardVisible = useKeyboardVisible();
     const canSend = text.trim().length > 0 && !pending;
 
     function submit() {
@@ -20,7 +22,12 @@ export function Composer({ pending, onSend }: Readonly<Props>) {
     }
 
     return (
-        <View style={styles.container}>
+        <View
+            style={[
+                styles.container,
+                !keyboardVisible && styles.clearOfNewEntryButton,
+            ]}
+        >
             <TextInput
                 value={text}
                 onChangeText={setText}
@@ -49,6 +56,9 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: Colors.border,
         backgroundColor: Colors.surface,
+    },
+    clearOfNewEntryButton: {
+        paddingBottom: Spacing.two + NewEntryButton.raise,
     },
     input: {
         flex: 1,

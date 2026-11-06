@@ -4,13 +4,10 @@ import type { ComponentProps } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { PressableScale } from "@/components/ui/pressable-scale";
-import { Colors, Spacing } from "@/constants/theme";
+import { Colors, NewEntryButton, Spacing } from "@/constants/theme";
 import { ChatProvider } from "@/lib/use-chat";
 
 export const unstable_settings = { anchor: "index" };
-
-const NEW_ENTRY_CIRCLE_SIZE = 60;
-const NEW_ENTRY_RAISE = 24;
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 type TabIconProps = { focused: boolean; size: number };
@@ -121,15 +118,15 @@ const styles = StyleSheet.create({
         paddingBottom: Spacing.one,
     },
     newEntryCircle: {
-        width: NEW_ENTRY_CIRCLE_SIZE,
-        height: NEW_ENTRY_CIRCLE_SIZE,
-        borderRadius: NEW_ENTRY_CIRCLE_SIZE / 2,
+        width: NewEntryButton.size,
+        height: NewEntryButton.size,
+        borderRadius: NewEntryButton.size / 2,
         borderWidth: 4,
         borderColor: Colors.surface,
         backgroundColor: Colors.primary,
         alignItems: "center",
         justifyContent: "center",
-        marginTop: -NEW_ENTRY_RAISE,
+        marginTop: -NewEntryButton.raise,
         marginBottom: Spacing.half,
     },
     newEntryLabel: { fontSize: 10, fontWeight: "600", color: Colors.text },

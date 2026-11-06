@@ -25,6 +25,11 @@ export const Spacing = {
     six: 64,
 } as const;
 
+export const NewEntryButton = {
+    size: 60,
+    raise: 24,
+} as const;
+
 export const ChartColors = {
     series: ["#3a72c6", "#cf6331", "#16a079", "#c18b12", "#c96b93"],
     other: "#a8a29e",

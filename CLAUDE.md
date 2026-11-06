@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-"Tiền Đâu" is a personal income/expense tracker (Expo SDK 58, Expo Router, React 19.3, RN 0.88, TypeScript strict, Supabase backend). v1 is built: login, Ghi (entry), Hôm nay, Báo cáo, transaction edit and settings screens.
+"Tiền Đâu" is a personal income/expense tracker (Expo SDK 58, Expo Router, React 19.3, RN 0.88, TypeScript strict, Supabase backend). v1 is built: login, Ghi (entry), Danh sách, Báo cáo and Cài đặt tabs, transaction detail/edit and category management.
 
 The approved v1 design is in [docs/superpowers/specs/2026-11-05-expense-app-v1-design.md](docs/superpowers/specs/2026-11-05-expense-app-v1-design.md) (in Vietnamese). Approved mockups are in `docs/mockups/`. Where a mockup and the spec disagree, the spec wins; `docs/mockups/README.md` lists the known differences.
 
@@ -47,7 +47,7 @@ Env: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` (publishable key,
 
 ## Architecture
 
-- **Routing:** Expo Router with routes in `src/app/`. Typed routes and React Compiler are on (`app.json` `experiments`). `(tabs)/_layout.tsx` uses `Tabs` from `expo-router/js-tabs`: Ghi (index) · Danh sách (`today.tsx`) · Báo cáo. `login`, `settings`, `categories`, `transaction/[id]` (detail: Sửa / Xoá with a confirm dialog) and `transaction/[id]/edit` sit beside the tabs.
+- **Routing:** Expo Router with routes in `src/app/`. Typed routes and React Compiler are on (`app.json` `experiments`). `(tabs)/_layout.tsx` uses `Tabs` from `expo-router/js-tabs`: Ghi (index) · Danh sách (`today.tsx`) · Báo cáo · Cài đặt (`settings.tsx`, draws its own title). `login`, `categories` (add, edit name/icon, delete, drag to reorder), `transaction/[id]` (detail: Sửa / Xoá with a confirm dialog) and `transaction/[id]/edit` sit beside the tabs.
 - **Auth:** `src/lib/auth.tsx` provides the session; the root `_layout.tsx` gates routes with `Stack.Protected`. `src/app/+native-intent.tsx` sends the OAuth redirect deep link (`auth/callback`) to `/` so it never hits an unmatched route.
 - **Data layer:** all Supabase access lives in `src/lib/` (`supabase.ts`, `transactions.ts`, `categories.ts`, `report.ts`, `delete-with-undo.ts`). Screens and components never call `supabase` directly. Transaction-creation logic (validation, default wallet, category) is in `transactions.ts` so a later AI entry feature can reuse it. After a write, `subscribeTransactionsChanged` notifies listeners.
 - **Data cache:** screens read through TanStack Query, not by calling `src/lib/` fetchers in effects. `src/lib/query-client.ts` holds the one `QueryClient` (30 s staleTime, AppState as focus, invalidates `["transactions"]` on every transaction write). `src/lib/queries.ts` defines every query (`dayQuery`, `monthQuery`, `periodQuery`, `transactionQuery`, `categoriesQuery`) and `useRefreshOnFocus`. `periodQuery` (Danh sách tab: day/week/month, see `src/lib/periods.ts`, weeks start Monday) reuses the day and month keys so the cache is shared with Báo cáo. Day/month lists use `placeholderData: keepPreviousData` and dim while the new period loads, and the previous day/month is prefetched. The detail/edit screens share `useTransaction` (`src/lib/use-transaction.ts`); their `["transaction", id]` key is deliberately outside `["transactions"]` and has `gcTime: 0`. The cache is cleared on sign-out (`auth.tsx`). In tests, build a `QueryClient` with `gcTime: Infinity` or Jest hangs on its cleanup timer.

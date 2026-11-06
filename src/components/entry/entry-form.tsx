@@ -5,12 +5,12 @@ import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
+import { CategorySheet } from "@/components/categories/category-sheet";
 import { CategoryGrid } from "@/components/entry/category-grid";
 import { DateField } from "@/components/entry/date-field";
 import { AmountDisplay } from "@/components/entry/entry-header";
 import { Keypad } from "@/components/entry/keypad";
 import { MetaChip } from "@/components/entry/meta-chip";
-import { NewCategorySheet } from "@/components/entry/new-category-sheet";
 import { NoteSheet } from "@/components/entry/note-sheet";
 import { TypeToggle } from "@/components/type-toggle";
 import { Button } from "@/components/ui/button";
@@ -278,12 +278,12 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
                     setNoteOpen(false);
                 }}
             />
-            <NewCategorySheet
+            <CategorySheet
                 visible={newCategoryOpen}
                 type={type}
                 nextSortOrder={nextSortOrder}
                 onClose={() => setNewCategoryOpen(false)}
-                onCreated={(c) => {
+                onSaved={(c) => {
                     setCachedCategories(queryClient, c.type, (list) => [
                         ...list,
                         c,

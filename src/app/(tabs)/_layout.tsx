@@ -53,6 +53,19 @@ export default function TabsLayout() {
                     ),
                 }}
             />
+            <Tabs.Screen
+                name="settings"
+                options={{
+                    title: "Cài đặt",
+                    tabBarIcon: ({ focused, size }) => (
+                        <Ionicons
+                            name="settings-outline"
+                            size={size}
+                            color={focused ? Colors.text : Colors.textMuted}
+                        />
+                    ),
+                }}
+            />
         </Tabs>
     );
 }

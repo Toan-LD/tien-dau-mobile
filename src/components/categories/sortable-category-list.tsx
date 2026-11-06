@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
     GestureDetector,
     ScrollView,
@@ -30,6 +30,7 @@ type Props = {
     items: Category[];
     onReorder(ids: string[]): void;
     onDelete(category: Category): void;
+    onEdit(category: Category): void;
     footer?: React.ReactNode;
 };
 
@@ -37,6 +38,7 @@ export function SortableCategoryList({
     items,
     onReorder,
     onDelete,
+    onEdit,
     footer,
 }: Props) {
     const order = useSharedValue(items.map((c) => c.id));
@@ -70,6 +72,7 @@ export function SortableCategoryList({
                         onStart={() => setDragging(true)}
                         onDrop={drop}
                         onDelete={onDelete}
+                        onEdit={onEdit}
                     />
                 ))}
             </View>
@@ -87,6 +90,7 @@ type RowProps = {
     onStart(): void;
     onDrop(ids: string[]): void;
     onDelete(category: Category): void;
+    onEdit(category: Category): void;
 };
 
 function Row({
@@ -98,6 +102,7 @@ function Row({
     onStart,
     onDrop,
     onDelete,
+    onEdit,
 }: RowProps) {
     const id = category.id;
     const startY = useSharedValue(0);
@@ -148,10 +153,21 @@ function Row({
 
     return (
         <Animated.View style={[styles.row, position]}>
-            <CategoryIcon iconKey={category.icon} size={20} />
-            <Text style={styles.name} numberOfLines={1}>
-                {category.name}
-            </Text>
+            {/* Tapping the row (icon or name) edits the category. */}
+            <Pressable
+                onPress={() => onEdit(category)}
+                accessibilityRole="button"
+                accessibilityLabel={`Sửa mục ${category.name}`}
+                style={({ pressed }) => [
+                    styles.main,
+                    pressed && styles.pressed,
+                ]}
+            >
+                <CategoryIcon iconKey={category.icon} size={20} />
+                <Text style={styles.name} numberOfLines={1}>
+                    {category.name}
+                </Text>
+            </Pressable>
             <IconButton
                 name="trash-outline"
                 size={20}
@@ -192,6 +208,14 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 10,
     },
+    main: {
+        flex: 1,
+        alignSelf: "stretch",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: Spacing.three,
+    },
+    pressed: { opacity: 0.5 },
     name: { flex: 1, fontSize: 15, color: Colors.text },
     iconButton: { padding: Spacing.one },
     handle: {

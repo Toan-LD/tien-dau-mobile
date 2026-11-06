@@ -27,7 +27,7 @@ Trước mắt app cho chính họ dùng, nhưng có thể sau này cho người
 - Nhiều ví, chọn ví, chuyển tiền giữa các ví. Bảng `wallets` có sẵn nhưng UI không đụng tới.
 - Ngân sách (`budgets`), giao dịch định kỳ (`recurring_transactions`), ảnh hoá đơn (`receipt_url`).
 - Mục con (`categories.parent_id`).
-- Quản lý mục: đổi tên, đổi icon. **[người dùng]**: "để tôi xem nó như nào đã rồi làm thêm". *(Cập nhật 2026-11-05: sau khi dùng thử, chủ project yêu cầu làm luôn **xoá** và **sắp xếp** mục; có ở màn Cài đặt → Quản lý danh mục.)*
+- Quản lý mục: đổi tên, đổi icon. **[người dùng]**: "để tôi xem nó như nào đã rồi làm thêm". *(Cập nhật 2026-11-05: sau khi dùng thử, chủ project yêu cầu làm luôn **xoá** và **sắp xếp** mục; có ở màn Cài đặt → Quản lý danh mục.)* *(Cập nhật 2026-11-06: thêm **sửa** mục (đổi tên, đổi icon): bấm vào mục ở màn Quản lý danh mục.)* *(Cập nhật 2026-11-06: bỏ nút ✎, chỉ cần bấm vào mục là sửa.)*
 - Đăng nhập bằng email/mật khẩu, đăng nhập ẩn danh, Google Sign-In native.
 - Biểu đồ chi theo ngày. Đã cân nhắc và bỏ. **[người dùng]**
 - Chạy trên web. Template có cấu hình web, nhưng v1 chỉ nhắm iOS/Android. **[Claude]**
@@ -68,10 +68,10 @@ Trước mắt app cho chính họ dùng, nhưng có thể sau này cho người
 
 ### 4.2 Điều hướng
 - Màn **Đăng nhập** khi chưa đăng nhập. Đã đăng nhập thì vào thẳng app. Phiên đăng nhập được lưu lại, mở app lần sau không phải đăng nhập lại.
-- Có 3 tab dưới cùng: **Ghi · Danh sách · Báo cáo**. Mở app thì vào tab **Ghi**. **[người dùng]** (tên tab: **[Claude]**; tab giữa đổi từ "Hôm nay" thành "Danh sách" ngày 2026-11-05 vì tab này xem được cả ngày khác, **[người dùng]**)
+- Có 4 tab dưới cùng: **Ghi · Danh sách · Báo cáo · Cài đặt**. Mở app thì vào tab **Ghi**. **[người dùng]** (tên tab: **[Claude]**; tab giữa đổi từ "Hôm nay" thành "Danh sách" ngày 2026-11-05 vì tab này xem được cả ngày khác, **[người dùng]**)
 - **Thoát app (Android):** ở tab Ghi, lần quay lại đầu tiên (nút hoặc vuốt từ mép màn hình) chỉ hiện thông báo "Vuốt hoặc bấm quay lại lần nữa để thoát"; quay lại thêm lần nữa trong 2 giây mới thoát. **[người dùng, 2026-11-05]**
 - **Bấm lại tab Danh sách** khi đang ở tab đó thì quay về hôm nay và cuộn lên đầu. **[người dùng, 2026-11-05]**
-- Nút bánh răng ở góc trên trang Báo cáo mở trang **Cài đặt**. **[Claude]**
+- **Cài đặt là tab thứ tư** ở thanh dưới (Ghi · Danh sách · Báo cáo · Cài đặt); trước đây là nút bánh răng ở góc trang Báo cáo. **[người dùng, 2026-11-06]**
 
 ### 4.3 Màn Đăng nhập
 - Tên app và một nút **"Đăng nhập bằng Google"**. Không có gì khác. **[người dùng]**: chỉ Google.

@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CategorySheet } from "@/components/categories/category-sheet";
 import { SortableCategoryList } from "@/components/categories/sortable-category-list";
-import { NewCategorySheet } from "@/components/entry/new-category-sheet";
 import { TypeToggle } from "@/components/type-toggle";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -28,7 +28,12 @@ import {
 export default function CategoriesScreen() {
     const toast = useToast();
     const [type, setType] = useState<TxType>("expense");
-    const [adding, setAdding] = useState(false);
+    // The add/edit sheet. `editing` stays set while the sheet slides away, so
+    // its title doesn't flip to "Mục mới" on the way out.
+    const [sheet, setSheet] = useState<{
+        open: boolean;
+        editing: Category | null;
+    }>({ open: false, editing: null });
     const queryClient = useQueryClient();
     const query = useQuery(categoriesQuery(type));
     const categories = query.data ?? null;
@@ -107,8 +112,10 @@ export default function CategoriesScreen() {
                         items={categories ?? []}
                         onReorder={reorder}
                         onDelete={confirmDelete}
+                        onEdit={(c) => setSheet({ open: true, editing: c })}
                         footer={
                             <Text style={styles.hint}>
+                                Nhấn vào một mục để sửa tên hoặc biểu tượng.
                                 Nhấn giữ biểu tượng ≡ rồi kéo để đổi thứ tự. Mục
                                 ở trên cùng hiện đầu tiên ở màn Ghi. Xoá một mục
                                 không xoá các khoản đã ghi: chúng sẽ hiện là
@@ -123,22 +130,34 @@ export default function CategoriesScreen() {
                 variant="dashed"
                 icon="add-outline"
                 label={type === "expense" ? "Thêm mục chi" : "Thêm mục thu"}
-                onPress={() => setAdding(true)}
+                onPress={() => setSheet({ open: true, editing: null })}
                 disabled={categories === null}
                 style={styles.addButton}
             />
 
-            <NewCategorySheet
-                visible={adding}
+            <CategorySheet
+                visible={sheet.open}
                 type={type}
                 nextSortOrder={nextSortOrder}
-                onClose={() => setAdding(false)}
-                onCreated={(c) => {
-                    setCachedCategories(queryClient, c.type, (list) => [
-                        ...list,
-                        c,
-                    ]);
-                    setAdding(false);
+                editing={sheet.editing}
+                onClose={() => setSheet((s) => ({ ...s, open: false }))}
+                onSaved={(c) => {
+                    if (sheet.editing) {
+                        setCachedCategories(queryClient, c.type, (list) =>
+                            list.map((x) => (x.id === c.id ? c : x)),
+                        );
+                        // Transactions show the category's name and icon.
+                        queryClient.invalidateQueries({
+                            queryKey: ["transactions"],
+                        });
+                        toast.show({ message: `Đã lưu mục "${c.name}"` });
+                    } else {
+                        setCachedCategories(queryClient, c.type, (list) => [
+                            ...list,
+                            c,
+                        ]);
+                    }
+                    setSheet((s) => ({ ...s, open: false }));
                 }}
             />
         </SafeAreaView>

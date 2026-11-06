@@ -71,6 +71,29 @@ export async function createCategory(input: {
     return toCategory(data);
 }
 
+// Renames a category and/or changes its icon. Its transactions follow, since
+// they point at the category by id. Same-name rules as createCategory.
+export async function updateCategory(
+    id: string,
+    input: { name: string; iconKey: string },
+): Promise<Category> {
+    const { data, error } = await supabase
+        .from("categories")
+        .update({
+            name: normalizeCategoryName(input.name),
+            icon: input.iconKey,
+        })
+        .eq("id", id)
+        .select("id,name,icon,type,sort_order")
+        .single();
+    if (error) {
+        if (error.code === "23505")
+            throw new DuplicateCategoryError("Mục đã có");
+        throw error;
+    }
+    return toCategory(data);
+}
+
 // Transactions in a deleted category keep their amount and show as
 // "Không phân loại": transactions.category_id is ON DELETE SET NULL.
 export async function deleteCategory(id: string): Promise<void> {

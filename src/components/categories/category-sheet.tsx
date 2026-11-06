@@ -11,6 +11,7 @@ import {
     createCategory,
     DuplicateCategoryError,
     normalizeCategoryName,
+    updateCategory,
     type Category,
     type TxType,
 } from "@/lib/categories";
@@ -22,17 +23,24 @@ const ICON_COLUMNS = 6;
 type Props = {
     visible: boolean;
     type: TxType;
+    // Where a new category goes in the list (ignored when editing).
     nextSortOrder: number;
+    // The category to edit; null/undefined creates a new one.
+    editing?: Category | null;
     onClose(): void;
-    onCreated(category: Category): void;
+    // The created or updated category.
+    onSaved(category: Category): void;
 };
 
-export function NewCategorySheet({
+// Name + icon for a category: "Mục chi mới" / "Mục thu mới" when creating,
+// "Sửa mục" when `editing` is set.
+export function CategorySheet({
     visible,
     type,
     nextSortOrder,
+    editing,
     onClose,
-    onCreated,
+    onSaved,
 }: Props) {
     const [name, setName] = useState("");
     const [iconKey, setIconKey] = useState<string>(DEFAULT_ICON_KEY);
@@ -45,14 +53,19 @@ export function NewCategorySheet({
     if (visible !== wasVisible) {
         setWasVisible(visible);
         if (visible) {
-            setName("");
-            setIconKey(DEFAULT_ICON_KEY);
+            setName(editing?.name ?? "");
+            setIconKey(editing?.icon ?? DEFAULT_ICON_KEY);
             setError(null);
             setCreating(false);
         }
     }
 
-    const canCreate = normalizeCategoryName(name) !== "" && !creating;
+    const unchanged =
+        !!editing &&
+        normalizeCategoryName(name) === editing.name &&
+        iconKey === (editing.icon ?? DEFAULT_ICON_KEY);
+    const canCreate =
+        normalizeCategoryName(name) !== "" && !creating && !unchanged;
 
     const create = async () => {
         if (creatingRef.current || normalizeCategoryName(name) === "") return;
@@ -60,18 +73,22 @@ export function NewCategorySheet({
         setCreating(true);
         setError(null);
         try {
-            const category = await createCategory({
-                name,
-                iconKey,
-                type,
-                sortOrder: nextSortOrder,
-            });
-            onCreated(category);
+            const category = editing
+                ? await updateCategory(editing.id, { name, iconKey })
+                : await createCategory({
+                      name,
+                      iconKey,
+                      type,
+                      sortOrder: nextSortOrder,
+                  });
+            onSaved(category);
         } catch (e) {
             setError(
                 e instanceof DuplicateCategoryError
                     ? "Mục đã có"
-                    : "Không tạo được, thử lại nhé",
+                    : editing
+                      ? "Không lưu được, thử lại nhé"
+                      : "Không tạo được, thử lại nhé",
             );
         } finally {
             creatingRef.current = false;
@@ -83,7 +100,13 @@ export function NewCategorySheet({
         <BottomSheet
             visible={visible}
             onClose={onClose}
-            title={type === "expense" ? "Mục chi mới" : "Mục thu mới"}
+            title={
+                editing
+                    ? "Sửa mục"
+                    : type === "expense"
+                      ? "Mục chi mới"
+                      : "Mục thu mới"
+            }
         >
             <TextInput
                 value={name}
@@ -93,7 +116,9 @@ export function NewCategorySheet({
                 }}
                 placeholder="Tên mục"
                 placeholderTextColor={Colors.textMuted}
-                autoFocus
+                // Editing usually means picking a new icon, so don't pop the
+                // keyboard over the icon grid.
+                autoFocus={!editing}
                 maxLength={40}
                 style={[styles.input, error !== null && styles.inputError]}
             />
@@ -130,7 +155,7 @@ export function NewCategorySheet({
                 })}
             </ScrollView>
             <Button
-                label="Tạo mục"
+                label={editing ? "Lưu" : "Tạo mục"}
                 onPress={create}
                 disabled={!canCreate}
                 style={styles.button}

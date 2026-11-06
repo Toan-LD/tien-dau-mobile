@@ -3,14 +3,12 @@ import {
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CategoryBars } from "@/components/report/category-bars";
 import { CategoryHistorySheet } from "@/components/report/category-history-sheet";
-import { IconButton } from "@/components/ui/icon-button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { MonthPicker, type YearMonth } from "@/components/ui/month-picker";
 import { PeriodNav } from "@/components/ui/period-nav";
@@ -30,7 +28,6 @@ function formatBalance(balance: number): string {
 }
 
 export default function ReportScreen() {
-    const router = useRouter();
     const today = useToday();
     const currentYear = Number(today.slice(0, 4));
     const currentMonth = Number(today.slice(5, 7));
@@ -88,24 +85,18 @@ export default function ReportScreen() {
     return (
         <SafeAreaView edges={["top"]} style={styles.container}>
             <ScrollView>
-                <View style={styles.header}>
-                    <PeriodNav
-                        title={formatMonthTitle(view.year, view.month)}
-                        onTitlePress={() => setPickerOpen(true)}
-                        titleLabel={`${formatMonthTitle(view.year, view.month)}. Chạm để chọn tháng`}
-                        onPrev={() => changeMonth(-1)}
-                        onNext={() => changeMonth(1)}
-                        nextDisabled={isCurrent}
-                        prevLabel="Tháng trước"
-                        nextLabel="Tháng sau"
-                    />
-                    <IconButton
-                        name="settings-outline"
-                        size={24}
-                        onPress={() => router.push("/settings")}
-                        accessibilityLabel="Cài đặt"
-                    />
-                </View>
+                <PeriodNav
+                    spread
+                    style={styles.header}
+                    title={formatMonthTitle(view.year, view.month)}
+                    onTitlePress={() => setPickerOpen(true)}
+                    titleLabel={`${formatMonthTitle(view.year, view.month)}. Chạm để chọn tháng`}
+                    onPrev={() => changeMonth(-1)}
+                    onNext={() => changeMonth(1)}
+                    nextDisabled={isCurrent}
+                    prevLabel="Tháng trước"
+                    nextLabel="Tháng sau"
+                />
 
                 {failed && (
                     <Text style={styles.error}>Không tải được báo cáo</Text>
@@ -177,9 +168,6 @@ export default function ReportScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.background },
     header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
         paddingHorizontal: Spacing.three,
         paddingVertical: Spacing.two,
     },

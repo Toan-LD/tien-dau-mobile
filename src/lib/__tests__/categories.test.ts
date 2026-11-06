@@ -8,6 +8,7 @@ import {
     listCategories,
     nextCategorySortOrder,
     normalizeCategoryName,
+    updateCategory,
 } from "@/lib/categories";
 
 jest.mock("@/lib/supabase", () => ({
@@ -186,5 +187,39 @@ describe("saveCategoryOrder", () => {
                 [cat("b", 1), cat("a", 2)],
             ),
         ).rejects.toBeTruthy();
+    });
+});
+
+describe("updateCategory", () => {
+    const row = {
+        id: "c1",
+        name: "Cà phê sáng",
+        icon: "cafe",
+        type: "expense",
+        sort_order: 2,
+    };
+
+    it("saves a normalized name and the icon, and maps the row", async () => {
+        fake.enqueue("categories", { data: row });
+        const c = await updateCategory("c1", {
+            name: "  Cà phê   sáng ",
+            iconKey: "cafe",
+        });
+        expect(fake.lastUpdate).toEqual({ name: "Cà phê sáng", icon: "cafe" });
+        expect(fake.callsTo("eq")).toEqual([["id", "c1"]]);
+        expect(c).toEqual({
+            id: "c1",
+            name: "Cà phê sáng",
+            icon: "cafe",
+            type: "expense",
+            sortOrder: 2,
+        });
+    });
+
+    it("reports a name already used by another category", async () => {
+        fake.enqueue("categories", { error: { code: "23505" } });
+        await expect(
+            updateCategory("c1", { name: "Ăn uống", iconKey: "restaurant" }),
+        ).rejects.toBeInstanceOf(DuplicateCategoryError);
     });
 });

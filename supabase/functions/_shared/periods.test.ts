@@ -1,5 +1,10 @@
-import { assertEquals } from "@std/assert";
-import { resolvePeriod, vietnamToday, weekdayTitle } from "./periods.ts";
+import { assertEquals, assertFalse } from "@std/assert";
+import {
+    resolveEntryDate,
+    resolvePeriod,
+    vietnamToday,
+    weekdayTitle,
+} from "./periods.ts";
 
 function assertPeriod(
     input: string,
@@ -114,4 +119,97 @@ Deno.test("đầu vào sai trả lỗi", () => {
         const result = resolvePeriod(bad, "2026-11-06");
         assertEquals(result.ok, false);
     }
+});
+
+Deno.test("resolveEntryDate: today, yesterday, day_before_yesterday", () => {
+    assertEquals(resolveEntryDate("today", "2026-11-06"), {
+        ok: true,
+        date: "2026-11-06",
+    });
+    assertEquals(resolveEntryDate("yesterday", "2026-11-01"), {
+        ok: true,
+        date: "2026-10-31",
+    });
+    assertEquals(resolveEntryDate("day_before_yesterday", "2026-01-01"), {
+        ok: true,
+        date: "2025-12-30",
+    });
+});
+
+Deno.test(
+    "resolveEntryDate: thứ trong tuần là lần gần nhất không sau hôm nay",
+    () => {
+        assertEquals(resolveEntryDate("friday", "2026-11-06"), {
+            ok: true,
+            date: "2026-11-06",
+        });
+        assertEquals(resolveEntryDate("monday", "2026-11-06"), {
+            ok: true,
+            date: "2026-11-02",
+        });
+        assertEquals(resolveEntryDate("saturday", "2026-11-06"), {
+            ok: true,
+            date: "2026-10-31",
+        });
+        assertEquals(resolveEntryDate("sunday", "2026-11-02"), {
+            ok: true,
+            date: "2026-11-01",
+        });
+    },
+);
+
+Deno.test(
+    "resolveEntryDate: DD/MM lùi về năm trước khi rơi vào tương lai",
+    () => {
+        assertEquals(resolveEntryDate("3/11", "2026-11-06"), {
+            ok: true,
+            date: "2026-11-03",
+        });
+        assertEquals(resolveEntryDate("30/12", "2027-01-02"), {
+            ok: true,
+            date: "2026-12-30",
+        });
+        assertEquals(resolveEntryDate("06/11", "2026-11-06"), {
+            ok: true,
+            date: "2026-11-06",
+        });
+        assertEquals(resolveEntryDate("29/02", "2026-11-06"), {
+            ok: true,
+            date: "2024-02-29",
+        });
+        assertFalse(resolveEntryDate("31/02", "2026-11-06").ok);
+        assertFalse(resolveEntryDate("1/13", "2026-11-06").ok);
+    },
+);
+
+Deno.test("resolveEntryDate: day:DD lùi về tháng gần nhất có ngày đó", () => {
+    assertEquals(resolveEntryDate("day:3", "2026-11-06"), {
+        ok: true,
+        date: "2026-11-03",
+    });
+    assertEquals(resolveEntryDate("day:10", "2026-11-06"), {
+        ok: true,
+        date: "2026-10-10",
+    });
+    assertEquals(resolveEntryDate("day:31", "2026-11-06"), {
+        ok: true,
+        date: "2026-10-31",
+    });
+    assertEquals(resolveEntryDate("day:31", "2026-12-06"), {
+        ok: true,
+        date: "2026-10-31",
+    });
+    assertFalse(resolveEntryDate("day:32", "2026-11-06").ok);
+});
+
+Deno.test("resolveEntryDate: YYYY-MM-DD, từ chối tương lai và rác", () => {
+    assertEquals(resolveEntryDate("2026-10-20", "2026-11-06"), {
+        ok: true,
+        date: "2026-10-20",
+    });
+    const future = resolveEntryDate("2026-11-07", "2026-11-06");
+    assertFalse(future.ok);
+    assertEquals(!future.ok && future.error.includes("trong tương lai"), true);
+    assertFalse(resolveEntryDate("2026-02-30", "2026-11-06").ok);
+    assertFalse(resolveEntryDate("tomorrow", "2026-11-06").ok);
 });

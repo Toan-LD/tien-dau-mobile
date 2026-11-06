@@ -19,11 +19,11 @@ as $$
 declare
   v_count int;
 begin
-  insert into public.chat_usage as u (user_id, day, count)
+  insert into public.chat_usage as usage_row (user_id, day, count)
   values (p_user_id, (now() at time zone 'Asia/Ho_Chi_Minh')::date, 1)
-  on conflict (user_id, day) do update set count = u.count + 1
-    where u.count < p_limit
-  returning u.count into v_count;
+  on conflict (user_id, day) do update set count = usage_row.count + 1
+    where usage_row.count < p_limit
+  returning usage_row.count into v_count;
 
   if v_count is null then
     return -1;

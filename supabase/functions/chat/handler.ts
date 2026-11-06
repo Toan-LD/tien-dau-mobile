@@ -20,7 +20,7 @@ export type HandlerDependencies = {
     consumeQuota(userId: string): Promise<number>;
     model: ChatModel;
     now(): Date;
-    timeoutMs: number;
+    timeoutMilliseconds: number;
 };
 
 type ChatInput = { question: string; history: ChatTurn[] };
@@ -122,7 +122,7 @@ export function createHandler(
                 timer = setTimeout(() => {
                     controller.abort();
                     reject(controller.signal.reason);
-                }, dependencies.timeoutMs);
+                }, dependencies.timeoutMilliseconds);
             });
             const reply = await Promise.race([
                 answer(user, input, controller.signal),

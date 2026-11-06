@@ -4,7 +4,7 @@ import { createHandler } from "./handler.ts";
 import type { AuthenticatedUser } from "./handler.ts";
 import { openAIModel } from "./llm.ts";
 
-const TIMEOUT_MS = 30_000;
+const TIMEOUT_MILLISECONDS = 30_000;
 const DEFAULT_DAILY_LIMIT = 50;
 
 const SERVER_CLIENT_OPTIONS = {
@@ -94,6 +94,6 @@ Deno.serve(
         consumeQuota,
         model: modelFromEnvironment(),
         now: () => new Date(),
-        timeoutMs: TIMEOUT_MS,
+        timeoutMilliseconds: TIMEOUT_MILLISECONDS,
     }),
 );

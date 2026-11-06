@@ -43,7 +43,7 @@ function setup(
         authenticated?: boolean;
         data?: FakeClientData;
         now?: Date;
-        timeoutMs?: number;
+        timeoutMilliseconds?: number;
     } = {},
 ) {
     const { client, calls } = createFakeClient(
@@ -69,7 +69,7 @@ function setup(
         },
         model: options.model ?? recorded.model,
         now: () => options.now ?? new Date("2026-11-06T03:00:00Z"),
-        timeoutMs: options.timeoutMs ?? 1000,
+        timeoutMilliseconds: options.timeoutMilliseconds ?? 1000,
     };
     return {
         handle: createHandler(dependencies),
@@ -318,8 +318,8 @@ Deno.test("tool đọc giao dịch qua client của người dùng", async () =>
     assert(String(toolMessage?.content).includes("30.000 đ"));
 });
 
-Deno.test("model chạy quá timeoutMs: 504", async () => {
-    const { handle } = setup({ model: hangingModel, timeoutMs: 50 });
+Deno.test("model chạy quá timeoutMilliseconds: 504", async () => {
+    const { handle } = setup({ model: hangingModel, timeoutMilliseconds: 50 });
     const response = await handle(
         chatRequest({ question: "Chào", history: [] }),
     );
@@ -331,7 +331,7 @@ Deno.test("model chạy quá timeoutMs: 504", async () => {
 
 Deno.test("model bỏ qua signal và treo mãi: vẫn 504 đúng hạn", async () => {
     const ignoringModel: ChatModel = { complete: () => new Promise(() => {}) };
-    const { handle } = setup({ model: ignoringModel, timeoutMs: 50 });
+    const { handle } = setup({ model: ignoringModel, timeoutMilliseconds: 50 });
     const response = await handle(
         chatRequest({ question: "Chào", history: [] }),
     );
@@ -396,7 +396,7 @@ Deno.test("đếm lượt lỗi: 500 và không gọi model", async () => {
         consumeQuota: () => Promise.reject(new Error("rpc failed")),
         model,
         now: () => new Date(),
-        timeoutMs: 1000,
+        timeoutMilliseconds: 1000,
     });
     const consoleError = captureConsoleError();
     try {

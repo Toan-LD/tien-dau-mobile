@@ -312,7 +312,12 @@ Deno.test("tool đọc giao dịch qua client của người dùng", async () =>
         status: 200,
         body: { reply: "Hôm nay bạn chi 30.000 đ.", remaining: 49 },
     });
-    assertEquals(clientCalls.tables, ["categories", "transactions"]);
+    // Hai lần đọc giao dịch: trang có dữ liệu, rồi trang rỗng báo hết.
+    assertEquals(clientCalls.tables, [
+        "categories",
+        "transactions",
+        "transactions",
+    ]);
     const toolMessage = model.receivedMessages[1].at(-1);
     assertEquals(toolMessage?.role, "tool");
     assert(String(toolMessage?.content).includes("30.000 đ"));

@@ -28,8 +28,27 @@ Deno.test("fetchTransactions phân trang 1000 dòng mỗi lần", async () => {
         [0, 999],
         [1000, 1999],
         [2000, 2999],
+        [2500, 3499],
     ]);
 });
+
+Deno.test(
+    "fetchTransactions vẫn lấy đủ khi server giới hạn 500 dòng mỗi trang",
+    async () => {
+        const rows = Array.from({ length: 1700 }, (_, index) => makeRow(index));
+        const { client, calls } = createFakeClient({
+            transactions: rows,
+            maxRowsPerPage: 500,
+        });
+        const transactions = await fetchTransactions(client, "a", "b");
+        assertEquals(transactions.length, 1700);
+        assertEquals(
+            transactions.map((transaction) => transaction.note),
+            rows.map((row) => row.note),
+        );
+        assertEquals(calls.ranges.at(-1), [1700, 2699]);
+    },
+);
 
 Deno.test(
     "fetchTransactions đủ một trang thì hỏi thêm một trang rỗng",

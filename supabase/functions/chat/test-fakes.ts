@@ -15,6 +15,8 @@ export type FakeClientData = {
     categories?: { id: string; name: string; type: string }[];
     // Khi có, mọi truy vấn trả lỗi này.
     error?: { message: string };
+    // Giả lập `max_rows` của server: mỗi trang trả nhiều nhất chừng này dòng.
+    maxRowsPerPage?: number;
 };
 
 export type FakeClientCalls = {
@@ -66,7 +68,15 @@ export function createFakeClient(data: FakeClientData): {
                     resolve({ data: null, error: data.error });
                     return;
                 }
-                const selected = page ? rows.slice(page[0], page[1] + 1) : rows;
+                const selected = page
+                    ? rows.slice(
+                          page[0],
+                          Math.min(
+                              page[1] + 1,
+                              page[0] + (data.maxRowsPerPage ?? Infinity),
+                          ),
+                      )
+                    : rows;
                 resolve({ data: selected, error: null });
             },
         };

@@ -1,11 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import type { ChatModel } from "./agent.ts";
+import { readDailyLimit } from "./daily-limit.ts";
 import { createHandler } from "./handler.ts";
 import type { AuthenticatedUser } from "./handler.ts";
 import { openAIModel } from "./llm.ts";
 
 const TIMEOUT_MILLISECONDS = 30_000;
-const DEFAULT_DAILY_LIMIT = 50;
 
 const SERVER_CLIENT_OPTIONS = {
     auth: {
@@ -59,15 +59,16 @@ async function consumeQuota(userId: string): Promise<number> {
         supabaseKey("SUPABASE_SECRET_KEYS", "SUPABASE_SERVICE_ROLE_KEY"),
         SERVER_CLIENT_OPTIONS,
     );
-    const dailyLimit = Number(
-        Deno.env.get("CHAT_DAILY_LIMIT") || DEFAULT_DAILY_LIMIT,
-    );
+    const dailyLimit = readDailyLimit(Deno.env.get("CHAT_DAILY_LIMIT"));
     const { data, error } = await serviceClient.rpc("consume_chat_quota", {
         p_user_id: userId,
         p_limit: dailyLimit,
     });
     if (error) throw new Error(error.message);
-    return data as number;
+    if (typeof data !== "number") {
+        throw new Error("consume_chat_quota did not return a number");
+    }
+    return data;
 }
 
 // Thiếu cấu hình LLM thì từng request trả 500, function vẫn khởi động được.

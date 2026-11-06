@@ -4,7 +4,11 @@ import {
     FunctionsRelayError,
 } from "@supabase/supabase-js";
 
-import { askChat, cleanReply } from "@/lib/chat";
+import {
+    CHAT_REQUEST_TIMEOUT_MILLISECONDS,
+    askChat,
+    cleanReply,
+} from "@/lib/chat";
 import { fake } from "@/test-utils/supabase-mock";
 
 jest.mock("@/lib/supabase", () => ({
@@ -39,9 +43,27 @@ describe("askChat", () => {
                         question: "Tháng này tôi chi bao nhiêu?",
                         history,
                     },
+                    timeout: CHAT_REQUEST_TIMEOUT_MILLISECONDS,
                 },
             ],
         ]);
+    });
+
+    it("gives the request a 40 second timeout, above the server's 30 second cap", () => {
+        expect(CHAT_REQUEST_TIMEOUT_MILLISECONDS).toBe(40_000);
+    });
+
+    it("maps a timed-out request (aborted fetch) to network so Thử lại shows", async () => {
+        fake.invokeResult = {
+            data: null,
+            error: new FunctionsFetchError(
+                new Error("The operation was aborted"),
+            ),
+        };
+        expect(await askChat("câu hỏi", [])).toEqual({
+            ok: false,
+            kind: "network",
+        });
     });
 
     it.each([

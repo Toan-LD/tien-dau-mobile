@@ -1,4 +1,4 @@
-const LOCAL_HOSTNAMES = ["127.0.0.1", "localhost"];
+const LOCAL_HOSTNAMES = new Set(["127.0.0.1", "localhost"]);
 
 export function isLocalSupabaseUrl(url: string): boolean {
     let parsed: URL;
@@ -9,7 +9,7 @@ export function isLocalSupabaseUrl(url: string): boolean {
     }
     return (
         parsed.protocol === "http:" &&
-        LOCAL_HOSTNAMES.includes(parsed.hostname) &&
+        LOCAL_HOSTNAMES.has(parsed.hostname) &&
         parsed.username === "" &&
         parsed.password === ""
     );

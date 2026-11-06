@@ -12,7 +12,7 @@ export const MAX_CATEGORY_NAME_LENGTH = 40;
 export function promptSafeName(name: string): string {
     const singleLine = name.replace(/\s+/g, " ").trim();
     const shortened = singleLine.slice(0, MAX_CATEGORY_NAME_LENGTH);
-    return `"${shortened.replace(/"/g, "'")}"`;
+    return `"${shortened.replaceAll('"', "'")}"`;
 }
 
 function categoryNames(

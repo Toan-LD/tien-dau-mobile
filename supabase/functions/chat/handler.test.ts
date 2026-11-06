@@ -391,6 +391,31 @@ Deno.test(
     },
 );
 
+Deno.test(
+    "model throw object không phải Error: log message, không log key",
+    async () => {
+        const failure = {
+            message: "plain object failure",
+            headers: { authorization: "Bearer sk-secret-llm-key" },
+        };
+        const model: ChatModel = { complete: () => Promise.reject(failure) };
+        const { handle } = setup({ model });
+        const consoleError = captureConsoleError();
+        try {
+            const response = await handle(
+                chatRequest({ question: "Chào", history: [] }),
+            );
+            assertEquals((await readResponse(response)).status, 500);
+        } finally {
+            consoleError.restore();
+        }
+        const logged = consoleError.lines.join("\n");
+        assert(logged.includes("plain object failure"), logged);
+        assertFalse(logged.includes("[object Object]"));
+        assertFalse(logged.includes("sk-secret-llm-key"));
+    },
+);
+
 Deno.test("lỗi database khi lấy danh mục: 500", async () => {
     const { handle } = setup({ data: { error: { message: "db down" } } });
     const consoleError = captureConsoleError();

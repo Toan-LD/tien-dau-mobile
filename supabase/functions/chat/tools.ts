@@ -449,7 +449,7 @@ async function listMatchingTransactions(
 function listCategories(
     argumentsObject: Arguments,
     context: ToolContext,
-): unknown {
+): object {
     const type = readType(argumentsObject, false);
     if (!type.ok) return type;
     const namesOf = (wanted: TransactionType) =>
@@ -503,7 +503,7 @@ function readReplaces(
 function proposeTransaction(
     argumentsObject: Arguments,
     context: ToolContext,
-): unknown {
+): object {
     const typeResult = readType(argumentsObject, true);
     if (!typeResult.ok) return typeResult;
     const type = typeResult.value as TransactionType;
@@ -582,7 +582,7 @@ export async function runTool(
         (
             argumentsObject: Arguments,
             context: ToolContext,
-        ) => unknown | Promise<unknown>
+        ) => object | Promise<object>
     > = {
         get_summary: getSummary,
         get_by_category: getByCategory,
@@ -597,7 +597,7 @@ export async function runTool(
     }
     const parsed = parseArguments(rawArguments);
     if (!parsed.ok) return JSON.stringify({ error: parsed.error });
-    const result = (await handler(parsed.value, context)) as object;
+    const result = await handler(parsed.value, context);
     if ("ok" in result && result.ok === false && "error" in result) {
         return JSON.stringify({ error: result.error });
     }

@@ -47,6 +47,17 @@ Deno.test("tên mục được bọc trong ngoặc kép", () => {
     assert(expenseLine === 'Mục chi: "Ăn uống", "Khác"');
 });
 
+Deno.test("mọi ngoặc kép trong tên mục đổi thành ngoặc đơn", () => {
+    const quotedPrompt = buildSystemPrompt({
+        today: "2026-11-06",
+        categories: [{ id: "e1", name: 'Quà "Tết" "mẹ"', type: "expense" }],
+    });
+    const expenseLine = quotedPrompt
+        .split("\n")
+        .find((line) => line.startsWith("Mục chi:"));
+    assert(expenseLine === `Mục chi: "Quà 'Tết' 'mẹ'"`);
+});
+
 Deno.test("tên mục nhiều dòng hay quá dài không phá cấu trúc prompt", () => {
     const hostile: CategoryRef[] = [
         {

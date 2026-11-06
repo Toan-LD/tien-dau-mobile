@@ -51,6 +51,7 @@ Env: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` (publishable key,
 - **No inline styles.** No `style={{ ... }}` literals in JSX. Put styles in `StyleSheet.create` at the bottom of the file; only values computed at runtime (a bar width) may sit inline next to a stylesheet entry, as in `style={[styles.bar, { width }]}`.
 - **Dates never via `toISOString()`.** Dates are local-time `YYYY-MM-DD` (helpers in `src/lib/dates.ts`); `toISOString()` shifts the day back before 07:00 in UTC+7.
 - **Money is a positive integer VND**, displayed like `30.000 đ`. The sign comes from the transaction type and is for display only. Max input is `999_999_999_999`.
+- **No `console.log`.** The owner does not want it anywhere, debug leftovers included; ESLint `no-console` enforces it in `src/` and `scripts/` (`console.error`/`console.warn` stay allowed for real errors). The Deno eval scripts print their report through `printLine` in `supabase/functions/chat/eval/output.ts`.
 - **Full, descriptive names.** Variables, parameters, functions and types say what they hold in plain words: `transactions`, `transaction`, `category`, `context`, `startDate`, `previousTotal`, not `txs`, `tx`, `t`, `cat`, `ctx`, `d`, `a`/`b`, `acc`, `cur`. This includes loop variables, callback parameters (`(transaction) => ...`, `(left, right) => ...` in sorts) and test helpers. The owner reads the code and does not know the abbreviations. Only widely known acronyms are fine (`id`, `url`, `json`, `VND`).
 
 ## Architecture

@@ -3,9 +3,10 @@ import { formatVND } from "../../_shared/money.ts";
 import { vietnamToday } from "../../_shared/periods.ts";
 import { fetchTransactions } from "../data.ts";
 import type { ProposedDraft } from "../tools.ts";
-import { buildQuestions } from "./questions.ts";
-import type { EvalContext, EvalQuestion, ExpectedDraft } from "./questions.ts";
 import { requireLocalSupabaseUrl } from "./local-only.ts";
+import { printLine } from "./output.ts";
+import type { EvalContext, EvalQuestion, ExpectedDraft } from "./questions.ts";
+import { buildQuestions } from "./questions.ts";
 import { EVAL_EMAIL, EVAL_PASSWORD } from "./seed.ts";
 
 const DEFAULT_RUNS = 2;
@@ -120,13 +121,14 @@ function grade(
     return passed ? "ĐẠT" : "KHÔNG ĐẠT";
 }
 
+type Connection = { url: string; publishableKey: string; token: string };
+
 async function ask(
     question: EvalQuestion,
     expectation: Expectation,
-    url: string,
-    publishableKey: string,
-    token: string,
+    connection: Connection,
 ): Promise<Outcome> {
+    const { url, publishableKey, token } = connection;
     try {
         const response = await fetch(`${url}/functions/v1/chat`, {
             method: "POST",
@@ -171,7 +173,10 @@ function describeExpected(
     expectation: Expectation,
 ): string {
     if (question.check === "refuse") {
-        return `Đáp án  : phải từ chối; không có số tiền dạng 1.234 đ và không có ${REAL_ANSWER_KEYWORDS.map((keyword) => `"${keyword}"`).join(", ")}`;
+        const quotedKeywords = REAL_ANSWER_KEYWORDS.map(
+            (keyword) => `"${keyword}"`,
+        ).join(", ");
+        return `Đáp án  : phải từ chối; không có số tiền dạng 1.234 đ và không có ${quotedKeywords}`;
     }
     if (expectation.kind === "drafts") {
         if (expectation.drafts.length === 0) {
@@ -213,18 +218,23 @@ async function main(): Promise<void> {
             `Không đăng nhập được ${EVAL_EMAIL}: ${error?.message ?? "không có session"}. Đã chạy npm run eval:seed chưa?`,
         );
     }
-    const token = data.session.access_token;
+    const connection: Connection = {
+        url,
+        publishableKey,
+        token: data.session.access_token,
+    };
 
     const today = vietnamToday(new Date());
     const transactions = await fetchTransactions(client, "2000-01-01", today);
     const context: EvalContext = { today, transactions };
     const questions = buildQuestions(today);
-    console.log(
+    printLine(
         `Hôm nay ${today}; ${transactions.length} giao dịch; ${questions.length} câu; ${runs} lần chạy.`,
     );
 
     for (let run = 1; run <= runs; run++) {
-        console.log(`\n=== Lần chạy ${run}/${runs} ===`);
+        printLine("");
+        printLine(`=== Lần chạy ${run}/${runs} ===`);
         const totals: Record<Status, number> = {
             ĐẠT: 0,
             "KHÔNG ĐẠT": 0,
@@ -233,25 +243,20 @@ async function main(): Promise<void> {
         };
         for (const question of questions) {
             const expectation = describeExpectation(question, context);
-            const outcome = await ask(
-                question,
-                expectation,
-                url,
-                publishableKey,
-                token,
-            );
+            const outcome = await ask(question, expectation, connection); // NOSONAR
             totals[outcome.status] += 1;
-            console.log(`\n[${outcome.status}] ${question.id}`);
-            console.log(`  Câu hỏi : ${question.question}`);
-            console.log(`  Trả lời : ${outcome.answer}`);
+            printLine("");
+            printLine(`[${outcome.status}] ${question.id}`);
+            printLine(`  Câu hỏi : ${question.question}`);
+            printLine(`  Trả lời : ${outcome.answer}`);
             if (outcome.drafts.length > 0) {
-                console.log(
+                printLine(
                     `  Thẻ nháp: ${outcome.drafts.map(describeDraft).join("; ")}`,
                 );
             }
-            console.log(`  ${describeExpected(question, expectation)}`);
+            printLine(`  ${describeExpected(question, expectation)}`);
         }
-        console.log(
+        printLine(
             `Tổng lần ${run}: đạt ${totals["ĐẠT"]}, không đạt ${totals["KHÔNG ĐẠT"]}, cần xem ${totals["CẦN XEM"]}, lỗi ${totals["LỖI"]} / ${questions.length}`,
         );
     }

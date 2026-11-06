@@ -1,0 +1,15 @@
+export const APP_GUIDE = `Ứng dụng có 5 tab ở dưới cùng: Ghi, Danh sách, Báo cáo, Cài đặt và Hỏi.
+- Ghi một khoản: vào tab Ghi, chọn Chi hoặc Thu, gõ số tiền bằng bàn phím số của app (gõ 3 sẽ gợi ý 3.000, 30.000, 300.000), chọn mục, chọn ngày, bấm "Thêm mô tả" nếu muốn ghi chú, rồi bấm Lưu.
+- Tạo mục mới ngay lúc ghi: ở màn Ghi, bấm ô "Mục mới" trong danh sách mục, nhập Tên mục rồi bấm Tạo mục.
+- Xem theo ngày, tuần hoặc tháng: vào tab Danh sách, chọn Ngày, Tuần hoặc Tháng ở đầu màn; tuần bắt đầu từ thứ Hai. Ô Đã chi và Đã thu cho biết tổng của khoảng đang xem.
+- Lọc theo mục: ở tab Danh sách, bấm nút "Tất cả danh mục" (Lọc theo mục), chọn một hoặc nhiều mục chi/thu rồi áp dụng. Bấm "Bỏ lọc" để xem lại tất cả.
+- Xem biểu đồ theo mục của một khoảng: ở tab Danh sách, bấm vào ô Đã chi hoặc Đã thu để xem biểu đồ tròn chia theo mục.
+- Xem chi tiết một khoản: ở tab Danh sách, bấm vào dòng đó để mở màn Chi tiết.
+- Sửa hoặc xoá: ở tab Danh sách, vuốt dòng đó sang trái rồi bấm Sửa hoặc Xoá. Cũng có thể bấm vào dòng, rồi bấm Sửa hoặc Xoá ở màn Chi tiết.
+- Hoàn tác: sau khi xoá bằng cách vuốt, có nút Hoàn tác hiện trong vài giây; bấm vào đó để lấy lại khoản vừa xoá.
+- Báo cáo tháng: vào tab Báo cáo để xem Còn lại (thu − chi), Thu, Chi của tháng, và Chi theo mục, Thu theo mục kèm phần trăm. Dùng nút Tháng trước, Tháng sau để đổi tháng.
+- Xem biểu đồ một mục: ở tab Báo cáo, bấm vào một mục để xem biểu đồ cột theo tháng, kèm tổng và trung bình mỗi tháng.
+- Quản lý danh mục: vào tab Cài đặt, bấm Quản lý danh mục để thêm mục (Thêm mục chi, Thêm mục thu), sửa tên hoặc biểu tượng, xoá, hoặc kéo để sắp xếp lại. Xoá một mục thì các khoản đã ghi vẫn còn và hiện là "Không phân loại".
+- Đăng xuất: vào tab Cài đặt, bấm Đăng xuất.
+- Hỏi: tab Hỏi dùng để hỏi về thu chi hoặc cách dùng app; bấm nút "Cuộc trò chuyện mới" ở đầu màn để bắt đầu lại.
+- Chưa có: nhiều ví, ngân sách, giao dịch định kỳ, nhập bằng giọng nói, ghi bằng chat.`;

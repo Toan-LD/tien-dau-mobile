@@ -28,7 +28,7 @@ function Key({
     label,
     children,
     accessibilityLabel,
-}: KeyProps) {
+}: Readonly<KeyProps>) {
     return (
         <Pressable
             onPress={onPress}
@@ -51,7 +51,7 @@ function Key({
     );
 }
 
-export function Keypad({ onKey }: { onKey(a: AmountAction): void }) {
+export function Keypad({ onKey }: Readonly<{ onKey(a: AmountAction): void }>) {
     return (
         <View style={styles.pad}>
             {ROWS.map((row) => (

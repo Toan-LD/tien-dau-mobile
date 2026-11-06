@@ -6,7 +6,6 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { SelectableTile } from "@/components/ui/selectable-tile";
 import { Colors, Spacing } from "@/constants/theme";
-import { CATEGORY_ICON_KEYS, DEFAULT_ICON_KEY } from "@/lib/category-icons";
 import {
     createCategory,
     DuplicateCategoryError,
@@ -15,6 +14,7 @@ import {
     type Category,
     type TxType,
 } from "@/lib/categories";
+import { CATEGORY_ICON_KEYS, DEFAULT_ICON_KEY } from "@/lib/category-icons";
 
 // Cells get whole-pixel widths from the measured grid: six "16.6667%" cells add up
 // to just over 100%, so Android wrapped some rows after five icons.
@@ -41,7 +41,7 @@ export function CategorySheet({
     editing,
     onClose,
     onSaved,
-}: Props) {
+}: Readonly<Props>) {
     const [name, setName] = useState("");
     const [iconKey, setIconKey] = useState<string>(DEFAULT_ICON_KEY);
     const [error, setError] = useState<string | null>(null);
@@ -83,12 +83,13 @@ export function CategorySheet({
                   });
             onSaved(category);
         } catch (e) {
+            const failedMessage = editing
+                ? "Không lưu được, thử lại nhé"
+                : "Không tạo được, thử lại nhé";
             setError(
                 e instanceof DuplicateCategoryError
                     ? "Mục đã có"
-                    : editing
-                      ? "Không lưu được, thử lại nhé"
-                      : "Không tạo được, thử lại nhé",
+                    : failedMessage,
             );
         } finally {
             creatingRef.current = false;
@@ -96,17 +97,13 @@ export function CategorySheet({
         }
     };
 
+    const newTitle = type === "expense" ? "Mục chi mới" : "Mục thu mới";
+
     return (
         <BottomSheet
             visible={visible}
             onClose={onClose}
-            title={
-                editing
-                    ? "Sửa mục"
-                    : type === "expense"
-                      ? "Mục chi mới"
-                      : "Mục thu mới"
-            }
+            title={editing ? "Sửa mục" : newTitle}
         >
             <TextInput
                 value={name}

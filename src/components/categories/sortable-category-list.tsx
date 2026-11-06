@@ -40,7 +40,7 @@ export function SortableCategoryList({
     onDelete,
     onEdit,
     footer,
-}: Props) {
+}: Readonly<Props>) {
     const order = useSharedValue(items.map((c) => c.id));
     const activeId = useSharedValue<string | null>(null);
     const dragY = useSharedValue(0);
@@ -103,7 +103,7 @@ function Row({
     onDrop,
     onDelete,
     onEdit,
-}: RowProps) {
+}: Readonly<RowProps>) {
     const id = category.id;
     const startY = useSharedValue(0);
 

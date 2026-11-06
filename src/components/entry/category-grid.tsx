@@ -20,7 +20,7 @@ export function CategoryGrid({
     onSelect,
     onAdd,
     addDisabled,
-}: Props) {
+}: Readonly<Props>) {
     return (
         <ScrollView
             style={styles.scroll}

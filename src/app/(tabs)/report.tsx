@@ -1,5 +1,6 @@
 import {
     keepPreviousData,
+    noop,
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
@@ -57,14 +58,14 @@ export default function ReportScreen() {
     const isCurrent = view.year === currentYear && view.month === currentMonth;
     useEffect(() => {
         const prev = new Date(view.year, view.month - 2, 1);
-        queryClient.prefetchQuery(
-            monthQuery(prev.getFullYear(), prev.getMonth() + 1),
-        );
+        queryClient
+            .query(monthQuery(prev.getFullYear(), prev.getMonth() + 1))
+            .catch(noop);
         if (!isCurrent) {
             const next = new Date(view.year, view.month, 1);
-            queryClient.prefetchQuery(
-                monthQuery(next.getFullYear(), next.getMonth() + 1),
-            );
+            queryClient
+                .query(monthQuery(next.getFullYear(), next.getMonth() + 1))
+                .catch(noop);
         }
     }, [view.year, view.month, isCurrent, queryClient]);
 

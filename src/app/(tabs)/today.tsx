@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
     keepPreviousData,
+    noop,
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
@@ -139,7 +140,9 @@ export default function ListScreen() {
     // Load the period before in the background, so tapping "‹" is instant.
     const prevStart = periodOf(mode, shiftAnchor(mode, anchor, -1)).start;
     useEffect(() => {
-        queryClient.prefetchQuery(periodQuery(mode, periodOf(mode, prevStart)));
+        queryClient
+            .query(periodQuery(mode, periodOf(mode, prevStart)))
+            .catch(noop);
     }, [mode, prevStart, queryClient]);
 
     const firstId = items && items.length > 0 ? items[0].id : null;

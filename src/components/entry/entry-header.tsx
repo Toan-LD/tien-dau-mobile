@@ -7,11 +7,11 @@ export function AmountDisplay({
     value,
     active,
     onPress,
-}: {
+}: Readonly<{
     value: number;
     active: boolean;
     onPress(): void;
-}) {
+}>) {
     const empty = value === 0;
     return (
         <Pressable

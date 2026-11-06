@@ -15,7 +15,6 @@ type Props = {
     accessibilityLabel?: string;
 };
 
-// Bordered button used for the date and note fields under the amount.
 export function MetaChip({
     icon,
     label,
@@ -23,7 +22,7 @@ export function MetaChip({
     placeholder,
     grow,
     accessibilityLabel,
-}: Props) {
+}: Readonly<Props>) {
     return (
         <PressableScale
             onPress={onPress}

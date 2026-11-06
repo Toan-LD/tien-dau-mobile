@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { noop, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
@@ -34,12 +34,12 @@ import {
     setCachedCategories,
     useRefreshOnFocus,
 } from "@/lib/queries";
-import { useToday } from "@/lib/use-today";
 import {
     validateDraft,
     type Transaction,
     type TransactionDraft,
 } from "@/lib/transactions";
+import { useToday } from "@/lib/use-today";
 
 // Horizontal swipe on the category grid: how far the finger must move
 // sideways before it counts as a swipe, and how far or fast to switch type.
@@ -53,7 +53,11 @@ type Props = {
     resetAfterSubmit: boolean;
 };
 
-export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
+export function EntryForm({
+    initial,
+    onSubmit,
+    resetAfterSubmit,
+}: Readonly<Props>) {
     const toast = useToast();
     const [type, setType] = useState<TxType>(initial?.type ?? "expense");
     const [amount, dispatch] = useReducer(amountReducer, initial, (i) =>
@@ -61,7 +65,7 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
             ? amountReducer(initialAmount, { type: "set", value: i.amount })
             : initialAmount,
     );
-    const [pickedCategoryId, setCategoryId] = useState<string | null>(
+    const [pickedCategoryId, setPickedCategoryId] = useState<string | null>(
         initial?.categoryId ?? null,
     );
     // null = "today", resolved at render and at save so the form rolls over at midnight.
@@ -89,9 +93,9 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
 
     // Load the other type's categories too, so switching Chi/Thu is instant.
     useEffect(() => {
-        queryClient.prefetchQuery(
-            categoriesQuery(type === "expense" ? "income" : "expense"),
-        );
+        queryClient
+            .query(categoriesQuery(type === "expense" ? "income" : "expense"))
+            .catch(noop);
     }, [type, queryClient]);
 
     // The picked category may have been deleted on the Danh mục screen.
@@ -103,7 +107,7 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
     const changeType = (next: TxType) => {
         if (next === type) return;
         setType(next);
-        setCategoryId(null);
+        setPickedCategoryId(null);
     };
 
     // Swiping sideways over the categories switches Chi/Thu, like flipping
@@ -126,7 +130,7 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
 
     // Tapping the selected category again clears the selection.
     const selectCategory = (id: string) => {
-        setCategoryId((current) => (current === id ? null : id));
+        setPickedCategoryId((current) => (current === id ? null : id));
         setKeypadOpen(false);
     };
 
@@ -155,7 +159,7 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
             });
             if (resetAfterSubmit) {
                 dispatch({ type: "clear" });
-                setCategoryId(null);
+                setPickedCategoryId(null);
                 setNote("");
                 toast.show({ message: "Đã lưu" });
             }
@@ -288,7 +292,7 @@ export function EntryForm({ initial, onSubmit, resetAfterSubmit }: Props) {
                         ...list,
                         c,
                     ]);
-                    setCategoryId(c.id);
+                    setPickedCategoryId(c.id);
                     setNewCategoryOpen(false);
                 }}
             />

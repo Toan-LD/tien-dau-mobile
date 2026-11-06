@@ -4,7 +4,7 @@ import { formatDayTitle, todayLocal, type LocalDate } from "@/lib/dates";
 
 type Props = { date: LocalDate; onChange(date: LocalDate): void };
 
-export function DateField({ date, onChange }: Props) {
+export function DateField({ date, onChange }: Readonly<Props>) {
     const picker = useDatePicker(date, onChange);
     const title = formatDayTitle(date, todayLocal());
 

@@ -11,7 +11,7 @@ type Props = {
     onDone(note: string): void;
 };
 
-export function NoteSheet({ visible, note, onDone }: Props) {
+export function NoteSheet({ visible, note, onDone }: Readonly<Props>) {
     const [draft, setDraft] = useState(note);
     const [wasVisible, setWasVisible] = useState(visible);
     if (visible !== wasVisible) {

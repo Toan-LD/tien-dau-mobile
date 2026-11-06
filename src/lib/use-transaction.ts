@@ -12,14 +12,10 @@ import {
 } from "@/lib/queries";
 import type { Transaction } from "@/lib/transactions";
 
-// One transaction for the detail and edit screens. Shows the copy already in a
-// cached day/month list at once, then the fresh one. Leaves the screen if the
-// row can't be loaded or no longer exists.
 export function useTransaction(id: string): Transaction | null {
     const router = useRouter();
     const toast = useToast();
     const queryClient = useQueryClient();
-    // Detail and edit can both be mounted; only the one on show navigates.
     const focused = useIsFocused();
     const query = useQuery({
         ...transactionQuery(id),
@@ -43,8 +39,6 @@ export function useTransaction(id: string): Transaction | null {
     return tx;
 }
 
-// Deletes a transaction with an undo toast. The row leaves every cached list at
-// once; if the delete fails the lists are reloaded and it comes back.
 const REFLOW = LayoutAnimation.create(
     180,
     LayoutAnimation.Types.easeInEaseOut,
@@ -56,12 +50,13 @@ export function useDeleteTransaction() {
     const queryClient = useQueryClient();
 
     return (tx: Transaction) => {
-        // The rows below glide up into the gap, once, instead of jumping.
         LayoutAnimation.configureNext(REFLOW);
         removeCachedTransaction(queryClient, tx.id);
-        deleteWithUndo(tx, toast, () => {}).then((ok) => {
+        void deleteWithUndo(tx, toast, () => {}).then((ok) => {
             if (!ok)
-                queryClient.invalidateQueries({ queryKey: ["transactions"] });
+                void queryClient.invalidateQueries({
+                    queryKey: ["transactions"],
+                });
         });
     };
 }

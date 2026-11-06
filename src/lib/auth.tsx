@@ -3,7 +3,7 @@ import { isRunningInExpoGo } from "expo";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 
 import { queryClient } from "@/lib/query-client";
@@ -25,14 +25,6 @@ function showError(message: string) {
     Alert.alert("Không đăng nhập được", message);
 }
 
-// Where Supabase sends the browser back after Google login. In Expo Go the link must use the
-// `exp://<dev server>/--/` form, because Expo Go does not register the app's own scheme. On some
-// devices `Linking.createURL` does not detect Expo Go and returns `tiendaumobile://auth/callback`,
-// which no installed app opens, so the login tab hangs. Build the Expo Go URL explicitly.
-//
-// Supabase Auth rejects any redirect URL whose host is an IP address (except loopback), whatever
-// the allow list says, and falls back to the Site URL (localhost:3000). The dev server must
-// therefore be reached through a hostname: `npm run start:phone` (see docs/setup.md).
 function authRedirectUrl() {
     const host = Constants.expoConfig?.hostUri;
     if (!isRunningInExpoGo() || !host) {
@@ -84,7 +76,9 @@ async function signOut() {
     clearDefaultWalletCache();
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({
+    children,
+}: Readonly<{ children: React.ReactNode }>) {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -96,20 +90,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .finally(() => setLoading(false));
 
         const { data } = supabase.auth.onAuthStateChange((_event, next) => {
-            // Signed out (by the button or an expired session): drop the cached
-            // data so the next account never sees the previous one's rows.
             if (!next) queryClient.clear();
             setSession(next);
         });
         return () => data.subscription.unsubscribe();
     }, []);
 
+    const value = useMemo(
+        () => ({ session, loading, signInWithGoogle, signOut }),
+        [session, loading],
+    );
+
     return (
-        <AuthContext.Provider
-            value={{ session, loading, signInWithGoogle, signOut }}
-        >
-            {children}
-        </AuthContext.Provider>
+        <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
     );
 }
 

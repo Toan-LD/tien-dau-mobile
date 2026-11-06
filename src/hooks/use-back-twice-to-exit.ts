@@ -17,7 +17,6 @@ export function useBackTwiceToExit() {
                 () => {
                     const now = Date.now();
                     if (now - lastPress.current < WINDOW_MS) {
-                        // Let Android do its usual thing and leave the app.
                         return false;
                     }
                     lastPress.current = now;

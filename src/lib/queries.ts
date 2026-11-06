@@ -9,7 +9,6 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef } from "react";
 
 import { listCategories, type Category, type TxType } from "@/lib/categories";
-import type { LocalDate } from "@/lib/dates";
 import type { Period, PeriodMode } from "@/lib/periods";
 import {
     getTransaction,
@@ -20,10 +19,7 @@ import {
     type Transaction,
 } from "@/lib/transactions";
 
-// Every query the screens use, in one place, so a key is never spelled twice.
-// Day and month lists sit under ["transactions"]: one invalidate refreshes them all.
-
-export function dayQuery(date: LocalDate) {
+export function dayQuery(date: string) {
     return queryOptions({
         queryKey: ["transactions", "day", date],
         queryFn: () => listTransactionsForDay(date),
@@ -37,24 +33,26 @@ export function monthQuery(year: number, month: number) {
     });
 }
 
-// The Danh sách tab's list for a day, week or month. Day and month reuse the
-// keys above, so they share the cache with each other and with Báo cáo.
+function periodKey(mode: PeriodMode, period: Period): QueryKey {
+    switch (mode) {
+        case "day":
+            return dayQuery(period.start).queryKey;
+        case "month": {
+            const [year, month] = period.start.split("-").map(Number);
+            return monthQuery(year, month).queryKey;
+        }
+        case "week":
+            return ["transactions", "week", period.start];
+    }
+}
+
 export function periodQuery(mode: PeriodMode, period: Period) {
-    const [year, month] = period.start.split("-").map(Number);
-    const queryKey: QueryKey =
-        mode === "day"
-            ? dayQuery(period.start).queryKey
-            : mode === "month"
-              ? monthQuery(year, month).queryKey
-              : ["transactions", "week", period.start];
     return queryOptions({
-        queryKey,
+        queryKey: periodKey(mode, period),
         queryFn: () => listTransactionsBetween(period.start, period.end),
     });
 }
 
-// Every amount in one category for the history chart on Báo cáo. Under
-// ["transactions"] so it refreshes after any add, edit or delete.
 export function categoryHistoryQuery(categoryId: string | null, type: TxType) {
     return queryOptions({
         queryKey: ["transactions", "category-history", type, categoryId],
@@ -62,10 +60,6 @@ export function categoryHistoryQuery(categoryId: string | null, type: TxType) {
     });
 }
 
-// Kept outside ["transactions"] on purpose: after a delete the edit screen must
-// not refetch its own row (it would find nothing and leave a second time).
-// Never kept after the screen closes (gcTime 0): the form copies the row once
-// when it opens, so an old cached copy would bring back values already edited.
 export function transactionQuery(id: string) {
     return queryOptions({
         queryKey: ["transaction", id],
@@ -82,8 +76,6 @@ export function categoriesQuery(type: TxType) {
     });
 }
 
-// The row the user just tapped is already in a cached day or month list;
-// showing it at once avoids a spinner while the edit screen loads it again.
 export function findCachedTransaction(
     client: QueryClient,
     id: string,
@@ -97,8 +89,6 @@ export function findCachedTransaction(
     return undefined;
 }
 
-// Takes a deleted row out of every cached day and month list, so it disappears
-// before the lists are reloaded.
 export function removeCachedTransaction(client: QueryClient, id: string) {
     client.setQueriesData<Transaction[]>(
         { queryKey: ["transactions"] },
@@ -116,9 +106,6 @@ export function setCachedCategories(
     );
 }
 
-// Reload a screen's data when the user comes back to it, but only if it is
-// older than staleTime. The first focus is skipped: useQuery already loads then.
-// A key change while the screen is on show is useQuery's job, not this hook's.
 export function useRefreshOnFocus(queryKey: QueryKey) {
     const client = useQueryClient();
     const first = useRef(true);
@@ -134,7 +121,7 @@ export function useRefreshOnFocus(queryKey: QueryKey) {
                 first.current = false;
                 return;
             }
-            client.refetchQueries(
+            void client.refetchQueries(
                 {
                     predicate: (q) => q.queryHash === hash.current,
                     stale: true,
@@ -145,9 +132,6 @@ export function useRefreshOnFocus(queryKey: QueryKey) {
     );
 }
 
-// True while a screen waits for data it hasn't got yet: the first load, or a
-// new day/week/month still showing the old one (placeholder). A quiet refresh
-// of data already on screen doesn't count, so the spinner doesn't flicker.
 export function isWaitingForData(query: {
     isFetching: boolean;
     isPlaceholderData: boolean;

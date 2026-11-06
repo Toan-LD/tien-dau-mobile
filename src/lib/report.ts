@@ -67,8 +67,6 @@ export function buildMonthReport(txs: Transaction[]): MonthReport {
     };
 }
 
-// One slice of the donut in the period report. `slot` picks the colour: 0..4
-// are the five chart colours in order, "other" is grey.
 export type DonutSlice = {
     key: string;
     name: string;
@@ -80,9 +78,6 @@ export type DonutSlice = {
 
 const DONUT_SLOTS = 5;
 
-// Category totals (largest first) as donut slices: the five biggest get a
-// colour each, the rest share one grey "Khác" slice. A single leftover keeps
-// its own name rather than becoming a "Khác" of one.
 export function toDonutSlices(items: CategoryTotal[]): DonutSlice[] {
     const sum = items.reduce((s, c) => s + c.total, 0);
     if (sum === 0) return [];
@@ -114,9 +109,6 @@ export function toDonutSlices(items: CategoryTotal[]): DonutSlice[] {
 
 export type MonthTotal = { year: number; month: number; total: number };
 
-// One category's history: a total for every month from its first entry up to
-// `until` (the current month), with empty months as zero so the chart's
-// columns line up with the calendar.
 export function monthlyTotals(
     rows: { date: string; amount: number }[],
     until: { year: number; month: number },
@@ -129,16 +121,15 @@ export function monthlyTotals(
         byMonth.set(key, (byMonth.get(key) ?? 0) + r.amount);
         if (key < first) first = key;
     }
+
+    const [firstYear, firstMonth] = first.split("-").map(Number);
+    const last = until.year * 12 + until.month - 1;
     const months: MonthTotal[] = [];
-    let [year, month] = first.split("-").map(Number);
-    while (year < until.year || (year === until.year && month <= until.month)) {
+    for (let i = firstYear * 12 + firstMonth - 1; i <= last; i++) {
+        const year = Math.floor(i / 12);
+        const month = (i % 12) + 1;
         const key = `${year}-${String(month).padStart(2, "0")}`;
         months.push({ year, month, total: byMonth.get(key) ?? 0 });
-        month += 1;
-        if (month > 12) {
-            month = 1;
-            year += 1;
-        }
     }
     return months;
 }
@@ -160,15 +151,12 @@ export function historySummary(months: MonthTotal[]): {
     };
 }
 
-// A share (0..1) as a whole percent; tiny shares read "<1%" instead of "0%".
 export function formatShare(share: number): string {
     const p = share * 100;
     if (p > 0 && p < 1) return "<1%";
     return `${Math.round(p)}%`;
 }
 
-// Each month's average with up to two months before it: the trend line on
-// the category history chart, in the same unit as the columns.
 export function movingAverage(values: number[], window = 3): number[] {
     return values.map((_, i) => {
         const from = Math.max(0, i - window + 1);
@@ -177,7 +165,6 @@ export function movingAverage(values: number[], window = 3): number[] {
     });
 }
 
-// Round axis values from 0 up past `max`, about four steps (0, 500k, 1tr…).
 export function niceTicks(max: number, steps = 4): number[] {
     if (max <= 0) return [0, 1];
     const rough = max / steps;

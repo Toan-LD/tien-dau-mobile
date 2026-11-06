@@ -26,7 +26,7 @@ import { StatCard, StatRow } from "@/components/ui/stat-card";
 import { useToast } from "@/components/ui/toast";
 import { Colors, Spacing } from "@/constants/theme";
 import type { TxType } from "@/lib/categories";
-import { resolveDate, toLocalDateString, type LocalDate } from "@/lib/dates";
+import { resolveDate, toLocalDateString } from "@/lib/dates";
 import { formatVND } from "@/lib/money";
 import {
     containsDate,
@@ -92,7 +92,7 @@ export default function ListScreen() {
     const toast = useToast();
     const today = useToday();
     const [mode, setMode] = useState<PeriodMode>("day");
-    const [picked, setPicked] = useState<LocalDate | null>(null);
+    const [picked, setPicked] = useState<string | null>(null);
     const anchor = resolveDate(picked, today);
     const period = periodOf(mode, anchor);
     const isCurrent = containsDate(period, today);
@@ -153,7 +153,7 @@ export default function ListScreen() {
 
     const clearHint = () => setHintId(null);
 
-    const goTo = (next: LocalDate) => {
+    const goTo = (next: string) => {
         setPicked(containsDate(periodOf(mode, next), today) ? null : next);
     };
     const datePicker = useDatePicker(anchor, goTo);

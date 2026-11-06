@@ -71,8 +71,6 @@ export async function createCategory(input: {
     return toCategory(data);
 }
 
-// Renames a category and/or changes its icon. Its transactions follow, since
-// they point at the category by id. Same-name rules as createCategory.
 export async function updateCategory(
     id: string,
     input: { name: string; iconKey: string },
@@ -94,21 +92,15 @@ export async function updateCategory(
     return toCategory(data);
 }
 
-// Transactions in a deleted category keep their amount and show as
-// "Không phân loại": transactions.category_id is ON DELETE SET NULL.
 export async function deleteCategory(id: string): Promise<void> {
     const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) throw error;
 }
 
-// sort_order for a new category: after the last one. reorderCategories numbers
-// from 1, so an empty list starts at 1 too.
 export function nextCategorySortOrder(list: Category[]): number {
     return list.reduce((max, c) => Math.max(max, c.sortOrder), 0) + 1;
 }
 
-// Puts categories in the given id order and renumbers them 1..n, so ties
-// and gaps in sort_order can't undo the user's order.
 export function reorderCategories(list: Category[], ids: string[]): Category[] {
     const byId = new Map(list.map((c) => [c.id, c]));
     return ids

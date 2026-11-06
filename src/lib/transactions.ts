@@ -1,5 +1,5 @@
 import type { TxType } from "@/lib/categories";
-import { monthRange, type LocalDate } from "@/lib/dates";
+import { monthRange } from "@/lib/dates";
 import { MAX_AMOUNT } from "@/lib/money";
 import { requireUserId } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
@@ -16,7 +16,7 @@ export type Transaction = {
     categoryId: string | null;
     category: TxCategory;
     note: string | null;
-    date: LocalDate;
+    date: string;
     createdAt: string;
     walletId: string;
 };
@@ -24,7 +24,7 @@ export type TransactionDraft = {
     type: TxType;
     amount: number;
     categoryId: string;
-    date: LocalDate;
+    date: string;
     note: string | null;
 };
 
@@ -66,7 +66,6 @@ export function subscribeTransactionsChanged(fn: () => void): () => void {
     };
 }
 
-// Tells every screen that transactions changed (the query cache reloads).
 export function notifyTransactionsChanged() {
     listeners.forEach((fn) => fn());
 }
@@ -174,7 +173,7 @@ export async function getTransaction(id: string): Promise<Transaction | null> {
 }
 
 export async function listTransactionsForDay(
-    date: LocalDate,
+    date: string,
 ): Promise<Transaction[]> {
     const { data, error } = await supabase
         .from("transactions")
@@ -186,11 +185,9 @@ export async function listTransactionsForDay(
     return (data ?? []).map(toTransaction);
 }
 
-// Every transaction from start to end (both included), newest day first and,
-// within a day, newest entry first.
 export async function listTransactionsBetween(
-    start: LocalDate,
-    end: LocalDate,
+    start: string,
+    end: string,
 ): Promise<Transaction[]> {
     const { data, error } = await supabase
         .from("transactions")
@@ -204,12 +201,10 @@ export async function listTransactionsBetween(
     return (data ?? []).map(toTransaction);
 }
 
-// Every amount ever recorded in one category (null = "Không phân loại") for
-// one type, oldest first: the data behind the category history chart.
 export async function listCategoryHistory(
     categoryId: string | null,
     type: TxType,
-): Promise<{ date: LocalDate; amount: number }[]> {
+): Promise<{ date: string; amount: number }[]> {
     const base = supabase
         .from("transactions")
         .select("transaction_date, amount")

@@ -1,7 +1,13 @@
 export const MAX_AMOUNT = 999_999_999_999;
 
 export function formatAmountDigits(amount: number): string {
-    return String(Math.trunc(amount)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    const whole = Math.trunc(amount);
+    const digits = String(Math.abs(whole));
+    const groups: string[] = [];
+    for (let end = digits.length; end > 0; end -= 3) {
+        groups.unshift(digits.slice(Math.max(0, end - 3), end));
+    }
+    return (whole < 0 ? "-" : "") + groups.join(".");
 }
 
 export function formatVND(amount: number): string {

@@ -1,8 +1,8 @@
 import { MetaChip } from "@/components/entry/meta-chip";
 import { useDatePicker } from "@/components/ui/date-picker";
-import { formatDayTitle, todayLocal, type LocalDate } from "@/lib/dates";
+import { formatDayTitle, todayLocal } from "@/lib/dates";
 
-type Props = { date: LocalDate; onChange(date: LocalDate): void };
+type Props = { date: string; onChange(date: string): void };
 
 export function DateField({ date, onChange }: Readonly<Props>) {
     const picker = useDatePicker(date, onChange);

@@ -26,7 +26,7 @@ import {
     initialAmount,
 } from "@/lib/amount-input";
 import { nextCategorySortOrder, type TxType } from "@/lib/categories";
-import { resolveDate, todayLocal, type LocalDate } from "@/lib/dates";
+import { resolveDate, todayLocal } from "@/lib/dates";
 import { formatAmountDigits } from "@/lib/money";
 import {
     categoriesQuery,
@@ -66,7 +66,7 @@ export function EntryForm({
     const [pickedCategoryId, setPickedCategoryId] = useState<string | null>(
         initial?.categoryId ?? null,
     );
-    const [pickedDate, setPickedDate] = useState<LocalDate | null>(
+    const [pickedDate, setPickedDate] = useState<string | null>(
         initial?.date ?? null,
     );
     const [note, setNote] = useState(initial?.note ?? "");
@@ -125,7 +125,7 @@ export function EntryForm({
         setKeypadOpen(false);
     };
 
-    const changeDate = (next: LocalDate) =>
+    const changeDate = (next: string) =>
         setPickedDate(!initial && next === todayLocal() ? null : next);
 
     const draft: TransactionDraft = {

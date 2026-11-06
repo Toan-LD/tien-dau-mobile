@@ -1,27 +1,20 @@
 import type { Category, TxType } from "@/lib/categories";
-import { addDays, toLocalDateString, type LocalDate } from "@/lib/dates";
+import { addDays, toLocalDateString } from "@/lib/dates";
 import { requireUserId } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { defaultWalletId, notifyTransactionsChanged } from "@/lib/transactions";
 
-// Development only: fills the signed-in account with made-up but believable
-// transactions so the lists, reports and charts can be tried with real
-// volume. Every sample row carries SAMPLE_MARKER in `receipt_url` (a column
-// the app doesn't use yet), so "Xoá dữ liệu mẫu" removes exactly these rows
-// and never anything the user entered.
 export const SAMPLE_MARKER = "sample-data";
 
 export type SampleRow = {
     type: TxType;
     amount: number;
     category_id: string;
-    transaction_date: LocalDate;
+    transaction_date: string;
     note: string | null;
     created_at: string;
 };
 
-// Small seeded random generator (mulberry32): the same seed gives the same
-// data, which keeps the tests stable.
 function random(seed: number) {
     let a = seed >>> 0;
     return () => {
@@ -36,13 +29,9 @@ function random(seed: number) {
 type Rule = {
     type: TxType;
     category: string;
-    // Chance per day (ignored when `day` is set).
     chance?: number;
-    // Day of the month it always happens on (rent, bills, salary).
     day?: number;
-    // Only on Saturday and Sunday.
     weekend?: boolean;
-    // Amount range in thousands of đồng.
     min: number;
     max: number;
     hour: [number, number];
@@ -197,7 +186,6 @@ const RULES: Rule[] = [
     },
 ];
 
-// Bonuses are added by date in the loop, not by chance.
 const BONUS: Rule = {
     type: "income",
     category: "Thưởng",
@@ -207,7 +195,6 @@ const BONUS: Rule = {
     notes: [],
 };
 
-// Tết (17/02/2026): shopping and family spending jump in February.
 const BUSY_MONTH = 2;
 const BUSY_RULES = new Set(["Mua sắm", "Gia đình"]);
 
@@ -216,8 +203,6 @@ function resolveCategory(
     type: TxType,
     name: string,
 ): Category | undefined {
-    // A missing category falls back to "Khác", never to an unrelated one
-    // (a gift must not land in Lương); without "Khác" the row is skipped.
     const ofType = categories.filter((c) => c.type === type);
     return (
         ofType.find((c) => c.name === name) ??
@@ -231,7 +216,7 @@ export function generateSampleTransactions({
     categories,
     seed = 2026,
 }: {
-    from: LocalDate;
+    from: string;
     now: Date;
     categories: Category[];
     seed?: number;
@@ -244,7 +229,7 @@ export function generateSampleTransactions({
 
     const add = (
         rule: Rule,
-        date: LocalDate,
+        date: string,
         amountK: number,
         note: string | null,
     ) => {
@@ -292,7 +277,6 @@ export function generateSampleTransactions({
             add(rule, date, between(rule.min, rule.max), note);
         }
 
-        // Bonuses: Tết bonus in January, a smaller one after each quarter.
         if (day === 15 && month === 1) {
             add(BONUS, date, 15000, "Thưởng Tết");
         } else if (day === 15 && [4, 7, 10].includes(month)) {
@@ -300,11 +284,9 @@ export function generateSampleTransactions({
         }
     }
 
-    // Within a day, oldest first, the way they'd have been entered.
     return rows.sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
 
-// Inserts the sample rows for the signed-in user in batches. Returns how many.
 export async function insertSampleData(now = new Date()): Promise<number> {
     const userId = await requireUserId();
     const walletId = await defaultWalletId(userId);
@@ -326,24 +308,30 @@ export async function insertSampleData(now = new Date()): Promise<number> {
         seed: Date.now(),
     });
     const BATCH = 200;
+    const batches: (typeof rows)[] = [];
     for (let i = 0; i < rows.length; i += BATCH) {
-        const { error: insertError } = await supabase
-            .from("transactions")
-            .insert(
-                rows.slice(i, i + BATCH).map((r) => ({
+        batches.push(rows.slice(i, i + BATCH));
+    }
+    // All batches go out together; a failed one still leaves the others in,
+    // and "Xoá dữ liệu mẫu" removes them by the marker.
+    const results = await Promise.all(
+        batches.map((batch) =>
+            supabase.from("transactions").insert(
+                batch.map((r) => ({
                     ...r,
                     user_id: userId,
                     wallet_id: walletId,
                     receipt_url: SAMPLE_MARKER,
                 })),
-            );
-        if (insertError) throw insertError;
-    }
+            ),
+        ),
+    );
+    const failed = results.find((r) => r.error);
     notifyTransactionsChanged();
+    if (failed?.error) throw failed.error;
     return rows.length;
 }
 
-// Removes every sample row of the signed-in user (RLS limits it to them).
 export async function deleteSampleData(): Promise<void> {
     const { error } = await supabase
         .from("transactions")

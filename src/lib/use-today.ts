@@ -2,10 +2,9 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
 
-import { todayLocal, type LocalDate } from "@/lib/dates";
+import { todayLocal } from "@/lib/dates";
 
-// Today's local date, refreshed on screen focus and when the app returns to the foreground.
-export function useToday(): LocalDate {
+export function useToday(): string {
     const [today, setToday] = useState(() => todayLocal());
 
     useFocusEffect(

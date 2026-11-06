@@ -19,6 +19,20 @@ describe("formatAmountDigits", () => {
         expect(formatAmountDigits(30000)).toBe("30.000");
         expect(formatAmountDigits(999)).toBe("999");
     });
+
+    it("groups every length of number", () => {
+        expect(formatAmountDigits(0)).toBe("0");
+        expect(formatAmountDigits(1000)).toBe("1.000");
+        expect(formatAmountDigits(12345)).toBe("12.345");
+        expect(formatAmountDigits(123456)).toBe("123.456");
+        expect(formatAmountDigits(1234567)).toBe("1.234.567");
+    });
+
+    it("drops decimals and keeps a minus sign", () => {
+        expect(formatAmountDigits(1234.9)).toBe("1.234");
+        expect(formatAmountDigits(-1234)).toBe("-1.234");
+        expect(formatAmountDigits(-0.5)).toBe("0");
+    });
 });
 
 describe("formatCompactVND", () => {

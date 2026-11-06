@@ -7,16 +7,16 @@ import { IconButton } from "@/components/ui/icon-button";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { Colors, Spacing } from "@/constants/theme";
 import { monthGrid, shiftMonth, yearMonthOf } from "@/lib/calendar";
-import { formatMonthTitle, todayLocal, type LocalDate } from "@/lib/dates";
+import { formatMonthTitle, todayLocal } from "@/lib/dates";
 
 const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 type Props = {
     visible: boolean;
-    value: LocalDate;
+    value: string;
     // Latest day that can be picked (today).
-    max: LocalDate;
-    onSelect(date: LocalDate): void;
+    max: string;
+    onSelect(date: string): void;
     onClose(): void;
 };
 
@@ -98,11 +98,11 @@ export function DayPicker({
 }
 
 type CellProps = {
-    day: LocalDate;
+    day: string;
     selected: boolean;
     isToday: boolean;
     disabled: boolean;
-    onPress(day: LocalDate): void;
+    onPress(day: string): void;
 };
 
 function DayCell({
@@ -147,10 +147,7 @@ function DayCell({
     );
 }
 
-export function useDatePicker(
-    date: LocalDate,
-    onChange: (date: LocalDate) => void,
-) {
+export function useDatePicker(date: string, onChange: (date: string) => void) {
     const [visible, setVisible] = useState(false);
 
     const sheet = (

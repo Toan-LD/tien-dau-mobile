@@ -1,29 +1,23 @@
-export type LocalDate = string; // 'YYYY-MM-DD'
-
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export function toLocalDateString(d: Date): LocalDate {
+export function toLocalDateString(d: Date): string {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export function todayLocal(now: Date = new Date()): LocalDate {
+export function todayLocal(now: Date = new Date()): string {
     return toLocalDateString(now);
 }
 
-// null means "follow today": the day is resolved when it is needed, so it rolls over at midnight.
-export function resolveDate(
-    picked: LocalDate | null,
-    today: LocalDate,
-): LocalDate {
+export function resolveDate(picked: string | null, today: string): string {
     return picked ?? today;
 }
 
-function parse(date: LocalDate): Date {
+function parse(date: string): Date {
     const [y, m, d] = date.split("-").map(Number);
     return new Date(y, m - 1, d);
 }
 
-export function addDays(date: LocalDate, n: number): LocalDate {
+export function addDays(date: string, n: number): string {
     const d = parse(date);
     d.setDate(d.getDate() + n);
     return toLocalDateString(d);
@@ -32,14 +26,14 @@ export function addDays(date: LocalDate, n: number): LocalDate {
 export function monthRange(
     year: number,
     month: number,
-): { start: LocalDate; end: LocalDate } {
+): { start: string; end: string } {
     return {
         start: toLocalDateString(new Date(year, month - 1, 1)),
         end: toLocalDateString(new Date(year, month, 0)),
     };
 }
 
-export function formatDayTitle(date: LocalDate, today: LocalDate): string {
+export function formatDayTitle(date: string, today: string): string {
     const [y, m, d] = date.split("-");
     if (date === today) return `Hôm nay, ${d}/${m}`;
     if (date === addDays(today, -1)) return `Hôm qua, ${d}/${m}`;

@@ -208,11 +208,15 @@ Kết quả in từng câu hỏi, câu trả lời, đáp án mong đợi và d�
 
 ### 7.5. Đưa lên project thật
 
-Làm sau khi chạy thử local ổn. Các lệnh này tác động lên project thật, nên chạy từng lệnh một. Repo đã `link` ở Phần 2, nên mặc định CLI dùng project đã link. Muốn chọn project khác thì thêm `--remote=<project ref>`.
+Làm sau khi chạy thử local ổn. Các lệnh này tác động lên project thật, nên chạy từng lệnh một. Repo đã `link` ở Phần 2.
+
+- `secrets set` và `functions deploy` chỉ làm việc với project thật, mặc định dùng project đã link. Muốn chọn project khác thì thêm `--remote=<project ref>`.
+- `db push` và `gen types` mặc định làm việc với database **trên máy**, nên phải thêm `--remote` để nhắm vào project thật. Quên cờ này thì migration chỉ chạy trên máy bạn, còn function trên server sẽ lỗi vì thiếu bảng `chat_usage`.
 
 ```bash
-# 1. Cập nhật database (bảng chat_usage và hàm đếm lượt hỏi)
-npx supabase db push
+# 1. Cập nhật database thật (bảng chat_usage và hàm đếm lượt hỏi).
+#    Thêm --dry-run để xem trước những migration sẽ chạy, rồi chạy lại không có --dry-run.
+npx supabase db push --remote
 
 # 2. Đặt secret cho function (đọc từ file .env vừa tạo)
 npx supabase secrets set --env-file supabase/functions/.env

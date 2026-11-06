@@ -58,7 +58,7 @@ export default function AskScreen() {
                                 <Text style={styles.pending}>
                                     Đang trả lời…
                                 </Text>
-                            ) : (
+                            ) : item.role === "draft" ? null : (
                                 <MessageBubble message={item} onRetry={retry} />
                             )
                         }

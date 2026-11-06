@@ -55,7 +55,12 @@ it("drops the answer of a request that was in flight when reset ran", async () =
     expect(chat.api.pending).toBe(true);
     act(() => chat.api.reset());
     await act(async () => {
-        pendingAnswer.resolve({ ok: true, reply: "Muộn", remaining: 1 });
+        pendingAnswer.resolve({
+            ok: true,
+            reply: "Muộn",
+            remaining: 1,
+            drafts: [],
+        });
         await pendingAnswer.promise;
     });
 
@@ -72,6 +77,7 @@ it("retries an earlier error by moving it to the end with the right history", as
             ok: true,
             reply: "Trả lời một",
             remaining: 1,
+            drafts: [],
         });
     const chat = renderChat();
 
@@ -87,10 +93,14 @@ it("retries an earlier error by moving it to the end with the right history", as
 
     await act(async () => chat.api.retry(firstErrorId));
 
-    expect(mockedAskChat).toHaveBeenLastCalledWith("một", []);
+    expect(mockedAskChat).toHaveBeenLastCalledWith("một", [], []);
     expect(
         chat.api.messages.map((message) =>
-            "text" in message ? message.text : `error:${message.question}`,
+            message.role === "error"
+                ? `error:${message.question}`
+                : "text" in message
+                  ? message.text
+                  : message.role,
         ),
     ).toEqual(["hai", "error:hai", "một", "Trả lời một"]);
     expect(chat.api.pending).toBe(false);

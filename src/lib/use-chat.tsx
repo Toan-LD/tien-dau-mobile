@@ -8,6 +8,7 @@ import {
 
 import { askChat, type ChatTurn } from "@/lib/chat";
 import {
+    cardsFor,
     chatReducer,
     historyFor,
     historyForRetry,
@@ -37,10 +38,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const ask = async (question: string, history: ChatTurn[]) => {
         const generation = conversationGeneration.current;
-        const result = await askChat(question, history);
+        const result = await askChat(
+            question,
+            history,
+            cardsFor(state.messages),
+        );
         if (generation !== conversationGeneration.current) return;
         if (result.ok) {
-            dispatch({ type: "reply", id: nextId(), text: result.reply });
+            dispatch({
+                type: "reply",
+                id: nextId(),
+                text: result.reply,
+                drafts: result.drafts.map((draft) => ({ id: nextId(), draft })),
+            });
         } else {
             dispatch({
                 type: "fail",

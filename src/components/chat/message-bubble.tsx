@@ -3,10 +3,14 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { Colors, Spacing } from "@/constants/theme";
-import { ERROR_TEXT, type ChatMessage } from "@/lib/chat-state";
+import {
+    ERROR_TEXT,
+    type ChatMessage,
+    type DraftMessage,
+} from "@/lib/chat-state";
 
 type Props = {
-    message: ChatMessage;
+    message: Exclude<ChatMessage, DraftMessage>;
     onRetry(errorId: string): void;
 };
 

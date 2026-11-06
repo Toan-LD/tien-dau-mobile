@@ -8,6 +8,8 @@ import {
     CHAT_REQUEST_TIMEOUT_MILLISECONDS,
     askChat,
     cleanReply,
+    parseDrafts,
+    type ChatDraft,
 } from "@/lib/chat";
 import { fake } from "@/test-utils/supabase-mock";
 
@@ -16,6 +18,16 @@ jest.mock("@/lib/supabase", () => ({
 }));
 
 beforeEach(() => fake.reset());
+
+const draft: ChatDraft = {
+    type: "expense",
+    amount: 30000,
+    categoryId: "category-food",
+    categoryName: "Ăn uống",
+    date: "2026-11-06",
+    note: "ăn sáng",
+    replaces: null,
+};
 
 describe("askChat", () => {
     it("calls the chat function and cleans the reply", async () => {
@@ -28,12 +40,17 @@ describe("askChat", () => {
             { role: "assistant" as const, content: "Chào bạn" },
         ];
 
-        const result = await askChat("Tháng này tôi chi bao nhiêu?", history);
+        const result = await askChat(
+            "Tháng này tôi chi bao nhiêu?",
+            history,
+            [],
+        );
 
         expect(result).toEqual({
             ok: true,
             reply: "Tổng chi là 30.000 đ",
             remaining: 49,
+            drafts: [],
         });
         expect(fake.callsTo("invoke")).toEqual([
             [
@@ -42,10 +59,66 @@ describe("askChat", () => {
                     body: {
                         question: "Tháng này tôi chi bao nhiêu?",
                         history,
+                        cards: [],
                     },
                     timeout: CHAT_REQUEST_TIMEOUT_MILLISECONDS,
                 },
             ],
+        ]);
+    });
+
+    it("sends cards and returns parsed drafts", async () => {
+        fake.invokeResult = {
+            data: { reply: "Bấm Lưu nhé.", remaining: 48, drafts: [draft] },
+            error: null,
+        };
+        const cards = [{ number: 1, status: "open" as const }];
+
+        const result = await askChat("không, 35k", [], cards);
+
+        expect(result).toEqual({
+            ok: true,
+            reply: "Bấm Lưu nhé.",
+            remaining: 48,
+            drafts: [draft],
+        });
+        const options = fake.callsTo("invoke")[0][1] as { body: unknown };
+        expect(options.body).toEqual({
+            question: "không, 35k",
+            history: [],
+            cards,
+        });
+    });
+
+    it("treats missing or malformed drafts as empty and drops bad cards", async () => {
+        fake.invokeResult = {
+            data: { reply: "Chào", remaining: 48 },
+            error: null,
+        };
+        expect(await askChat("Chào", [], [])).toMatchObject({ drafts: [] });
+
+        fake.invokeResult = {
+            data: { reply: "Chào", remaining: 48, drafts: "x" },
+            error: null,
+        };
+        expect(await askChat("Chào", [], [])).toMatchObject({ drafts: [] });
+
+        expect(
+            parseDrafts([
+                draft,
+                { ...draft, amount: "30k" },
+                { ...draft, amount: 0 },
+                { ...draft, amount: 1_000_000_000_000 },
+                { ...draft, type: "transfer" },
+                { ...draft, date: "06/11/2026" },
+                { ...draft, replaces: 0 },
+                { ...draft, note: 5 },
+                null,
+            ]),
+        ).toEqual([draft]);
+        expect(parseDrafts({ ...draft, replaces: 2 })).toEqual([]);
+        expect(parseDrafts([{ ...draft, replaces: 2 }])).toEqual([
+            { ...draft, replaces: 2 },
         ]);
     });
 
@@ -60,7 +133,7 @@ describe("askChat", () => {
                 new Error("The operation was aborted"),
             ),
         };
-        expect(await askChat("câu hỏi", [])).toEqual({
+        expect(await askChat("câu hỏi", [], [])).toEqual({
             ok: false,
             kind: "network",
         });
@@ -76,7 +149,7 @@ describe("askChat", () => {
             data: null,
             error: new FunctionsHttpError({ status }),
         };
-        expect(await askChat("câu hỏi", [])).toEqual({ ok: false, kind });
+        expect(await askChat("câu hỏi", [], [])).toEqual({ ok: false, kind });
     });
 
     it("maps a relay error to server", async () => {
@@ -84,7 +157,7 @@ describe("askChat", () => {
             data: null,
             error: new FunctionsRelayError({}),
         };
-        expect(await askChat("câu hỏi", [])).toEqual({
+        expect(await askChat("câu hỏi", [], [])).toEqual({
             ok: false,
             kind: "server",
         });
@@ -95,7 +168,7 @@ describe("askChat", () => {
             data: null,
             error: new FunctionsFetchError({}),
         };
-        expect(await askChat("câu hỏi", [])).toEqual({
+        expect(await askChat("câu hỏi", [], [])).toEqual({
             ok: false,
             kind: "network",
         });
@@ -103,7 +176,7 @@ describe("askChat", () => {
 
     it("maps any thrown error to network", async () => {
         fake.invokeThrows = new Error("boom");
-        expect(await askChat("câu hỏi", [])).toEqual({
+        expect(await askChat("câu hỏi", [], [])).toEqual({
             ok: false,
             kind: "network",
         });

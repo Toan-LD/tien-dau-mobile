@@ -10,26 +10,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { vietnamToday } from "../../_shared/periods.ts";
 import type { CategoryRef } from "../../_shared/types.ts";
 import { buildFixture } from "./fixture.ts";
+import { requireLocalSupabaseUrl } from "./local-only.ts";
 
 export const EVAL_EMAIL = "eval@tiendau.local";
 // Chỉ tồn tại trong Supabase local, không phải bí mật.
 export const EVAL_PASSWORD = "eval-local-only-password";
 
 const INSERT_BATCH_SIZE = 500;
-
-// Từ chối mọi URL không phải máy local để không bao giờ chạm project thật.
-export function requireLocalSupabaseUrl(): string {
-    const url = Deno.env.get("SUPABASE_URL") ?? Deno.env.get("API_URL") ?? "";
-    if (
-        !url.startsWith("http://127.0.0.1") &&
-        !url.startsWith("http://localhost")
-    ) {
-        throw new Error(
-            "SUPABASE_URL phải bắt đầu bằng http://127.0.0.1 hoặc http://localhost (chỉ chạy với Supabase local).",
-        );
-    }
-    return url;
-}
 
 function requireEnvironment(...names: string[]): string {
     for (const name of names) {

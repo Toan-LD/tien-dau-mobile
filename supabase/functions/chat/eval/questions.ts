@@ -18,6 +18,9 @@ export type EvalQuestion = {
     expect?: (context: EvalContext) => string[];
     // true: chỉ cần có MỘT trong các chuỗi expect thay vì tất cả.
     matchAny?: boolean;
+    // Cách diễn đạt chấp nhận được (chỉ cần một) khi `expect` trả về rỗng,
+    // ví dụ không có mục nào tăng. Không khai báo thì kết quả là CẦN XEM.
+    whenEmpty?: string[];
 };
 
 function inPeriod(context: EvalContext, periodInput: string): Transaction[] {
@@ -157,6 +160,7 @@ const numbersQuestions: EvalQuestion[] = [
             const [first] = result.biggest_increases ?? [];
             return first ? [first.name] : [];
         },
+        whenEmpty: ["không có", "không mục nào", "không tăng"],
     },
     {
         id: "biggest-this-week",
@@ -215,6 +219,7 @@ const numbersQuestions: EvalQuestion[] = [
                 "newest",
                 50,
             ).items.map((item) => item.amount),
+        whenEmpty: ["không có", "chưa có"],
     },
 ];
 

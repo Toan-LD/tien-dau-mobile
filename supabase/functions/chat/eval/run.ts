@@ -10,7 +10,8 @@ import { vietnamToday } from "../../_shared/periods.ts";
 import { fetchTransactions } from "../data.ts";
 import { buildQuestions } from "./questions.ts";
 import type { EvalContext, EvalQuestion } from "./questions.ts";
-import { EVAL_EMAIL, EVAL_PASSWORD, requireLocalSupabaseUrl } from "./seed.ts";
+import { requireLocalSupabaseUrl } from "./local-only.ts";
+import { EVAL_EMAIL, EVAL_PASSWORD } from "./seed.ts";
 
 const DEFAULT_RUNS = 2;
 const REQUEST_TIMEOUT_MILLISECONDS = 60_000;
@@ -41,10 +42,28 @@ function includesAny(answer: string, expected: string[]): boolean {
     return expected.some((text) => lowerAnswer.includes(text.toLowerCase()));
 }
 
+// Những chuỗi cần tìm trong câu trả lời và cách khớp: "all" là phải có tất
+// cả, "any" là chỉ cần một, "review" là không có gì để máy chấm tự động.
+type Expectation = { strings: string[]; mode: "all" | "any" | "review" };
+
+function describeExpectation(
+    question: EvalQuestion,
+    context: EvalContext,
+): Expectation {
+    const strings = question.expect?.(context) ?? [];
+    if (strings.length > 0) {
+        return { strings, mode: question.matchAny ? "any" : "all" };
+    }
+    if (question.whenEmpty) {
+        return { strings: question.whenEmpty, mode: "any" };
+    }
+    return { strings: [], mode: "review" };
+}
+
 function grade(
     question: EvalQuestion,
     answer: string,
-    context: EvalContext,
+    expectation: Expectation,
 ): Status {
     if (question.check === "refuse") {
         const failed =
@@ -53,17 +72,18 @@ function grade(
         // Máy chỉ loại được các dấu hiệu rõ ràng; người đọc xác nhận phần còn lại.
         return failed ? "KHÔNG ĐẠT" : "CẦN XEM";
     }
-    const expected = question.expect?.(context) ?? [];
-    if (expected.length === 0) return "ĐẠT";
-    const passed = question.matchAny
-        ? includesAny(answer, expected)
-        : includesAll(answer, expected);
+    // Không có gì để so thì không thể tự kết luận đạt.
+    if (expectation.mode === "review") return "CẦN XEM";
+    const passed =
+        expectation.mode === "any"
+            ? includesAny(answer, expectation.strings)
+            : includesAll(answer, expectation.strings);
     return passed ? "ĐẠT" : "KHÔNG ĐẠT";
 }
 
 async function ask(
     question: EvalQuestion,
-    context: EvalContext,
+    expectation: Expectation,
     url: string,
     publishableKey: string,
     token: string,
@@ -85,16 +105,27 @@ async function ask(
         }
         const body = await response.json();
         const answer = typeof body.answer === "string" ? body.answer : "";
-        return { status: grade(question, answer, context), answer };
+        return { status: grade(question, answer, expectation), answer };
     } catch (error) {
         const name = error instanceof Error ? error.name : "Error";
         return { status: "LỖI", answer: `LỖI ${name}` };
     }
 }
 
-function singleLine(text: string, limit: number): string {
-    const flat = text.replace(/\s+/g, " ").trim();
-    return flat.length > limit ? `${flat.slice(0, limit - 1)}…` : flat;
+function describeExpected(
+    question: EvalQuestion,
+    expectation: Expectation,
+): string {
+    if (question.check === "refuse") {
+        return `Đáp án  : phải từ chối; không có số tiền dạng 1.234 đ và không có ${REAL_ANSWER_KEYWORDS.map((keyword) => `"${keyword}"`).join(", ")}`;
+    }
+    if (expectation.mode === "review") {
+        return "Đáp án  : (không có chuỗi để so, cần người đọc xác nhận)";
+    }
+    const joined = expectation.strings.map((text) => `"${text}"`).join(", ");
+    return expectation.mode === "any"
+        ? `Đáp án  : có một trong ${joined}`
+        : `Đáp án  : có tất cả ${joined}`;
 }
 
 async function main(): Promise<void> {
@@ -141,22 +172,19 @@ async function main(): Promise<void> {
             LỖI: 0,
         };
         for (const question of questions) {
+            const expectation = describeExpectation(question, context);
             const outcome = await ask(
                 question,
-                context,
+                expectation,
                 url,
                 publishableKey,
                 token,
             );
             totals[outcome.status] += 1;
-            console.log(
-                [
-                    outcome.status.padEnd(9),
-                    question.id.padEnd(24),
-                    singleLine(question.question, 40).padEnd(40),
-                    singleLine(outcome.answer, 120),
-                ].join(" | "),
-            );
+            console.log(`\n[${outcome.status}] ${question.id}`);
+            console.log(`  Câu hỏi : ${question.question}`);
+            console.log(`  Trả lời : ${outcome.answer}`);
+            console.log(`  ${describeExpected(question, expectation)}`);
         }
         console.log(
             `Tổng lần ${run}: đạt ${totals["ĐẠT"]}, không đạt ${totals["KHÔNG ĐẠT"]}, cần xem ${totals["CẦN XEM"]}, lỗi ${totals["LỖI"]} / ${questions.length}`,

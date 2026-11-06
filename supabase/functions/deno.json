@@ -1,0 +1,7 @@
+{
+    "imports": {
+        "@std/assert": "jsr:@std/assert@1",
+        "openai": "npm:openai@7",
+        "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
+    }
+}

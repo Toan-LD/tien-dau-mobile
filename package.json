@@ -36,6 +36,7 @@
     "devDependencies": {
         "@types/jest": "30.0.0",
         "@types/react": "~19.3.0",
+        "deno": "^2.9.6",
         "eslint": "^9.0.0",
         "eslint-config-expo": "~58.0.4",
         "eslint-config-prettier": "^10.1.8",
@@ -55,12 +56,18 @@
         "web": "expo start --web",
         "lint": "expo lint",
         "test": "jest",
+        "test:fn": "deno test --config supabase/functions/deno.json supabase/functions",
+        "check:fn": "deno check --config supabase/functions/deno.json supabase/functions/chat/index.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check ."
     },
     "private": true,
     "jest": {
         "preset": "jest-expo",
-        "globalSetup": "./jest.global-setup.js"
+        "globalSetup": "./jest.global-setup.js",
+        "testPathIgnorePatterns": [
+            "/node_modules/",
+            "/supabase/"
+        ]
     }
 }

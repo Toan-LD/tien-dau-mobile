@@ -7,6 +7,10 @@ module.exports = defineConfig([
     expoConfig,
     eslintPluginPrettierRecommended,
     {
-        ignores: ["dist/*", "src/lib/database.types.ts"],
+        ignores: [
+            "dist/*",
+            "src/lib/database.types.ts",
+            "supabase/functions/**",
+        ],
     },
 ]);

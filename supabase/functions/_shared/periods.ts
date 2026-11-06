@@ -52,8 +52,8 @@ export function formatDate(date: string): string {
 }
 
 export function weekdayTitle(date: string): string {
-    const day = new Date(toMilliseconds(date)).getUTCDay();
-    return `${WEEKDAYS[day]}, ${formatDate(date)}`;
+    const weekdayIndex = new Date(toMilliseconds(date)).getUTCDay();
+    return `${WEEKDAYS[weekdayIndex]}, ${formatDate(date)}`;
 }
 
 export function vietnamToday(now: Date): string {
@@ -132,8 +132,8 @@ export function resolvePeriod(input: string, today: string): PeriodResult {
     }
 
     if (isValidMonth(input)) {
-        const [year, month] = input.split("-").map(Number);
-        return monthPeriod(year, month, today);
+        const [requestedYear, requestedMonth] = input.split("-").map(Number);
+        return monthPeriod(requestedYear, requestedMonth, today);
     }
     if (isValidDate(input)) {
         return single(input, `Ngày ${formatDate(input)}`);

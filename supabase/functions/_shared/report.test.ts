@@ -35,11 +35,14 @@ Deno.test("summarize tính chi, thu, số dư", () => {
 });
 
 Deno.test("summarize số dư âm và mảng rỗng", () => {
-    const over = [
+    const transactionsWithNegativeBalance = [
         makeTransaction("expense", 150000, "Ăn uống", "2026-11-01"),
         makeTransaction("income", 100000, "Lương", "2026-11-03"),
     ];
-    assertEquals(summarize(over).balance, "-50.000 đ");
+    assertEquals(
+        summarize(transactionsWithNegativeBalance).balance,
+        "-50.000 đ",
+    );
     assertEquals(summarize([]), {
         expense: "0 đ",
         income: "0 đ",

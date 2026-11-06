@@ -1,11 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { vietnamToday } from "../_shared/periods.ts";
+import type { CategoryRef } from "../_shared/types.ts";
 import type { ChatModel, ChatTurn } from "./agent.ts";
 import { GIVE_UP_REPLY, runAgent } from "./agent.ts";
 import { fetchCategories, fetchTransactions } from "./data.ts";
 import { buildSystemPrompt } from "./system-prompt.ts";
 import type { CardState, CardStatus, ProposedDraft } from "./tools.ts";
-import { runTool } from "./tools.ts";
+import { replyForDraftsOnly, runTool } from "./tools.ts";
 
 export const MAX_QUESTION_LENGTH = 500;
 export const MAX_HISTORY_TURNS = 10;
@@ -117,11 +118,11 @@ export function createHandler(
 ): (request: Request) => Promise<Response> {
     async function answer(
         user: AuthenticatedUser,
+        categories: CategoryRef[],
         input: ChatInput,
         signal: AbortSignal,
     ): Promise<ChatAnswer> {
         const today = vietnamToday(dependencies.now());
-        const categories = await fetchCategories(user.client);
         const drafts: ProposedDraft[] = [];
         const toolContext = {
             today,
@@ -138,6 +139,7 @@ export function createHandler(
             question: input.question,
             runTool: (name, argumentsJson) =>
                 runTool(name, argumentsJson, toolContext),
+            replyAfterTools: replyForDraftsOnly,
             signal,
         });
         return { reply, drafts: reply === GIVE_UP_REPLY ? [] : drafts };
@@ -153,7 +155,10 @@ export function createHandler(
             const input = await readInput(request);
             if (!input) return jsonResponse(400, { error: "bad_request" });
 
-            const remaining = await dependencies.consumeQuota(user.userId);
+            const [remaining, categories] = await Promise.all([
+                dependencies.consumeQuota(user.userId),
+                fetchCategories(user.client),
+            ]);
             if (remaining < 0) {
                 return jsonResponse(429, { error: "quota_exceeded" });
             }
@@ -165,7 +170,7 @@ export function createHandler(
                 }, dependencies.timeoutMilliseconds);
             });
             const answered = await Promise.race([
-                answer(user, input, controller.signal),
+                answer(user, categories, input, controller.signal),
                 timeout,
             ]);
             return jsonResponse(200, { ...answered, remaining });

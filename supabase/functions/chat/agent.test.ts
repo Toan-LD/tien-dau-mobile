@@ -6,6 +6,7 @@ import type {
 } from "openai/resources/chat/completions";
 import { GIVE_UP_REPLY, runAgent } from "./agent.ts";
 import type { ChatModel } from "./agent.ts";
+import type { ToolResult } from "./tools.ts";
 
 function textReply(content: string | null): ChatCompletionMessage {
     return { role: "assistant", content, refusal: null };
@@ -121,6 +122,47 @@ Deno.test(
         }
     },
 );
+
+Deno.test(
+    "replyAfterTools trả câu: dừng sau vòng tool, không gọi model lần nữa",
+    async () => {
+        const toolCalls: string[][] = [];
+        const { model, receivedMessages } = scriptedModel([
+            toolReply("a", "b"),
+            textReply("không được dùng"),
+        ]);
+        const seenResults: ToolResult[][] = [];
+        const answer = await runAgent({
+            ...baseOptions(model, toolCalls),
+            replyAfterTools(results) {
+                seenResults.push(results);
+                return "Câu do server viết";
+            },
+        });
+        assertEquals(answer, "Câu do server viết");
+        assertEquals(receivedMessages.length, 1);
+        assertEquals(toolCalls.length, 2);
+        assertEquals(seenResults, [
+            [
+                { name: "tool_a", content: "kết quả tool_a" },
+                { name: "tool_b", content: "kết quả tool_b" },
+            ],
+        ]);
+    },
+);
+
+Deno.test("replyAfterTools trả null: hỏi model như thường", async () => {
+    const { model, receivedMessages } = scriptedModel([
+        toolReply("a"),
+        textReply("Xong"),
+    ]);
+    const answer = await runAgent({
+        ...baseOptions(model),
+        replyAfterTools: () => null,
+    });
+    assertEquals(answer, "Xong");
+    assertEquals(receivedMessages.length, 2);
+});
 
 Deno.test("lỗi từ runTool được ném ra, không nuốt", async () => {
     const { model } = scriptedModel([toolReply("a")]);

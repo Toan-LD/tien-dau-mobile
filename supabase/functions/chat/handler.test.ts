@@ -35,6 +35,21 @@ function toolCallReply(
     };
 }
 
+function toolCallsReply(
+    calls: [name: string, argumentsObject: unknown][],
+): ChatCompletionMessage {
+    return {
+        role: "assistant",
+        content: null,
+        refusal: null,
+        tool_calls: calls.map(([name, argumentsObject], index) => ({
+            id: `call-${index}-${name}`,
+            type: "function" as const,
+            function: { name, arguments: JSON.stringify(argumentsObject) },
+        })),
+    };
+}
+
 const breakfastCall = { type: "expense", amount: "30k", category: "Ăn uống" };
 
 function recordingModel(replies: ChatCompletionMessage[]) {
@@ -433,6 +448,31 @@ Deno.test("lỗi database khi lấy danh mục: 500", async () => {
     assert(consoleError.lines.join("\n").includes("db down"));
 });
 
+Deno.test("đọc danh mục cùng lúc với đếm lượt", async () => {
+    const { client, calls } = createFakeClient({
+        categories: [{ id: "category-food", name: "Ăn uống", type: "expense" }],
+    });
+    const tablesWhenQuotaFinished: string[] = [];
+    const handle = createHandler({
+        authenticate: () => Promise.resolve({ userId: USER_ID, client }),
+        consumeQuota: () =>
+            new Promise((resolve) => {
+                setTimeout(() => {
+                    tablesWhenQuotaFinished.push(...calls.tables);
+                    resolve(49);
+                }, 0);
+            }),
+        model: recordingModel([textReply("Chào")]).model,
+        now: () => new Date(),
+        timeoutMilliseconds: 1000,
+    });
+    const response = await handle(
+        chatRequest({ question: "Chào", history: [] }),
+    );
+    assertEquals(response.status, 200);
+    assertEquals(tablesWhenQuotaFinished, ["categories"]);
+});
+
 Deno.test("đếm lượt lỗi: 500 và không gọi model", async () => {
     const { model, receivedMessages } = recordingModel([textReply("Chào")]);
     const handle = createHandler({
@@ -461,34 +501,38 @@ Deno.test("đếm lượt lỗi: 500 và không gọi model", async () => {
     assertEquals(receivedMessages, []);
 });
 
-Deno.test("trả drafts khi model gọi propose_transaction", async () => {
-    const model = recordingModel([
-        toolCallReply("propose_transaction", breakfastCall),
-        textReply("Bạn kiểm tra rồi bấm Lưu nhé."),
-    ]);
-    const { handle } = setup({ model: model.model });
-    const response = await handle(
-        chatRequest({ question: "ăn sáng 30k", history: [], cards: [] }),
-    );
-    assertEquals(await readResponse(response), {
-        status: 200,
-        body: {
-            reply: "Bạn kiểm tra rồi bấm Lưu nhé.",
-            remaining: 49,
-            drafts: [
-                {
-                    type: "expense",
-                    amount: 30000,
-                    categoryId: "category-food",
-                    categoryName: "Ăn uống",
-                    date: "2026-11-06",
-                    note: null,
-                    replaces: null,
-                },
-            ],
-        },
-    });
-});
+Deno.test(
+    "chỉ soạn thẻ: trả drafts với câu server viết, chỉ gọi model một lần",
+    async () => {
+        const model = recordingModel([
+            toolCallReply("propose_transaction", breakfastCall),
+            textReply("không được dùng"),
+        ]);
+        const { handle } = setup({ model: model.model });
+        const response = await handle(
+            chatRequest({ question: "ăn sáng 30k", history: [], cards: [] }),
+        );
+        assertEquals(await readResponse(response), {
+            status: 200,
+            body: {
+                reply: "Bạn kiểm tra thẻ rồi bấm Lưu nhé.",
+                remaining: 49,
+                drafts: [
+                    {
+                        type: "expense",
+                        amount: 30000,
+                        categoryId: "category-food",
+                        categoryName: "Ăn uống",
+                        date: "2026-11-06",
+                        note: null,
+                        replaces: null,
+                    },
+                ],
+            },
+        });
+        assertEquals(model.receivedMessages.length, 1);
+    },
+);
 
 Deno.test("drafts rỗng cho câu hỏi thường", async () => {
     const { handle } = setup();
@@ -502,7 +546,10 @@ Deno.test("drafts rỗng cho câu hỏi thường", async () => {
 Deno.test("drafts rỗng khi agent bỏ cuộc", async () => {
     const model = recordingModel(
         Array.from({ length: MAX_TOOL_ROUNDS + 1 }, () =>
-            toolCallReply("propose_transaction", breakfastCall),
+            toolCallsReply([
+                ["propose_transaction", breakfastCall],
+                ["list_categories", {}],
+            ]),
         ),
     );
     const { handle } = setup({ model: model.model });

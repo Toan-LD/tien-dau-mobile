@@ -2,6 +2,7 @@ import { assert, assertEquals } from "@std/assert";
 import type { CategoryRef, Transaction } from "../_shared/types.ts";
 import {
     type CardState,
+    replyForDraftsOnly,
     runTool,
     TOOL_DEFINITIONS,
     type ToolContext,
@@ -467,5 +468,47 @@ Deno.test(
         assert(parameters.properties.amount.description?.includes("1tr2"));
         assert(parameters.properties.date.description?.includes("day:DD"));
         assert(parameters.properties.replaces.description?.includes("[Thẻ N"));
+    },
+);
+
+const savedDraft = {
+    name: "propose_transaction",
+    content: '{"card":"Chi 30.000 đ"}',
+};
+
+Deno.test("replyForDraftsOnly: một thẻ soạn xong thì server tự trả lời", () => {
+    assertEquals(
+        replyForDraftsOnly([savedDraft]),
+        "Bạn kiểm tra thẻ rồi bấm Lưu nhé.",
+    );
+});
+
+Deno.test("replyForDraftsOnly: nhiều thẻ thì nói số thẻ", () => {
+    assertEquals(
+        replyForDraftsOnly([savedDraft, savedDraft, savedDraft]),
+        "Mình soạn 3 thẻ, bạn kiểm tra từng thẻ rồi bấm Lưu nhé.",
+    );
+});
+
+Deno.test("replyForDraftsOnly: một thẻ lỗi thì để model trả lời", () => {
+    const failedDraft = {
+        name: "propose_transaction",
+        content: '{"error":"Số tiền mơ hồ"}',
+    };
+    assertEquals(replyForDraftsOnly([savedDraft, failedDraft]), null);
+});
+
+Deno.test(
+    "replyForDraftsOnly: có công cụ đọc số liệu thì để model trả lời",
+    () => {
+        const summary = { name: "get_summary", content: '{"total":"0 đ"}' };
+        assertEquals(replyForDraftsOnly([savedDraft, summary]), null);
+    },
+);
+
+Deno.test(
+    "replyForDraftsOnly: không có kết quả nào thì để model trả lời",
+    () => {
+        assertEquals(replyForDraftsOnly([]), null);
     },
 );

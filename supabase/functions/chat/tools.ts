@@ -25,6 +25,7 @@ import type {
 
 export type CardStatus = "open" | "saved" | "dismissed" | "replaced";
 export type CardState = { number: number; status: CardStatus };
+export type ToolResult = { name: string; content: string };
 export type ProposedDraft = {
     type: TransactionType;
     amount: number;
@@ -570,6 +571,16 @@ function proposeTransaction(
         note_for_reply: DRAFT_NOTE_FOR_REPLY,
         ...(replaces.value !== null && { replaces: replaces.value }),
     };
+}
+
+export function replyForDraftsOnly(results: ToolResult[]): string | null {
+    if (results.length === 0) return null;
+    for (const result of results) {
+        if (result.name !== "propose_transaction") return null;
+        if ("error" in JSON.parse(result.content)) return null;
+    }
+    if (results.length === 1) return "Bạn kiểm tra thẻ rồi bấm Lưu nhé.";
+    return `Mình soạn ${results.length} thẻ, bạn kiểm tra từng thẻ rồi bấm Lưu nhé.`;
 }
 
 export async function runTool(

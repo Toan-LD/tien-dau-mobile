@@ -97,3 +97,11 @@ Deno.test("hướng dẫn app có ghi bằng chat", () => {
     );
     assert(missingLine && !missingLine.includes("ghi bằng chat"));
 });
+
+Deno.test("soạn thẻ ngay, không đọc danh mục trước", () => {
+    assert(prompt.includes("Soạn thẻ ngay ở lượt đầu"));
+});
+
+Deno.test("gọi mọi công cụ cần thiết trong cùng một lượt", () => {
+    assert(prompt.includes("gọi tất cả công cụ cần thiết trong cùng một lượt"));
+});

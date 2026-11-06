@@ -3,6 +3,7 @@ import type {
     ChatCompletionMessageParam,
     ChatCompletionTool,
 } from "openai/resources/chat/completions";
+import type { ToolResult } from "./tools.ts";
 import { TOOL_DEFINITIONS } from "./tools.ts";
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
@@ -26,6 +27,7 @@ export type RunAgentOptions = {
     history: ChatTurn[];
     question: string;
     runTool(name: string, argumentsJson: string): Promise<string>;
+    replyAfterTools?(results: ToolResult[]): string | null;
     signal: AbortSignal;
 };
 
@@ -50,6 +52,7 @@ export async function runAgent(options: RunAgentOptions): Promise<string> {
         if (round === MAX_TOOL_ROUNDS) break;
 
         messages.push(reply);
+        const results: ToolResult[] = [];
         for (const toolCall of toolCalls) {
             if (toolCall.type !== "function") continue;
             const content = await options.runTool(
@@ -61,7 +64,10 @@ export async function runAgent(options: RunAgentOptions): Promise<string> {
                 tool_call_id: toolCall.id,
                 content,
             });
+            results.push({ name: toolCall.function.name, content });
         }
+        const serverReply = options.replyAfterTools?.(results);
+        if (serverReply) return serverReply;
     }
     return GIVE_UP_REPLY;
 }

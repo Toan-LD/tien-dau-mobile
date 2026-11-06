@@ -33,6 +33,34 @@ export const ERROR_TEXT: Record<ChatErrorKind, string> = {
 
 const HISTORY_LIMIT = 10;
 
+// Takes the error message and the user message right before it out of the
+// conversation. Returns null when the id is not an error message.
+function splitFailedQuestion(messages: ChatMessage[], errorId: string) {
+    const errorIndex = messages.findIndex((message) => message.id === errorId);
+    const failed = messages[errorIndex];
+    if (failed?.role !== "error") return null;
+    const before = messages[errorIndex - 1];
+    const hasQuestion =
+        before?.role === "user" && before.text === failed.question;
+    const questionIndex = hasQuestion ? errorIndex - 1 : -1;
+    const remaining = messages.filter(
+        (_message, index) => index !== errorIndex && index !== questionIndex,
+    );
+    const question: ChatMessage = hasQuestion
+        ? before
+        : { id: failed.id, role: "user", text: failed.question };
+    return { remaining, question };
+}
+
+// History to send when retrying: every answered turn except the failed one.
+export function historyForRetry(
+    messages: ChatMessage[],
+    errorId: string,
+): ChatTurn[] {
+    const split = splitFailedQuestion(messages, errorId);
+    return split ? historyFor(split.remaining) : [];
+}
+
 export function chatReducer(state: ChatState, action: ChatAction): ChatState {
     switch (action.type) {
         case "send":
@@ -44,13 +72,14 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
                 ],
                 pending: true,
             };
-        case "retry":
+        case "retry": {
+            const split = splitFailedQuestion(state.messages, action.errorId);
+            if (!split) return state;
             return {
-                messages: state.messages.filter(
-                    (message) => message.id !== action.errorId,
-                ),
+                messages: [...split.remaining, split.question],
                 pending: true,
             };
+        }
         case "reply":
             return {
                 messages: [

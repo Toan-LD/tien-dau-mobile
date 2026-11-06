@@ -10,6 +10,7 @@ import { askChat, type ChatTurn } from "@/lib/chat";
 import {
     chatReducer,
     historyFor,
+    historyForRetry,
     initialChatState,
     type ChatMessage,
 } from "@/lib/chat-state";
@@ -27,6 +28,8 @@ const ChatContext = createContext<ChatContextValue | null>(null);
 export function ChatProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(chatReducer, initialChatState);
     const messageCounter = useRef(0);
+    // Bumped on reset so answers to the old conversation are dropped.
+    const conversationGeneration = useRef(0);
 
     const nextId = () => {
         messageCounter.current += 1;
@@ -34,7 +37,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
 
     const ask = async (question: string, history: ChatTurn[]) => {
+        const generation = conversationGeneration.current;
         const result = await askChat(question, history);
+        if (generation !== conversationGeneration.current) return;
         if (result.ok) {
             dispatch({ type: "reply", id: nextId(), text: result.reply });
         } else {
@@ -57,18 +62,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const retry = (errorId: string) => {
         if (state.pending) return;
-        const errorIndex = state.messages.findIndex(
-            (message) => message.id === errorId,
-        );
-        const failed = state.messages[errorIndex];
+        const failed = state.messages.find((message) => message.id === errorId);
         if (failed?.role !== "error") return;
-        // The failed question's user message sits right before the error.
-        const history = historyFor(state.messages.slice(0, errorIndex - 1));
+        const history = historyForRetry(state.messages, errorId);
         dispatch({ type: "retry", errorId });
         void ask(failed.question, history);
     };
 
-    const reset = () => dispatch({ type: "reset" });
+    const reset = () => {
+        conversationGeneration.current += 1;
+        dispatch({ type: "reset" });
+    };
 
     return (
         <ChatContext.Provider

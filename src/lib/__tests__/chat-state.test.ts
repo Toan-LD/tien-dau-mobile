@@ -2,6 +2,7 @@ import {
     chatReducer,
     ERROR_TEXT,
     historyFor,
+    historyForRetry,
     initialChatState,
     type ChatMessage,
     type ChatState,
@@ -52,23 +53,69 @@ describe("chatReducer", () => {
         });
     });
 
-    it("retry removes the error message without adding a user message", () => {
+    it("retry moves the failed question to the end and sets pending", () => {
+        const failedQuestion: ChatMessage = {
+            id: "m3",
+            role: "user",
+            text: "Hỏi lại",
+        };
         const state = chatReducer(
             {
                 messages: [
                     question,
+                    answer,
+                    failedQuestion,
                     {
-                        id: "m2",
+                        id: "m4",
                         role: "error",
                         kind: "server",
-                        question: "Chào",
+                        question: "Hỏi lại",
                     },
                 ],
                 pending: false,
             },
-            { type: "retry", errorId: "m2" },
+            { type: "retry", errorId: "m4" },
         );
-        expect(state).toEqual({ messages: [question], pending: true });
+        expect(state).toEqual({
+            messages: [question, answer, failedQuestion],
+            pending: true,
+        });
+    });
+
+    it("retrying an earlier error keeps later turns before it", () => {
+        const firstQuestion: ChatMessage = {
+            id: "u1",
+            role: "user",
+            text: "một",
+        };
+        const secondQuestion: ChatMessage = {
+            id: "u2",
+            role: "user",
+            text: "hai",
+        };
+        const messages: ChatMessage[] = [
+            firstQuestion,
+            { id: "e1", role: "error", kind: "network", question: "một" },
+            secondQuestion,
+            { id: "e2", role: "error", kind: "network", question: "hai" },
+        ];
+        const state = chatReducer(
+            { messages, pending: false },
+            { type: "retry", errorId: "e1" },
+        );
+        expect(state.messages).toEqual([
+            secondQuestion,
+            messages[3],
+            firstQuestion,
+        ]);
+        expect(state.pending).toBe(true);
+    });
+
+    it("retry with an unknown id keeps the state", () => {
+        const state: ChatState = { messages: [question], pending: false };
+        expect(chatReducer(state, { type: "retry", errorId: "nope" })).toBe(
+            state,
+        );
     });
 
     it("reset returns the initial state", () => {
@@ -122,5 +169,20 @@ describe("ERROR_TEXT", () => {
             "Không kết nối được. Kiểm tra mạng rồi thử lại.",
         );
         expect(ERROR_TEXT.server).toBe("Có lỗi xảy ra, bạn thử lại sau.");
+    });
+});
+
+describe("historyForRetry", () => {
+    it("keeps answered turns that come after the failed question", () => {
+        const messages: ChatMessage[] = [
+            { id: "u1", role: "user", text: "một" },
+            { id: "e1", role: "error", kind: "server", question: "một" },
+            { id: "u2", role: "user", text: "hai" },
+            { id: "a2", role: "assistant", text: "trả lời hai" },
+        ];
+        expect(historyForRetry(messages, "e1")).toEqual([
+            { role: "user", content: "hai" },
+            { role: "assistant", content: "trả lời hai" },
+        ]);
     });
 });

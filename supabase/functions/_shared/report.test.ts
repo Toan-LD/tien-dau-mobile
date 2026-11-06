@@ -1,14 +1,14 @@
 import { assertEquals } from "@std/assert";
-import { byCategory, compare, listTxs, summarize } from "./report.ts";
-import type { Tx, TxType } from "./types.ts";
+import { byCategory, compare, listTransactions, summarize } from "./report.ts";
+import type { Transaction, TransactionType } from "./types.ts";
 
-function tx(
-    type: TxType,
+function makeTransaction(
+    type: TransactionType,
     amount: number,
     categoryName: string | null,
     date: string,
     createdAt = `${date}T00:00:00Z`,
-): Tx {
+): Transaction {
     return {
         type,
         amount,
@@ -21,12 +21,12 @@ function tx(
 }
 
 Deno.test("summarize tính chi, thu, số dư", () => {
-    const txs = [
-        tx("expense", 100000, "Ăn uống", "2026-11-01"),
-        tx("expense", 50000, "Đi lại", "2026-11-02"),
-        tx("income", 1000000, "Lương", "2026-11-03"),
+    const transactions = [
+        makeTransaction("expense", 100000, "Ăn uống", "2026-11-01"),
+        makeTransaction("expense", 50000, "Đi lại", "2026-11-02"),
+        makeTransaction("income", 1000000, "Lương", "2026-11-03"),
     ];
-    assertEquals(summarize(txs), {
+    assertEquals(summarize(transactions), {
         expense: "150.000 đ",
         income: "1.000.000 đ",
         balance: "850.000 đ",
@@ -36,8 +36,8 @@ Deno.test("summarize tính chi, thu, số dư", () => {
 
 Deno.test("summarize số dư âm và mảng rỗng", () => {
     const over = [
-        tx("expense", 150000, "Ăn uống", "2026-11-01"),
-        tx("income", 100000, "Lương", "2026-11-03"),
+        makeTransaction("expense", 150000, "Ăn uống", "2026-11-01"),
+        makeTransaction("income", 100000, "Lương", "2026-11-03"),
     ];
     assertEquals(summarize(over).balance, "-50.000 đ");
     assertEquals(summarize([]), {
@@ -51,13 +51,13 @@ Deno.test("summarize số dư âm và mảng rỗng", () => {
 Deno.test(
     "byCategory chỉ tính đúng loại, gộp không phân loại, tính tỷ lệ",
     () => {
-        const txs = [
-            tx("expense", 60000, "Ăn uống", "2026-11-01"),
-            tx("expense", 20000, null, "2026-11-02"),
-            tx("expense", 20000, "Đi lại", "2026-11-02"),
-            tx("income", 999999, "Lương", "2026-11-03"),
+        const transactions = [
+            makeTransaction("expense", 60000, "Ăn uống", "2026-11-01"),
+            makeTransaction("expense", 20000, null, "2026-11-02"),
+            makeTransaction("expense", 20000, "Đi lại", "2026-11-02"),
+            makeTransaction("income", 999999, "Lương", "2026-11-03"),
         ];
-        assertEquals(byCategory(txs, "expense"), {
+        assertEquals(byCategory(transactions, "expense"), {
             total: "100.000 đ",
             categories: [
                 { name: "Ăn uống", total: "60.000 đ", share: "60%", count: 1 },
@@ -74,22 +74,28 @@ Deno.test(
 );
 
 Deno.test("byCategory sắp giảm dần theo tổng, bằng nhau theo tên", () => {
-    const txs = [
-        tx("expense", 10000, "B", "2026-11-01"),
-        tx("expense", 10000, "A", "2026-11-01"),
-        tx("expense", 30000, "C", "2026-11-01"),
-        tx("expense", 10000, "C", "2026-11-01"),
+    const transactions = [
+        makeTransaction("expense", 10000, "B", "2026-11-01"),
+        makeTransaction("expense", 10000, "A", "2026-11-01"),
+        makeTransaction("expense", 30000, "C", "2026-11-01"),
+        makeTransaction("expense", 10000, "C", "2026-11-01"),
     ];
-    const names = byCategory(txs, "expense").categories.map((c) => c.name);
+    const names = byCategory(transactions, "expense").categories.map(
+        (category) => category.name,
+    );
     assertEquals(names, ["C", "A", "B"]);
-    assertEquals(byCategory(txs, "expense").categories[0].count, 2);
+    assertEquals(byCategory(transactions, "expense").categories[0].count, 2);
     assertEquals(byCategory([], "expense"), { total: "0 đ", categories: [] });
 });
 
 Deno.test("compare tính thay đổi tổng", () => {
-    const base = [tx("expense", 800000, "Ăn uống", "2026-10-01")];
-    const cur = [tx("expense", 920000, "Ăn uống", "2026-11-01")];
-    assertEquals(compare(base, cur, "expense", false), {
+    const previous = [
+        makeTransaction("expense", 800000, "Ăn uống", "2026-10-01"),
+    ];
+    const current = [
+        makeTransaction("expense", 920000, "Ăn uống", "2026-11-01"),
+    ];
+    assertEquals(compare(previous, current, "expense", false), {
         base_total: "800.000 đ",
         total: "920.000 đ",
         change: "tăng 120.000 đ (+15%)",
@@ -97,65 +103,95 @@ Deno.test("compare tính thay đổi tổng", () => {
 });
 
 Deno.test("compare breakdown: top 3 tăng/giảm, bỏ mục không đổi", () => {
-    const base = [
-        tx("expense", 100000, "A", "2026-10-01"),
-        tx("expense", 100000, "B", "2026-10-01"),
-        tx("expense", 100000, "C", "2026-10-01"),
-        tx("expense", 100000, "D", "2026-10-01"),
-        tx("expense", 100000, "Same", "2026-10-01"),
-        tx("expense", 500000, "Gone", "2026-10-01"),
-        tx("expense", 90000, "X", "2026-10-01"),
-        tx("income", 1, "Lương", "2026-10-01"),
+    const previous = [
+        makeTransaction("expense", 100000, "A", "2026-10-01"),
+        makeTransaction("expense", 100000, "B", "2026-10-01"),
+        makeTransaction("expense", 100000, "C", "2026-10-01"),
+        makeTransaction("expense", 100000, "D", "2026-10-01"),
+        makeTransaction("expense", 100000, "Same", "2026-10-01"),
+        makeTransaction("expense", 500000, "Gone", "2026-10-01"),
+        makeTransaction("expense", 90000, "X", "2026-10-01"),
+        makeTransaction("income", 1, "Lương", "2026-10-01"),
     ];
-    const cur = [
-        tx("expense", 110000, "A", "2026-11-01"),
-        tx("expense", 150000, "B", "2026-11-01"),
-        tx("expense", 200000, "C", "2026-11-01"),
-        tx("expense", 300000, "D", "2026-11-01"),
-        tx("expense", 100000, "Same", "2026-11-01"),
-        tx("expense", 40000, "New", "2026-11-01"),
-        tx("expense", 10000, "X", "2026-11-01"),
+    const current = [
+        makeTransaction("expense", 110000, "A", "2026-11-01"),
+        makeTransaction("expense", 150000, "B", "2026-11-01"),
+        makeTransaction("expense", 200000, "C", "2026-11-01"),
+        makeTransaction("expense", 300000, "D", "2026-11-01"),
+        makeTransaction("expense", 100000, "Same", "2026-11-01"),
+        makeTransaction("expense", 40000, "New", "2026-11-01"),
+        makeTransaction("expense", 10000, "X", "2026-11-01"),
     ];
-    const r = compare(base, cur, "expense", true);
-    assertEquals(r.biggest_increases, [
+    const result = compare(previous, current, "expense", true);
+    assertEquals(result.biggest_increases, [
         { name: "D", change: "tăng 200.000 đ (+200%)" },
         { name: "C", change: "tăng 100.000 đ (+100%)" },
         { name: "B", change: "tăng 50.000 đ (+50%)" },
     ]);
-    assertEquals(r.biggest_decreases, [
+    assertEquals(result.biggest_decreases, [
         { name: "Gone", change: "giảm 500.000 đ (-100%)" },
         { name: "X", change: "giảm 80.000 đ (-89%)" },
     ]);
-    const noBreakdown = compare(base, cur, "expense", false);
+    const noBreakdown = compare(previous, current, "expense", false);
     assertEquals("biggest_increases" in noBreakdown, false);
     assertEquals("biggest_decreases" in noBreakdown, false);
 });
 
 Deno.test("compare breakdown: mục chỉ có ở một kỳ vẫn được tính", () => {
-    const r = compare(
+    const result = compare(
         [],
-        [tx("expense", 40000, "New", "2026-11-01")],
+        [makeTransaction("expense", 40000, "New", "2026-11-01")],
         "expense",
         true,
     );
-    assertEquals(r.biggest_increases, [
+    assertEquals(result.biggest_increases, [
         { name: "New", change: "tăng 40.000 đ (kỳ trước không có)" },
     ]);
-    assertEquals(r.biggest_decreases, []);
+    assertEquals(result.biggest_decreases, []);
 });
 
-Deno.test("listTxs newest: theo date rồi createdAt giảm dần", () => {
-    const txs = [
-        tx("expense", 1000, "A", "2026-11-01", "2026-11-01T08:00:00Z"),
-        tx("expense", 2000, "B", "2026-11-03", "2026-11-03T08:00:00Z"),
-        tx("income", 3000, "C", "2026-11-03", "2026-11-03T09:00:00Z"),
-        tx("expense", 4000, null, "2026-11-02", "2026-11-02T08:00:00Z"),
-        tx("expense", 5000, "E", "2026-10-30", "2026-10-30T08:00:00Z"),
+Deno.test("listTransactions newest: theo date rồi createdAt giảm dần", () => {
+    const transactions = [
+        makeTransaction(
+            "expense",
+            1000,
+            "A",
+            "2026-11-01",
+            "2026-11-01T08:00:00Z",
+        ),
+        makeTransaction(
+            "expense",
+            2000,
+            "B",
+            "2026-11-03",
+            "2026-11-03T08:00:00Z",
+        ),
+        makeTransaction(
+            "income",
+            3000,
+            "C",
+            "2026-11-03",
+            "2026-11-03T09:00:00Z",
+        ),
+        makeTransaction(
+            "expense",
+            4000,
+            null,
+            "2026-11-02",
+            "2026-11-02T08:00:00Z",
+        ),
+        makeTransaction(
+            "expense",
+            5000,
+            "E",
+            "2026-10-30",
+            "2026-10-30T08:00:00Z",
+        ),
     ];
-    const r = listTxs(txs, "newest", 2);
-    assertEquals(r.total_count, 5);
-    assertEquals(r.shown, 2);
-    assertEquals(r.items, [
+    const result = listTransactions(transactions, "newest", 2);
+    assertEquals(result.total_count, 5);
+    assertEquals(result.shown, 2);
+    assertEquals(result.items, [
         {
             date: "03/11/2026",
             kind: "thu",
@@ -171,19 +207,23 @@ Deno.test("listTxs newest: theo date rồi createdAt giảm dần", () => {
             note: null,
         },
     ]);
-    const all = listTxs(txs, "newest", 10);
+    const all = listTransactions(transactions, "newest", 10);
     assertEquals(all.items[2].category, "Không phân loại");
 });
 
 Deno.test(
-    "listTxs largest: theo amount giảm dần, bằng nhau thì mới nhất trước",
+    "listTransactions largest: theo amount giảm dần, bằng nhau thì mới nhất trước",
     () => {
-        const txs = [
-            tx("expense", 5000, "Old", "2026-11-01"),
-            tx("expense", 9000, "Big", "2026-10-01"),
-            tx("expense", 5000, "New", "2026-11-02"),
+        const transactions = [
+            makeTransaction("expense", 5000, "Old", "2026-11-01"),
+            makeTransaction("expense", 9000, "Big", "2026-10-01"),
+            makeTransaction("expense", 5000, "New", "2026-11-02"),
         ];
-        const cats = listTxs(txs, "largest", 3).items.map((i) => i.category);
-        assertEquals(cats, ["Big", "New", "Old"]);
+        const categoryNames = listTransactions(
+            transactions,
+            "largest",
+            3,
+        ).items.map((item) => item.category);
+        assertEquals(categoryNames, ["Big", "New", "Old"]);
     },
 );

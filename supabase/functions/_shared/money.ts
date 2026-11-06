@@ -17,14 +17,16 @@ export function formatShare(part: number, whole: number): string {
 }
 
 export function formatChange(before: number, after: number): string {
-    const diff = after - before;
-    if (diff === 0) return "không đổi";
-    const amount = formatVND(Math.abs(diff));
+    const difference = after - before;
+    if (difference === 0) return "không đổi";
+    const amount = formatVND(Math.abs(difference));
     if (before === 0) {
-        return diff > 0
+        return difference > 0
             ? `tăng ${amount} (kỳ trước không có)`
             : `giảm ${amount} (kỳ trước không có)`;
     }
-    const pct = Math.round((diff / before) * 100);
-    return diff > 0 ? `tăng ${amount} (+${pct}%)` : `giảm ${amount} (${pct}%)`;
+    const percent = Math.round((difference / before) * 100);
+    return difference > 0
+        ? `tăng ${amount} (+${percent}%)`
+        : `giảm ${amount} (${percent}%)`;
 }

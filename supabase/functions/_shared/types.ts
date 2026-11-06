@@ -1,7 +1,7 @@
-export type TxType = "expense" | "income";
+export type TransactionType = "expense" | "income";
 
-export type Tx = {
-    type: TxType;
+export type Transaction = {
+    type: TransactionType;
     amount: number;
     categoryId: string | null;
     categoryName: string | null;
@@ -10,4 +10,4 @@ export type Tx = {
     createdAt: string;
 };
 
-export type CategoryRef = { id: string; name: string; type: TxType };
+export type CategoryRef = { id: string; name: string; type: TransactionType };

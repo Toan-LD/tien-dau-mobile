@@ -2,7 +2,7 @@ export type Period = { start: string; end: string; label: string };
 export type PeriodResult =
     { ok: true; period: Period } | { ok: false; error: string };
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const WEEKDAYS = [
     "Chủ Nhật",
     "Thứ Hai",
@@ -13,24 +13,27 @@ const WEEKDAYS = [
     "Thứ Bảy",
 ];
 
-const pad = (n: number, width = 2) => String(n).padStart(width, "0");
+const pad = (value: number, width = 2) => String(value).padStart(width, "0");
 
-function toIso(ms: number): string {
-    const d = new Date(ms);
-    return `${pad(d.getUTCFullYear(), 4)}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+function toIsoDate(milliseconds: number): string {
+    const date = new Date(milliseconds);
+    return `${pad(date.getUTCFullYear(), 4)}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
 }
 
-function toMs(date: string): number {
-    const [y, m, d] = date.split("-").map(Number);
-    return Date.UTC(y, m - 1, d);
+function toMilliseconds(date: string): number {
+    const [year, month, day] = date.split("-").map(Number);
+    return Date.UTC(year, month - 1, day);
 }
 
 function addDays(date: string, days: number): string {
-    return toIso(toMs(date) + days * DAY_MS);
+    return toIsoDate(toMilliseconds(date) + days * MILLISECONDS_PER_DAY);
 }
 
 function isValidDate(date: string): boolean {
-    return /^\d{4}-\d{2}-\d{2}$/.test(date) && toIso(toMs(date)) === date;
+    return (
+        /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+        toIsoDate(toMilliseconds(date)) === date
+    );
 }
 
 function isValidMonth(month: string): boolean {
@@ -39,17 +42,17 @@ function isValidMonth(month: string): boolean {
 
 function lastDayOfMonth(year: number, month: number): string {
     // Ngày 0 của tháng kế tiếp là ngày cuối của tháng này.
-    return toIso(Date.UTC(year, month, 0));
+    return toIsoDate(Date.UTC(year, month, 0));
 }
 
 // "2026-11-06" -> "06/11/2026"
 export function formatDate(date: string): string {
-    const [y, m, d] = date.split("-");
-    return `${d}/${m}/${y}`;
+    const [year, month, day] = date.split("-");
+    return `${day}/${month}/${year}`;
 }
 
 export function weekdayTitle(date: string): string {
-    const day = new Date(toMs(date)).getUTCDay();
+    const day = new Date(toMilliseconds(date)).getUTCDay();
     return `${WEEKDAYS[day]}, ${formatDate(date)}`;
 }
 
@@ -100,13 +103,14 @@ export function resolvePeriod(input: string, today: string): PeriodResult {
         case "today":
             return single(today, `Hôm nay, ${formatDate(today)}`);
         case "yesterday": {
-            const y = addDays(today, -1);
-            return single(y, `Hôm qua, ${formatDate(y)}`);
+            const yesterday = addDays(today, -1);
+            return single(yesterday, `Hôm qua, ${formatDate(yesterday)}`);
         }
         case "this_week":
         case "last_week": {
             // Thứ Hai là ngày đầu tuần: Chủ Nhật (0) lùi 6 ngày.
-            const sinceMonday = (new Date(toMs(today)).getUTCDay() + 6) % 7;
+            const sinceMonday =
+                (new Date(toMilliseconds(today)).getUTCDay() + 6) % 7;
             const thisMonday = addDays(today, -sinceMonday);
             if (input === "this_week") {
                 return range("Tuần này", thisMonday, today);
@@ -128,8 +132,8 @@ export function resolvePeriod(input: string, today: string): PeriodResult {
     }
 
     if (isValidMonth(input)) {
-        const [y, m] = input.split("-").map(Number);
-        return monthPeriod(y, m, today);
+        const [year, month] = input.split("-").map(Number);
+        return monthPeriod(year, month, today);
     }
     if (isValidDate(input)) {
         return single(input, `Ngày ${formatDate(input)}`);

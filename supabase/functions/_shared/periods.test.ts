@@ -8,11 +8,11 @@ function assertPeriod(
     end: string,
     label?: string,
 ) {
-    const r = resolvePeriod(input, today);
-    if (!r.ok) throw new Error(`"${input}" bị từ chối: ${r.error}`);
-    assertEquals(r.period.start, start);
-    assertEquals(r.period.end, end);
-    if (label !== undefined) assertEquals(r.period.label, label);
+    const result = resolvePeriod(input, today);
+    if (!result.ok) throw new Error(`"${input}" bị từ chối: ${result.error}`);
+    assertEquals(result.period.start, start);
+    assertEquals(result.period.end, end);
+    if (label !== undefined) assertEquals(result.period.label, label);
 }
 
 Deno.test("vietnamToday dùng giờ Việt Nam", () => {
@@ -112,7 +112,7 @@ Deno.test("đầu vào sai trả lỗi", () => {
         "2026-11-06..2026-11-01",
         "06/11/2026",
     ]) {
-        const r = resolvePeriod(bad, "2026-11-06");
-        assertEquals(r.ok, false);
+        const result = resolvePeriod(bad, "2026-11-06");
+        assertEquals(result.ok, false);
     }
 });

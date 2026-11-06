@@ -1,9 +1,9 @@
-import type { CategoryRef, TxType } from "./types.ts";
+import type { CategoryRef, TransactionType } from "./types.ts";
 
 export const UNCATEGORIZED = "Không phân loại";
 
-export function normalizeName(s: string): string {
-    return s
+export function normalizeName(text: string): string {
+    return text
         .toLowerCase()
         .replace(/đ/g, "d")
         .normalize("NFD")
@@ -18,20 +18,23 @@ export type CategoryMatch =
 export function matchCategory(
     name: string,
     categories: CategoryRef[],
-    type?: TxType,
+    type?: TransactionType,
 ): CategoryMatch {
     const wanted = normalizeName(name);
     const scoped = categories.filter(
-        (c) => type === undefined || c.type === type,
+        (category) => type === undefined || category.type === type,
     );
     if (wanted === normalizeName(UNCATEGORIZED)) {
         return { ok: true, ids: [null] };
     }
     const ids = scoped
-        .filter((c) => normalizeName(c.name) === wanted)
-        .map((c) => c.id);
+        .filter((category) => normalizeName(category.name) === wanted)
+        .map((category) => category.id);
     if (ids.length > 0) return { ok: true, ids };
-    const names = [...new Set(scoped.map((c) => c.name)), UNCATEGORIZED];
+    const names = [
+        ...new Set(scoped.map((category) => category.name)),
+        UNCATEGORIZED,
+    ];
     return {
         ok: false,
         error: `Không có mục "${name}". Các mục: ${names.join(", ")}.`,

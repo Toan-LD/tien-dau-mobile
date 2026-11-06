@@ -312,8 +312,6 @@ export async function insertSampleData(now = new Date()): Promise<number> {
     for (let i = 0; i < rows.length; i += BATCH) {
         batches.push(rows.slice(i, i + BATCH));
     }
-    // All batches go out together; a failed one still leaves the others in,
-    // and "Xoá dữ liệu mẫu" removes them by the marker.
     const results = await Promise.all(
         batches.map((batch) =>
             supabase.from("transactions").insert(

@@ -144,7 +144,6 @@ export default function ListScreen() {
             setHintId(firstId);
             await AsyncStorage.setItem(HINT_KEY, "1");
         };
-        // Storage errors only mean the hint may show again next time.
         showHintOnce().catch(noop);
         return () => {
             cancelled = true;

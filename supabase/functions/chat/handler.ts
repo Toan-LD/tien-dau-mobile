@@ -83,6 +83,8 @@ export function createHandler(
         const toolContext = {
             today,
             categories,
+            cards: [],
+            drafts: [],
             loadTransactions: (start: string, end: string) =>
                 fetchTransactions(user.client, start, end),
         };

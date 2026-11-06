@@ -1,7 +1,16 @@
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
-import { matchCategory } from "../_shared/categories.ts";
+import {
+    matchCategory,
+    normalizeName,
+    UNCATEGORIZED,
+} from "../_shared/categories.ts";
+import { formatVND, parseAmount } from "../_shared/money.ts";
 import type { Period } from "../_shared/periods.ts";
-import { resolvePeriod } from "../_shared/periods.ts";
+import {
+    resolveEntryDate,
+    resolvePeriod,
+    weekdayTitle,
+} from "../_shared/periods.ts";
 import {
     byCategory,
     compare,
@@ -14,14 +23,37 @@ import type {
     TransactionType,
 } from "../_shared/types.ts";
 
+export type CardStatus = "open" | "saved" | "dismissed" | "replaced";
+export type CardState = { number: number; status: CardStatus };
+export type ProposedDraft = {
+    type: TransactionType;
+    amount: number;
+    categoryId: string;
+    categoryName: string;
+    date: string;
+    note: string | null;
+    replaces: number | null;
+};
+
 export type ToolContext = {
     today: string;
     categories: CategoryRef[];
+    cards: CardState[];
+    drafts: ProposedDraft[];
     loadTransactions(start: string, end: string): Promise<Transaction[]>;
 };
 
+export const MAX_DRAFTS_PER_REPLY = 5;
+export const MAX_NOTE_LENGTH = 200;
+
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 20;
+
+const ENTRY_DATE_FORMS =
+    'today (mặc định), yesterday, day_before_yesterday, monday…sunday (lần gần nhất không sau hôm nay), DD/MM (người dùng nói ngày và tháng), day:DD (người dùng chỉ nói "ngày 3"), YYYY-MM-DD (người dùng nói đủ năm)';
+
+const DRAFT_NOTE_FOR_REPLY =
+    "Thẻ nháp đã hiện cho người dùng; họ cần bấm Lưu để ghi. Đừng nói là đã ghi.";
 
 const PERIOD_FORMS =
     "today, yesterday, this_week, last_week, this_month, last_month, this_year, YYYY-MM (một tháng), YYYY-MM-DD (một ngày), YYYY-MM-DD..YYYY-MM-DD (một khoảng)";
@@ -152,6 +184,49 @@ export const TOOL_DEFINITIONS: ChatCompletionTool[] = [
                     },
                 },
                 required: [],
+            },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "propose_transaction",
+            description:
+                "Soạn một thẻ nháp ghi khoản chi/thu để người dùng xem lại và bấm Lưu. Không ghi gì cả. Gọi một lần cho mỗi khoản; tối đa 5 thẻ mỗi câu trả lời. Chỉ gọi khi người dùng nhờ ghi, hoặc đang trả lời/sửa khoản vừa bàn.",
+            parameters: {
+                type: "object",
+                properties: {
+                    type: {
+                        type: "string",
+                        enum: TYPE_ENUM,
+                        description: "expense là chi, income là thu.",
+                    },
+                    amount: {
+                        type: "string",
+                        description:
+                            'Số tiền đúng như người dùng gõ, ví dụ "30k", "1tr2", "30.000"; không tự đổi.',
+                    },
+                    category: {
+                        type: "string",
+                        description:
+                            'Tên một mục có sẵn cùng loại, khớp nhất với khoản (ví dụ "Ăn uống"); không phân biệt hoa thường và dấu. Không dùng "Không phân loại".',
+                    },
+                    date: {
+                        type: "string",
+                        description: `Ngày của khoản, một trong: ${ENTRY_DATE_FORMS}. Người dùng không nói ngày thì bỏ trống. Không tự tính ngày, năm hay tháng.`,
+                    },
+                    note: {
+                        type: "string",
+                        description:
+                            'Mô tả ngắn, là phần người dùng nói về khoản đó ("ăn sáng"), không phải cả câu. Không có thì bỏ trống.',
+                    },
+                    replaces: {
+                        type: "integer",
+                        description:
+                            "Số của thẻ đang sửa, lấy từ dòng [Thẻ N: ...] trong lịch sử. Chỉ truyền khi người dùng sửa một thẻ đã soạn.",
+                    },
+                },
+                required: ["type", "amount", "category"],
             },
         },
     },
@@ -387,6 +462,116 @@ function listCategories(
     };
 }
 
+function readNote(argumentsObject: Arguments): Parsed<string | null> {
+    const value = argumentsObject.note;
+    if (value === undefined || value === null) return { ok: true, value: null };
+    if (typeof value !== "string") {
+        return fail('Tham số "note" phải là chuỗi.');
+    }
+    const collapsed = value
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, MAX_NOTE_LENGTH);
+    return { ok: true, value: collapsed === "" ? null : collapsed };
+}
+
+function readReplaces(
+    argumentsObject: Arguments,
+    cards: CardState[],
+): Parsed<number | null> {
+    const value = argumentsObject.replaces;
+    if (value === undefined || value === null) return { ok: true, value: null };
+    if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
+        return fail(
+            'Tham số "replaces" phải là số thứ tự thẻ (số nguyên dương).',
+        );
+    }
+    const card = cards.find((candidate) => candidate.number === value);
+    if (!card) {
+        return fail(
+            `Không có thẻ ${value} trong cuộc trò chuyện; kiểm tra lại "replaces".`,
+        );
+    }
+    if (card.status === "saved") {
+        return fail(
+            `Thẻ ${value} đã được lưu; không soạn lại, bảo người dùng sửa khoản đó ở tab Danh sách.`,
+        );
+    }
+    return { ok: true, value: card.status === "open" ? value : null };
+}
+
+function proposeTransaction(
+    argumentsObject: Arguments,
+    context: ToolContext,
+): unknown {
+    const typeResult = readType(argumentsObject, true);
+    if (!typeResult.ok) return typeResult;
+    const type = typeResult.value as TransactionType;
+    const amountText = readText(argumentsObject, "amount", true);
+    if (!amountText.ok) return amountText;
+    const amount = parseAmount(amountText.value as string);
+    if (!amount.ok) return amount;
+    const categoryName = readText(argumentsObject, "category", true);
+    if (!categoryName.ok) return categoryName;
+    if (
+        normalizeName(categoryName.value as string) ===
+        normalizeName(UNCATEGORIZED)
+    ) {
+        return fail(
+            `Không soạn được thẻ với mục "${UNCATEGORIZED}": khoản ghi phải có mục. Chọn mục có sẵn khớp nhất hoặc hỏi người dùng.`,
+        );
+    }
+    const match = matchCategory(
+        categoryName.value as string,
+        context.categories,
+        type,
+    );
+    if (!match.ok) return match;
+    const categoryId = match.ids[0];
+    const category = context.categories.find(
+        (candidate) => candidate.id === categoryId,
+    );
+    if (categoryId === null || !category) {
+        return fail(`Không có mục "${categoryName.value}".`);
+    }
+    const dateText = readText(argumentsObject, "date", false);
+    if (!dateText.ok) return dateText;
+    const date = resolveEntryDate(dateText.value ?? "today", context.today);
+    if (!date.ok) return date;
+    const note = readNote(argumentsObject);
+    if (!note.ok) return note;
+    const replaces = readReplaces(argumentsObject, context.cards);
+    if (!replaces.ok) return replaces;
+    if (context.drafts.length >= MAX_DRAFTS_PER_REPLY) {
+        return fail(
+            `Mỗi lần chỉ soạn tối đa ${MAX_DRAFTS_PER_REPLY} thẻ; bảo người dùng gửi tiếp phần còn lại.`,
+        );
+    }
+
+    context.drafts.push({
+        type,
+        amount: amount.amount,
+        categoryId,
+        categoryName: category.name,
+        date: date.date,
+        note: note.value,
+        replaces: replaces.value,
+    });
+    const card = [
+        `${type === "expense" ? "Chi" : "Thu"} ${formatVND(amount.amount)}`,
+        category.name,
+        weekdayTitle(date.date),
+        note.value,
+    ]
+        .filter(Boolean)
+        .join(" · ");
+    return {
+        card,
+        note_for_reply: DRAFT_NOTE_FOR_REPLY,
+        ...(replaces.value !== null && { replaces: replaces.value }),
+    };
+}
+
 export async function runTool(
     name: string,
     rawArguments: string,
@@ -404,6 +589,7 @@ export async function runTool(
         compare_periods: comparePeriods,
         list_transactions: listMatchingTransactions,
         list_categories: listCategories,
+        propose_transaction: proposeTransaction,
     };
     const handler = Object.hasOwn(handlers, name) ? handlers[name] : undefined;
     if (!handler) {

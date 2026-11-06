@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
     Pressable,
     StyleSheet,
@@ -49,11 +49,13 @@ export function SegmentedControl<T extends string>({
     const optionWidth = useSharedValue(0);
     const x = useSharedValue(0);
     const scale = useSharedValue(1);
+    const slidIndex = useRef(index);
 
-    useEffect(() => {
+    const slideTo = (nextIndex: number) => {
+        slidIndex.current = nextIndex;
         const width = optionWidth.get();
         if (width === 0) return;
-        x.set(withSpring(index * width, SLIDE));
+        x.set(withSpring(nextIndex * width, SLIDE));
         scale.set(
             withSequence(
                 withTiming(LIFT_SCALE, LIFT),
@@ -61,7 +63,11 @@ export function SegmentedControl<T extends string>({
                 withSpring(1, SETTLE),
             ),
         );
-    }, [index, optionWidth, scale, x]);
+    };
+
+    useEffect(() => {
+        if (index !== slidIndex.current) slideTo(index);
+    });
 
     const thumbStyle = useAnimatedStyle(() => {
         const lift = Math.max(0, (scale.get() - 1) / (LIFT_SCALE - 1));
@@ -94,7 +100,10 @@ export function SegmentedControl<T extends string>({
                 return (
                     <Pressable
                         key={o.value}
-                        onPress={() => onChange(o.value)}
+                        onPress={() => {
+                            if (i !== slidIndex.current) slideTo(i);
+                            onChange(o.value);
+                        }}
                         accessibilityRole="button"
                         accessibilityLabel={o.label}
                         accessibilityState={{ selected: on }}

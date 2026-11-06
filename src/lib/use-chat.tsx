@@ -8,12 +8,16 @@ import {
 
 import { askChat, type ChatTurn } from "@/lib/chat";
 import {
+    cardsFor,
     chatReducer,
     historyFor,
     historyForRetry,
     initialChatState,
     type ChatMessage,
 } from "@/lib/chat-state";
+import { createTransaction, validateDraft } from "@/lib/transactions";
+
+export type SaveResult = "saved" | "failed" | "ignored";
 
 type ChatContextValue = {
     messages: ChatMessage[];
@@ -21,6 +25,8 @@ type ChatContextValue = {
     send: (text: string) => void;
     retry: (errorId: string) => void;
     reset: () => void;
+    saveDraft: (messageId: string) => Promise<SaveResult>;
+    dismissDraft: (messageId: string) => void;
 };
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -29,6 +35,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(chatReducer, initialChatState);
     const messageCounter = useRef(0);
     const conversationGeneration = useRef(0);
+    const savingMessageIds = useRef(new Set<string>());
 
     const nextId = () => {
         messageCounter.current += 1;
@@ -37,10 +44,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const ask = async (question: string, history: ChatTurn[]) => {
         const generation = conversationGeneration.current;
-        const result = await askChat(question, history);
+        const result = await askChat(
+            question,
+            history,
+            cardsFor(state.messages),
+        );
         if (generation !== conversationGeneration.current) return;
         if (result.ok) {
-            dispatch({ type: "reply", id: nextId(), text: result.reply });
+            dispatch({
+                type: "reply",
+                id: nextId(),
+                text: result.reply,
+                drafts: result.drafts.map((draft) => ({ id: nextId(), draft })),
+            });
         } else {
             dispatch({
                 type: "fail",
@@ -73,6 +89,45 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "reset" });
     };
 
+    const saveDraft = async (messageId: string): Promise<SaveResult> => {
+        const message = state.messages.find(
+            (candidate) => candidate.id === messageId,
+        );
+        if (message?.role !== "draft" || message.status !== "open") {
+            return "ignored";
+        }
+        if (savingMessageIds.current.has(messageId)) return "ignored";
+        const { type, amount, categoryId, date, note } = message.draft;
+        const draft = { type, amount, categoryId, date, note };
+        if (validateDraft(draft) !== null) return "failed";
+
+        const generation = conversationGeneration.current;
+        const stillCurrent = () =>
+            generation === conversationGeneration.current;
+        savingMessageIds.current.add(messageId);
+        dispatch({ type: "saveStart", id: messageId });
+        try {
+            const transaction = await createTransaction(draft);
+            if (stillCurrent()) {
+                dispatch({
+                    type: "saveDone",
+                    id: messageId,
+                    transactionId: transaction.id,
+                });
+            }
+            return "saved";
+        } catch {
+            if (stillCurrent()) dispatch({ type: "saveFail", id: messageId });
+            return "failed";
+        } finally {
+            savingMessageIds.current.delete(messageId);
+        }
+    };
+
+    const dismissDraft = (messageId: string) => {
+        dispatch({ type: "dismiss", id: messageId });
+    };
+
     return (
         <ChatContext.Provider
             value={{
@@ -81,6 +136,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 send,
                 retry,
                 reset,
+                saveDraft,
+                dismissDraft,
             }}
         >
             {children}

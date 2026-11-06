@@ -1,9 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { vietnamToday } from "../../_shared/periods.ts";
 import type { CategoryRef } from "../../_shared/types.ts";
 import { buildFixture } from "./fixture.ts";
 import { requireLocalSupabaseUrl } from "./local-only.ts";
+import { printLine } from "./output.ts";
 
 export const EVAL_EMAIL = "eval@tiendau.local";
 export const EVAL_PASSWORD = "eval-local-only-password";
@@ -84,9 +85,8 @@ async function seed(): Promise<void> {
         created_at: transaction.createdAt,
     }));
     for (let from = 0; from < rows.length; from += INSERT_BATCH_SIZE) {
-        const { error } = await admin
-            .from("transactions")
-            .insert(rows.slice(from, from + INSERT_BATCH_SIZE));
+        const batch = rows.slice(from, from + INSERT_BATCH_SIZE);
+        const { error } = await admin.from("transactions").insert(batch); // NOSONAR
         if (error) throw new Error(error.message);
     }
 
@@ -95,7 +95,7 @@ async function seed(): Promise<void> {
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId);
     if (countError) throw new Error(countError.message);
-    console.log(
+    printLine(
         `Đã nạp ${rows.length} giao dịch cho ${EVAL_EMAIL}; hiện có ${count} dòng.`,
     );
 }

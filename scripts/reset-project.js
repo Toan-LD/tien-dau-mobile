@@ -11,6 +11,8 @@ const fs = require("fs");
 const path = require("path");
 const readline = require("readline");
 
+const printLine = (text) => process.stdout.write(`${text}\n`);
+
 const root = process.cwd();
 const oldDirs = ["src", "scripts"];
 const exampleDir = "example";
@@ -69,7 +71,7 @@ const moveDirectories = async (userInput) => {
                 path.join(exampleDirPath, "assets/images"),
                 { recursive: true },
             );
-            console.log(`📁 /${exampleDir} directory created.`);
+            printLine(`📁 /${exampleDir} directory created.`);
         }
 
         // Move old directories to new app-example directory or delete them
@@ -79,16 +81,16 @@ const moveDirectories = async (userInput) => {
                 if (userInput === "y") {
                     const newDirPath = path.join(root, exampleDir, dir);
                     await fs.promises.rename(oldDirPath, newDirPath);
-                    console.log(`➡️ /${dir} moved to /${exampleDir}/${dir}.`);
+                    printLine(`➡️ /${dir} moved to /${exampleDir}/${dir}.`);
                 } else {
                     await fs.promises.rm(oldDirPath, {
                         recursive: true,
                         force: true,
                     });
-                    console.log(`❌ /${dir} deleted.`);
+                    printLine(`❌ /${dir} deleted.`);
                 }
             } else {
-                console.log(`➡️ /${dir} does not exist, skipping.`);
+                printLine(`➡️ /${dir} does not exist, skipping.`);
             }
         }
 
@@ -103,7 +105,7 @@ const moveDirectories = async (userInput) => {
                         asset,
                     );
                     await fs.promises.rename(assetPath, newAssetPath);
-                    console.log(
+                    printLine(
                         `➡️ /assets/images/${asset} moved to /${exampleDir}/assets/images/${asset}.`,
                     );
                 } else {
@@ -111,7 +113,7 @@ const moveDirectories = async (userInput) => {
                         recursive: true,
                         force: true,
                     });
-                    console.log(`❌ /assets/images/${asset} deleted.`);
+                    printLine(`❌ /assets/images/${asset} deleted.`);
                 }
             }
         }
@@ -119,20 +121,22 @@ const moveDirectories = async (userInput) => {
         // Create new /src/app directory
         const newAppDirPath = path.join(root, newAppDir);
         await fs.promises.mkdir(newAppDirPath, { recursive: true });
-        console.log("\n📁 New /src/app directory created.");
+        printLine("");
+        printLine("📁 New /src/app directory created.");
 
         // Create index.tsx
         const indexPath = path.join(newAppDirPath, "index.tsx");
         await fs.promises.writeFile(indexPath, indexContent);
-        console.log("📄 src/app/index.tsx created.");
+        printLine("📄 src/app/index.tsx created.");
 
         // Create _layout.tsx
         const layoutPath = path.join(newAppDirPath, "_layout.tsx");
         await fs.promises.writeFile(layoutPath, layoutContent);
-        console.log("📄 src/app/_layout.tsx created.");
+        printLine("📄 src/app/_layout.tsx created.");
 
-        console.log("\n✅ Project reset complete. Next steps:");
-        console.log(
+        printLine("");
+        printLine("✅ Project reset complete. Next steps:");
+        printLine(
             `1. Run \`npx expo start\` to start a development server.\n2. Edit src/app/index.tsx to edit the main screen.\n3. Put all your application code in /src, only screens and layout files should be in /src/app.${
                 userInput === "y"
                     ? `\n4. Delete the /${exampleDir} directory when you're done referencing it.`
@@ -151,7 +155,7 @@ rl.question(
         if (userInput === "y" || userInput === "n") {
             moveDirectories(userInput).finally(() => rl.close());
         } else {
-            console.log("❌ Invalid input. Please enter 'Y' or 'N'.");
+            printLine("❌ Invalid input. Please enter 'Y' or 'N'.");
             rl.close();
         }
     },

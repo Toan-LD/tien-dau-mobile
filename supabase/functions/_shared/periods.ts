@@ -1,6 +1,8 @@
 export type Period = { start: string; end: string; label: string };
 export type PeriodResult =
     { ok: true; period: Period } | { ok: false; error: string };
+export type EntryDateResult =
+    { ok: true; date: string } | { ok: false; error: string };
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const WEEKDAYS = [
@@ -12,6 +14,18 @@ const WEEKDAYS = [
     "Thứ Sáu",
     "Thứ Bảy",
 ];
+
+const WEEKDAY_NAMES = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+];
+const MAX_YEARS_BACK = 8;
+const MAX_MONTHS_BACK = 12;
 
 const pad = (value: number, width = 2) => String(value).padStart(width, "0");
 
@@ -154,4 +168,89 @@ export function resolvePeriod(input: string, today: string): PeriodResult {
         };
     }
     return invalid(input);
+}
+
+const ENTRY_DATE_FORMS =
+    "today, yesterday, day_before_yesterday, monday…sunday, DD/MM, day:DD, YYYY-MM-DD";
+
+function invalidEntryDate(input: string, detail?: string): EntryDateResult {
+    return {
+        ok: false,
+        error:
+            detail ??
+            `Ngày không hợp lệ: "${input}". Dùng một trong: ${ENTRY_DATE_FORMS}.`,
+    };
+}
+
+function latestDayMonth(
+    day: number,
+    month: number,
+    today: string,
+): string | null {
+    const todayYear = Number(today.slice(0, 4));
+    for (let year = todayYear; year >= todayYear - MAX_YEARS_BACK; year--) {
+        const candidate = `${pad(year, 4)}-${pad(month)}-${pad(day)}`;
+        if (isValidDate(candidate) && candidate <= today) return candidate;
+    }
+    return null;
+}
+
+function latestDayOfMonth(day: number, today: string): string | null {
+    const [todayYear, todayMonth] = today.split("-").map(Number);
+    for (let monthsBack = 0; monthsBack <= MAX_MONTHS_BACK; monthsBack++) {
+        const monthIndex = todayMonth - 1 - monthsBack;
+        const year = todayYear + Math.floor(monthIndex / 12);
+        const month = (((monthIndex % 12) + 12) % 12) + 1;
+        const candidate = `${pad(year, 4)}-${pad(month)}-${pad(day)}`;
+        if (isValidDate(candidate) && candidate <= today) return candidate;
+    }
+    return null;
+}
+
+export function resolveEntryDate(
+    input: string,
+    today: string,
+): EntryDateResult {
+    switch (input) {
+        case "today":
+            return { ok: true, date: today };
+        case "yesterday":
+            return { ok: true, date: addDays(today, -1) };
+        case "day_before_yesterday":
+            return { ok: true, date: addDays(today, -2) };
+    }
+
+    const weekdayIndex = WEEKDAY_NAMES.indexOf(input);
+    if (weekdayIndex >= 0) {
+        const todayIndex = new Date(toMilliseconds(today)).getUTCDay();
+        const daysBack = (todayIndex - weekdayIndex + 7) % 7;
+        return { ok: true, date: addDays(today, -daysBack) };
+    }
+
+    const dayMonth = /^(\d{1,2})\/(\d{1,2})$/.exec(input);
+    if (dayMonth) {
+        const date = latestDayMonth(
+            Number(dayMonth[1]),
+            Number(dayMonth[2]),
+            today,
+        );
+        return date ? { ok: true, date } : invalidEntryDate(input);
+    }
+
+    const dayOnly = /^day:(\d{1,2})$/.exec(input);
+    if (dayOnly) {
+        const date = latestDayOfMonth(Number(dayOnly[1]), today);
+        return date ? { ok: true, date } : invalidEntryDate(input);
+    }
+
+    if (isValidDate(input)) {
+        if (input > today) {
+            return invalidEntryDate(
+                input,
+                `Ngày "${input}" nằm trong tương lai; hỏi lại người dùng. Hôm nay là ${today}.`,
+            );
+        }
+        return { ok: true, date: input };
+    }
+    return invalidEntryDate(input);
 }

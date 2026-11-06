@@ -1,6 +1,11 @@
 import { assert, assertEquals } from "@std/assert";
 import type { CategoryRef, Transaction } from "../_shared/types.ts";
-import { runTool, TOOL_DEFINITIONS, type ToolContext } from "./tools.ts";
+import {
+    type CardState,
+    runTool,
+    TOOL_DEFINITIONS,
+    type ToolContext,
+} from "./tools.ts";
 
 const categories: CategoryRef[] = [
     { id: "e1", name: "Ăn uống", type: "expense" },
@@ -57,11 +62,16 @@ const transactions: Transaction[] = [
     },
 ];
 
-function makeContext(rows: Transaction[] = transactions) {
+function makeContext(
+    rows: Transaction[] = transactions,
+    cards: CardState[] = [],
+) {
     const requests: [string, string][] = [];
     const context: ToolContext = {
         today: "2026-11-06",
         categories,
+        cards,
+        drafts: [],
         loadTransactions: (start, end) => {
             requests.push([start, end]);
             return Promise.resolve(rows);
@@ -283,5 +293,179 @@ Deno.test("TOOL_DEFINITIONS có đúng tham số bắt buộc", () => {
         compare_periods: ["base_period", "period", "type"],
         list_transactions: ["period"],
         list_categories: [],
+        propose_transaction: ["type", "amount", "category"],
     });
 });
+
+const breakfast = { type: "expense", amount: "30k", category: "Ăn uống" };
+
+Deno.test("propose_transaction thêm thẻ nháp và trả tóm tắt", async () => {
+    const { context, requests } = makeContext();
+    const result = await call(
+        "propose_transaction",
+        { ...breakfast, category: "an uong", note: "  ăn\nsáng " },
+        context,
+    );
+    assertEquals(context.drafts, [
+        {
+            type: "expense",
+            amount: 30000,
+            categoryId: "e1",
+            categoryName: "Ăn uống",
+            date: "2026-11-06",
+            note: "ăn sáng",
+            replaces: null,
+        },
+    ]);
+    assertEquals(
+        result.card,
+        "Chi 30.000 đ · Ăn uống · Thứ Sáu, 06/11/2026 · ăn sáng",
+    );
+    assert(typeof result.note_for_reply === "string");
+    assert(!("replaces" in result));
+    assertEquals(requests, []);
+});
+
+Deno.test("propose_transaction đọc ngày và mục thu", async () => {
+    const { context } = makeContext();
+    const result = await call(
+        "propose_transaction",
+        { type: "income", amount: "15tr", category: "Lương", date: "monday" },
+        context,
+    );
+    assertEquals(context.drafts[0].date, "2026-11-02");
+    assertEquals(context.drafts[0].categoryId, "i1");
+    assertEquals(context.drafts[0].note, null);
+    assertEquals(result.card, "Thu 15.000.000 đ · Lương · Thứ Hai, 02/11/2026");
+});
+
+Deno.test(
+    "propose_transaction báo lỗi khi số tiền mơ hồ, mục sai loại hoặc Không phân loại",
+    async () => {
+        for (const [argumentsObject, expectedWord] of [
+            [{ ...breakfast, amount: "30" }, "mơ hồ"],
+            [{ ...breakfast, category: "Lương" }, "Ăn uống"],
+            [{ ...breakfast, category: "Không phân loại" }, "Không phân loại"],
+            [{ ...breakfast, date: "2026-11-07" }, "tương lai"],
+            [{ ...breakfast, date: "next_week" }, "day:DD"],
+            [{ ...breakfast, type: "transfer" }, "type"],
+            [{ type: "expense", category: "Ăn uống" }, "amount"],
+            [{ ...breakfast, note: 5 }, "note"],
+        ] as [Record<string, unknown>, string][]) {
+            const { context } = makeContext();
+            const result = await call(
+                "propose_transaction",
+                argumentsObject,
+                context,
+            );
+            assert("error" in result, JSON.stringify(argumentsObject));
+            assert(
+                result.error.includes(expectedWord),
+                `${JSON.stringify(argumentsObject)} → ${result.error}`,
+            );
+            assertEquals(context.drafts, []);
+        }
+    },
+);
+
+Deno.test(
+    "propose_transaction cắt mô tả còn 200 ký tự, rỗng thì null",
+    async () => {
+        const { context } = makeContext();
+        await call(
+            "propose_transaction",
+            { ...breakfast, note: "x".repeat(250) },
+            context,
+        );
+        await call(
+            "propose_transaction",
+            { ...breakfast, note: "   " },
+            context,
+        );
+        assertEquals(context.drafts[0].note?.length, 200);
+        assertEquals(context.drafts[1].note, null);
+    },
+);
+
+Deno.test("propose_transaction từ chối thẻ thứ 6", async () => {
+    const { context } = makeContext();
+    for (let index = 0; index < 5; index++) {
+        const result = await call("propose_transaction", breakfast, context);
+        assert(!("error" in result), result.error);
+    }
+    const sixth = await call("propose_transaction", breakfast, context);
+    assert(sixth.error.includes("5"));
+    assertEquals(context.drafts.length, 5);
+});
+
+Deno.test("propose_transaction với replaces theo trạng thái thẻ", async () => {
+    const cards: CardState[] = [
+        { number: 1, status: "open" },
+        { number: 2, status: "saved" },
+        { number: 3, status: "dismissed" },
+        { number: 4, status: "replaced" },
+    ];
+    const { context } = makeContext(transactions, cards);
+
+    const open = await call(
+        "propose_transaction",
+        { ...breakfast, replaces: 1 },
+        context,
+    );
+    assertEquals(open.replaces, 1);
+    assertEquals(context.drafts.at(-1)?.replaces, 1);
+
+    const saved = await call(
+        "propose_transaction",
+        { ...breakfast, replaces: 2 },
+        context,
+    );
+    assert(saved.error.includes("Danh sách"));
+    assertEquals(context.drafts.length, 1);
+
+    for (const number of [3, 4]) {
+        const closed = await call(
+            "propose_transaction",
+            { ...breakfast, replaces: number },
+            context,
+        );
+        assert(!("replaces" in closed));
+        assertEquals(context.drafts.at(-1)?.replaces, null);
+    }
+
+    for (const replaces of [9, 0, 1.5, "1"]) {
+        const bad = await call(
+            "propose_transaction",
+            { ...breakfast, replaces },
+            context,
+        );
+        assert(bad.error.includes("replaces"), bad.error);
+    }
+    assertEquals(context.drafts.length, 3);
+});
+
+Deno.test(
+    "TOOL_DEFINITIONS có propose_transaction với các tham số trong spec",
+    () => {
+        const definition = TOOL_DEFINITIONS.find(
+            (candidate) =>
+                candidate.type === "function" &&
+                candidate.function.name === "propose_transaction",
+        );
+        assert(definition && definition.type === "function");
+        const parameters = definition.function.parameters as {
+            properties: Record<string, { description?: string }>;
+        };
+        assertEquals(Object.keys(parameters.properties).sort(), [
+            "amount",
+            "category",
+            "date",
+            "note",
+            "replaces",
+            "type",
+        ]);
+        assert(parameters.properties.amount.description?.includes("1tr2"));
+        assert(parameters.properties.date.description?.includes("day:DD"));
+        assert(parameters.properties.replaces.description?.includes("[Thẻ N"));
+    },
+);

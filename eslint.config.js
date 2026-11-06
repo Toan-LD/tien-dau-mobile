@@ -7,6 +7,11 @@ module.exports = defineConfig([
     expoConfig,
     eslintPluginPrettierRecommended,
     {
+        rules: {
+            "no-console": ["error", { allow: ["error", "warn"] }],
+        },
+    },
+    {
         ignores: [
             "dist/*",
             "src/lib/database.types.ts",

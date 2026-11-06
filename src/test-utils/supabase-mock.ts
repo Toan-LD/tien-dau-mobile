@@ -12,6 +12,11 @@ export const fake = {
     calls: [] as Call[],
     lastInsert: undefined as unknown,
     lastUpdate: undefined as unknown,
+    invokeResult: { data: null, error: null } as {
+        data: unknown;
+        error: unknown;
+    },
+    invokeThrows: undefined as unknown,
     reset() {
         this.userId = "user-1";
         this.queue = {};
@@ -19,6 +24,8 @@ export const fake = {
         this.calls = [];
         this.lastInsert = undefined;
         this.lastUpdate = undefined;
+        this.invokeResult = { data: null, error: null };
+        this.invokeThrows = undefined;
     },
     enqueue(table: string, result: Partial<Result>) {
         (this.queue[table] ??= []).push({ data: null, error: null, ...result });
@@ -65,6 +72,15 @@ export const fakeSupabase = {
     from: (table: string) => {
         fake.calls.push({ method: "from", args: [table] });
         return builder(table);
+    },
+    functions: {
+        invoke: (name: string, options: unknown) => {
+            fake.calls.push({ method: "invoke", args: [name, options] });
+            if (fake.invokeThrows !== undefined) {
+                return Promise.reject(fake.invokeThrows);
+            }
+            return Promise.resolve(fake.invokeResult);
+        },
     },
     auth: {
         getSession: () =>

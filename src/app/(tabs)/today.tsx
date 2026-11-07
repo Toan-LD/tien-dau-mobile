@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import {
     keepPreviousData,
     noop,
@@ -7,8 +8,8 @@ import {
 } from "@tanstack/react-query";
 import { useNavigation, useRouter } from "expo-router";
 import type { BottomTabNavigationProp } from "expo-router/js-tabs";
-import { useEffect, useRef, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { startTransition, useEffect, useRef, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -66,6 +67,12 @@ const UNIT: Record<PeriodMode, string> = {
 };
 
 type Row = { kind: "day"; group: DayGroup } | { kind: "tx"; tx: Transaction };
+
+const NO_ANCHOR = { disabled: true };
+
+function rowType(row: Row): Row["kind"] {
+    return row.kind;
+}
 
 function toRows(mode: PeriodMode, list: Transaction[]): Row[] {
     if (mode === "day") return list.map((tx) => ({ kind: "tx", tx }));
@@ -152,6 +159,9 @@ export default function ListScreen() {
 
     const clearHint = () => setHintId(null);
 
+    const changeMode = (next: PeriodMode) =>
+        startTransition(() => setMode(next));
+
     const goTo = (next: string) => {
         setPicked(containsDate(periodOf(mode, next), today) ? null : next);
     };
@@ -161,7 +171,11 @@ export default function ListScreen() {
 
     const navigation =
         useNavigation<BottomTabNavigationProp<Record<string, undefined>>>();
-    const listRef = useRef<FlatList<Row>>(null);
+    const listRef = useRef<FlashListRef<Row>>(null);
+    const deleteRow = (tx: Transaction) => {
+        listRef.current?.prepareForLayoutAnimationRender();
+        remove(tx);
+    };
     useEffect(
         () =>
             navigation.addListener("tabPress", () => {
@@ -206,7 +220,7 @@ export default function ListScreen() {
             <SegmentedControl<PeriodMode>
                 options={MODES}
                 value={mode}
-                onChange={setMode}
+                onChange={changeMode}
             />
             <PeriodNav
                 spread
@@ -226,13 +240,11 @@ export default function ListScreen() {
                 onClear={() => setCategoryFilter([])}
             />
             <View style={styles.listArea}>
-                <FlatList
+                <FlashList
                     ref={listRef}
                     style={showingOld && styles.stale}
-                    initialNumToRender={12}
-                    maxToRenderPerBatch={8}
-                    updateCellsBatchingPeriod={40}
-                    windowSize={7}
+                    maintainVisibleContentPosition={NO_ANCHOR}
+                    getItemType={rowType}
                     onScrollBeginDrag={stopSwipes}
                     onScrollEndDrag={allowSwipes}
                     onMomentumScrollBegin={stopSwipes}
@@ -265,7 +277,7 @@ export default function ListScreen() {
                                 onPeekDone={clearHint}
                                 onPress={openTransaction}
                                 onEdit={editTransaction}
-                                onDelete={remove}
+                                onDelete={deleteRow}
                                 swipeEnabled={swipeEnabled}
                             />
                         )

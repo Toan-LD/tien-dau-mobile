@@ -1,20 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+    Animated,
     Pressable,
     StyleSheet,
     View,
+    type LayoutChangeEvent,
     type StyleProp,
     type ViewStyle,
 } from "react-native";
-import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withDelay,
-    withSequence,
-    withSpring,
-    withTiming,
-    type SharedValue,
-} from "react-native-reanimated";
 
 import { Colors, Spacing } from "@/constants/theme";
 
@@ -30,9 +23,9 @@ type Props<T extends string> = {
 const PADDING = 2;
 const SLIDE = { damping: 22, stiffness: 380, mass: 0.7 };
 const LIFT_SCALE = 1.06;
-const LIFT = { duration: 80 };
+const LIFT_MS = 80;
 const PRESS_SCALE = 0.96;
-const PRESS = { duration: 70 };
+const PRESS_MS = 70;
 const SETTLE = { damping: 12, stiffness: 420, mass: 0.5 };
 const HOLD_MS = 90;
 
@@ -44,80 +37,94 @@ export function SegmentedControl<T extends string>({
 }: Readonly<Props<T>>) {
     const index = Math.max(
         0,
-        options.findIndex((o) => o.value === value),
+        options.findIndex((option) => option.value === value),
     );
-    const optionWidth = useSharedValue(0);
-    const x = useSharedValue(0);
-    const scale = useSharedValue(1);
+    const [optionWidth, setOptionWidth] = useState(0);
+    const [position] = useState(() => new Animated.Value(index));
+    const [scale] = useState(() => new Animated.Value(1));
     const slidIndex = useRef(index);
 
     const slideTo = (nextIndex: number) => {
         slidIndex.current = nextIndex;
-        const width = optionWidth.get();
-        if (width === 0) return;
-        x.set(withSpring(nextIndex * width, SLIDE));
-        scale.set(
-            withSequence(
-                withTiming(LIFT_SCALE, LIFT),
-                withDelay(HOLD_MS, withTiming(PRESS_SCALE, PRESS)),
-                withSpring(1, SETTLE),
-            ),
-        );
+        Animated.spring(position, {
+            toValue: nextIndex,
+            ...SLIDE,
+            useNativeDriver: true,
+        }).start();
+        Animated.sequence([
+            Animated.timing(scale, {
+                toValue: LIFT_SCALE,
+                duration: LIFT_MS,
+                useNativeDriver: true,
+            }),
+            Animated.delay(HOLD_MS),
+            Animated.timing(scale, {
+                toValue: PRESS_SCALE,
+                duration: PRESS_MS,
+                useNativeDriver: true,
+            }),
+            Animated.spring(scale, {
+                toValue: 1,
+                ...SETTLE,
+                useNativeDriver: true,
+            }),
+        ]).start();
     };
 
     useEffect(() => {
         if (index !== slidIndex.current) slideTo(index);
     });
 
-    const thumbStyle = useAnimatedStyle(() => {
-        const lift = Math.max(0, (scale.get() - 1) / (LIFT_SCALE - 1));
-        return {
-            width: optionWidth.get(),
-            opacity: optionWidth.get() > 0 ? 1 : 0,
-            transform: [{ translateX: x.get() }, { scale: scale.get() }],
-            elevation: 1 + lift * 5,
-            shadowOpacity: 0.08 + lift * 0.12,
-            shadowRadius: 1 + lift * 5,
-        };
-    });
+    const onLayout = (event: LayoutChangeEvent) =>
+        setOptionWidth(
+            (event.nativeEvent.layout.width - PADDING * 2) / options.length,
+        );
 
     return (
-        <View
-            style={[styles.segment, style]}
-            onLayout={(e) => {
-                const width =
-                    (e.nativeEvent.layout.width - PADDING * 2) / options.length;
-                optionWidth.set(width);
-                x.set(index * width);
-            }}
-        >
-            <Animated.View
-                pointerEvents="none"
-                style={[styles.thumb, thumbStyle]}
-            />
-            {options.map((o, i) => {
-                const on = o.value === value;
+        <View style={[styles.segment, style]} onLayout={onLayout}>
+            {optionWidth > 0 && (
+                <Animated.View
+                    pointerEvents="none"
+                    style={[
+                        styles.thumb,
+                        {
+                            width: optionWidth,
+                            transform: [
+                                {
+                                    translateX: Animated.multiply(
+                                        position,
+                                        optionWidth,
+                                    ),
+                                },
+                                { scale },
+                            ],
+                        },
+                    ]}
+                />
+            )}
+            {options.map((option, optionIndex) => {
+                const selected = option.value === value;
                 return (
                     <Pressable
-                        key={o.value}
+                        key={option.value}
                         onPress={() => {
-                            if (i !== slidIndex.current) slideTo(i);
-                            onChange(o.value);
+                            if (optionIndex !== slidIndex.current) {
+                                slideTo(optionIndex);
+                            }
+                            onChange(option.value);
                         }}
                         accessibilityRole="button"
-                        accessibilityLabel={o.label}
-                        accessibilityState={{ selected: on }}
+                        accessibilityLabel={option.label}
+                        accessibilityState={{ selected }}
                         style={({ pressed }) => [
                             styles.option,
-                            pressed && !on && styles.optionPressed,
+                            pressed && !selected && styles.optionPressed,
                         ]}
                     >
                         <OptionLabel
-                            label={o.label}
-                            index={i}
-                            selected={on}
-                            x={x}
-                            optionWidth={optionWidth}
+                            label={option.label}
+                            index={optionIndex}
+                            position={position}
                         />
                     </Pressable>
                 );
@@ -126,46 +133,43 @@ export function SegmentedControl<T extends string>({
     );
 }
 
-function nearness(
-    x: number,
-    width: number,
-    index: number,
-    selected: boolean,
-): number {
-    "worklet";
-    if (width === 0) return selected ? 1 : 0;
-    return Math.min(1, Math.max(0, 1 - Math.abs(x / width - index)));
-}
-
 function OptionLabel({
     label,
     index,
-    selected,
-    x,
-    optionWidth,
+    position,
 }: Readonly<{
     label: string;
     index: number;
-    selected: boolean;
-    x: SharedValue<number>;
-    optionWidth: SharedValue<number>;
+    position: Animated.Value;
 }>) {
-    const boldStyle = useAnimatedStyle(() => ({
-        opacity: nearness(x.get(), optionWidth.get(), index, selected),
-    }));
-    const plainStyle = useAnimatedStyle(() => ({
-        opacity: 1 - nearness(x.get(), optionWidth.get(), index, selected),
-    }));
+    const boldOpacity = position.interpolate({
+        inputRange: [index - 1, index, index + 1],
+        outputRange: [0, 1, 0],
+        extrapolate: "clamp",
+    });
+    const plainOpacity = position.interpolate({
+        inputRange: [index - 1, index, index + 1],
+        outputRange: [1, 0, 1],
+        extrapolate: "clamp",
+    });
 
     return (
         <View>
             <Animated.Text
-                style={[styles.optionText, styles.optionTextOn, boldStyle]}
+                style={[
+                    styles.optionText,
+                    styles.optionTextOn,
+                    { opacity: boldOpacity },
+                ]}
             >
                 {label}
             </Animated.Text>
             <Animated.Text
-                style={[styles.optionText, styles.plainLayer, plainStyle]}
+                style={[
+                    styles.optionText,
+                    styles.plainLayer,
+                    { opacity: plainOpacity },
+                ]}
             >
                 {label}
             </Animated.Text>
@@ -189,8 +193,11 @@ const styles = StyleSheet.create({
         left: PADDING,
         backgroundColor: Colors.surface,
         borderRadius: 6,
+        elevation: 2,
         shadowColor: Colors.text,
         shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.12,
+        shadowRadius: 2,
     },
     option: {
         flex: 1,

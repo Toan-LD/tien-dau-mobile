@@ -36,6 +36,10 @@ export const TransactionRow = memo(function TransactionRow({
     const swipeRef = useRef<SwipeableMethods>(null);
 
     useEffect(() => {
+        swipeRef.current?.reset();
+    }, [tx.id]);
+
+    useEffect(() => {
         if (!peekHint) return;
         swipeRef.current?.openRight();
         const timer = setTimeout(() => {
